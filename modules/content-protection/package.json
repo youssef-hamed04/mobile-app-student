@@ -1,0 +1,7 @@
+{
+  "name": "content-protection",
+  "version": "1.0.0",
+  "description": "Native screenshot / screen-recording protection and secure rendering surfaces.",
+  "main": "src/index.ts",
+  "private": true
+}
