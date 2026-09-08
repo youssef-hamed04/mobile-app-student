@@ -15,6 +15,8 @@ import { Text } from './Text';
 
 export type ButtonVariant =
   | 'primary'
+  /** The brand mark's plate: orange fill, black ink, heavy rule. */
+  | 'highlight'
   | 'secondary'
   | 'outline'
   | 'ghost'
@@ -25,6 +27,7 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
 
 const CONTAINER: Record<ButtonVariant, string> = {
   primary: 'bg-primary active:opacity-85',
+  highlight: 'bg-highlight border-2 border-outline active:opacity-85',
   secondary: 'bg-surface-alt border border-border active:bg-surface-raised',
   outline: 'border-2 border-primary bg-transparent active:bg-primary-soft',
   ghost: 'bg-transparent active:bg-surface-alt',
@@ -34,6 +37,7 @@ const CONTAINER: Record<ButtonVariant, string> = {
 
 const LABEL: Record<ButtonVariant, string> = {
   primary: 'text-primary-fg',
+  highlight: 'text-highlight-fg',
   secondary: 'text-foreground',
   outline: 'text-primary',
   ghost: 'text-foreground',
@@ -42,8 +46,8 @@ const LABEL: Record<ButtonVariant, string> = {
 };
 
 const SIZE: Record<ButtonSize, string> = {
-  sm: 'h-10 px-3 rounded-sm gap-1.5',
-  md: 'h-12 px-4 rounded-md gap-2',
+  sm: 'h-10 px-3.5 rounded-md gap-1.5',
+  md: 'h-12 px-5 rounded-md gap-2',
   lg: 'h-14 px-6 rounded-lg gap-2',
 };
 
@@ -98,18 +102,22 @@ export const Button = React.forwardRef<View, ButtonProps>(function Button(
   const spinnerColor =
     variant === 'primary'
       ? colors.primaryFg
-      : variant === 'danger'
-        ? colors.accentFg
-        : colors.primary;
+      : variant === 'highlight'
+        ? colors.highlightFg
+        : variant === 'danger'
+          ? colors.accentFg
+          : colors.primary;
 
   const iconColor =
     variant === 'primary'
       ? colors.primaryFg
-      : variant === 'danger'
-        ? colors.accentFg
-        : variant === 'outline' || variant === 'link'
-          ? colors.primary
-          : colors.foreground;
+      : variant === 'highlight'
+        ? colors.highlightFg
+        : variant === 'danger'
+          ? colors.accentFg
+          : variant === 'outline' || variant === 'link'
+            ? colors.primary
+            : colors.foreground;
 
   return (
     <Pressable

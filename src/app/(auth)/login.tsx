@@ -60,7 +60,7 @@ export default function LoginScreen() {
       </View>
 
       <View className="mb-8 items-center">
-        <BrandMark size={64} />
+        <BrandMark size={112} />
         <Text variant="h1" className="mt-5 text-center">
           {t('auth.welcomeBack')}
         </Text>

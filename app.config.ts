@@ -15,12 +15,6 @@ const NAME: Record<Variant, string> = {
   staging: 'EduPlatform (Stg)',
   production: 'EduPlatform',
 };
-{
-  "expo": {
-    "name": "edu-mobile",
-    "newArchEnabled": true
-  }
-}
 
 const BUNDLE_ID: Record<Variant, string> = {
   development: 'com.eduplatform.app.dev',
@@ -70,7 +64,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     versionCode: 1,
     adaptiveIcon: {
       foregroundImage: './assets/images/adaptive-icon.png',
-      backgroundColor: '#0B0B0D',
+      // White, not the theme's dark background: the mark is black line art
+      // and would vanish against it.
+      backgroundColor: '#FFFFFF',
     },
     permissions: [
       'android.permission.INTERNET',
@@ -90,7 +86,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       {
         image: './assets/images/splash.png',
         resizeMode: 'contain',
-        backgroundColor: '#0B0B0D',
+        backgroundColor: '#FFFFFF',
       },
     ],
     'expo-secure-store',
@@ -101,7 +97,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-notifications',
       {
         icon: './assets/images/notification-icon.png',
-        color: '#F26A1B',
+        color: '#FF914C',
       },
     ],
     [

@@ -26,6 +26,11 @@ export const qk = {
     feed: () => [...qk.home.all, 'feed'] as const,
   },
 
+  ads: {
+    all: ['ads'] as const,
+    list: (placement: string) => [...qk.ads.all, 'list', placement] as const,
+  },
+
   courses: {
     all: ['courses'] as const,
     list: (filters: object) => [...qk.courses.all, 'list', filters] as const,

@@ -10,6 +10,7 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { Screen } from '@/components/ui/Screen';
 import { CardSkeleton, Skeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
+import { AdBanner } from '@/features/ads';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { CourseCard } from '@/features/courses/components/CourseCard';
 import { useHomeFeed } from '@/features/courses/hooks';
@@ -73,6 +74,14 @@ export default function HomeScreen() {
           </Text>
         ) : null}
       </View>
+
+      {/*
+        Promotions sit between the header and the student's own content: high
+        enough to be seen, but never above the greeting or ahead of the
+        courses they came here for. Its query is independent of the feed, so
+        it cannot delay anything below it.
+      */}
+      <AdBanner className="mb-6 mt-3" />
 
       {data ? (
         <View className="mb-6 mt-3 flex-row gap-2 px-4">
@@ -222,7 +231,7 @@ function Stat({
     <View
       accessible
       accessibilityLabel={`${label}: ${value}`}
-      className="flex-1 items-center rounded-md border border-border bg-surface px-1 py-3"
+      className="flex-1 items-center rounded-md border border-border bg-surface px-1 py-3.5"
     >
       <Icon name={icon} size={16} color={colors.primary} />
       <Text variant="label" className="mt-1.5" numberOfLines={1}>
@@ -241,6 +250,8 @@ function HomeSkeleton({ greeting }: { greeting: string }) {
       <View className="px-4 pt-2">
         <Text variant="h2">{greeting}</Text>
       </View>
+
+      <AdBanner className="mb-6 mt-3" />
 
       <View className="mb-6 mt-4 flex-row gap-2 px-4">
         {[0, 1, 2, 3].map((i) => (

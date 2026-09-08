@@ -1,4 +1,9 @@
 {
+  "ads": {
+    "label": "مميز",
+    "carouselLabel": "العروض",
+    "slidePosition": "{{position}} من {{total}}"
+  },
   "common": {
     "appName": "المنصة التعليمية",
     "ok": "حسنًا",

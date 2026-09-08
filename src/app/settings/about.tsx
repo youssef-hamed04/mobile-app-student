@@ -20,7 +20,7 @@ export default function AboutScreen() {
 
       <Screen hideNetworkBanner edges={[]} contentClassName="pt-8">
         <View className="mb-8 items-center">
-          <BrandMark size={72} />
+          <BrandMark size={120} />
           <Text variant="h3" className="mt-4">
             {t('common.appName')}
           </Text>

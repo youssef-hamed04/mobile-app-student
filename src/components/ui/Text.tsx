@@ -25,7 +25,9 @@ export type TextTone =
   | 'accent'
   | 'success'
   | 'warning'
-  | 'inverse';
+  | 'inverse'
+  /** Black ink for use on a `highlight` (orange plate) surface. */
+  | 'onHighlight';
 
 const VARIANTS: Record<TextVariant, string> = {
   display: 'text-4xl font-heading leading-[42px]',
@@ -37,7 +39,7 @@ const VARIANTS: Record<TextVariant, string> = {
   bodyStrong: 'text-base font-heading leading-6',
   caption: 'text-sm leading-5',
   label: 'text-sm font-heading leading-5',
-  overline: 'text-2xs uppercase tracking-widest font-heading',
+  overline: 'text-2xs uppercase tracking-[1.5px] font-heading',
   mono: 'text-sm',
 };
 
@@ -50,6 +52,7 @@ const TONES: Record<TextTone, string> = {
   success: 'text-success',
   warning: 'text-warning',
   inverse: 'text-primary-fg',
+  onHighlight: 'text-highlight-fg',
 };
 
 export interface TextProps extends RNTextProps {

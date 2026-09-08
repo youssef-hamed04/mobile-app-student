@@ -26,11 +26,24 @@ export function SectionHeader({
   return (
     <View className="mb-3 flex-row items-end justify-between gap-3">
       <View className="flex-1">
-        <Text variant="h3" accessibilityRole="header" numberOfLines={1}>
-          {title}
-        </Text>
+        <View className="flex-row items-center gap-2">
+          {/*
+            The mark's orange plate, reduced to a rule. `rounded-full` + a
+            logical `h-*` keeps it flipping correctly under RTL without any
+            conditional styling.
+          */}
+          <View className="h-4 w-1 rounded-full bg-highlight" />
+          <Text
+            variant="h3"
+            accessibilityRole="header"
+            numberOfLines={1}
+            className="flex-1"
+          >
+            {title}
+          </Text>
+        </View>
         {subtitle ? (
-          <Text variant="caption" tone="muted" numberOfLines={1} className="mt-0.5">
+          <Text variant="caption" tone="muted" numberOfLines={1} className="ms-3 mt-0.5">
             {subtitle}
           </Text>
         ) : null}

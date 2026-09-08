@@ -61,24 +61,37 @@ export const zIndex = {
 export const elevation = {
   none: { shadowOpacity: 0, elevation: 0 },
   sm: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    elevation: 1,
+    shadowColor: '#14131A',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
   },
   md: {
-    shadowColor: '#000',
+    shadowColor: '#14131A',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 4,
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+    elevation: 5,
   },
   lg: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.14,
-    shadowRadius: 24,
-    elevation: 10,
+    shadowColor: '#14131A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 12,
   },
+} as const;
+
+/**
+ * Outline weights.
+ *
+ * The brand mark builds depth from rule weight rather than blur, so these are
+ * the deliberate steps: `hair` for incidental dividers, `rule` for card and
+ * control edges, `plate` for the heavy badge outline on orange/light fills.
+ */
+export const strokeWidth = {
+  hair: 1,
+  rule: 2,
+  plate: 3,
 } as const;

@@ -6,70 +6,89 @@
  * Semantic color tokens.
  *
  * Light and Dark are two deliberately designed palettes, not inversions:
- *  - Light uses warm white surfaces so orange reads as energy, not alarm.
- *  - Dark uses a near-black with a warm bias (#0B0B0D -> #14141A) so the
+ *  - Light uses a warm paper ground (#F7F5F2) so white cards read as raised
+ *    plates against it, echoing the brand mark's badge-on-ground structure.
+ *  - Dark uses a near-black with a warm bias (#0C0B0E -> #16151A) so the
  *    orange/red brand stays saturated without glowing.
- *  - Primary is lifted in dark mode (500 -> 400) to hold WCAG AA contrast
- *    against dark surfaces; red is lifted the same way.
+ *  - `primary` is lifted in dark mode for WCAG AA against dark surfaces.
+ *  - `highlight` is the brand mark's orange plate and is identical in both
+ *    themes: it is a surface, always inked with `highlight-fg` (near-black),
+ *    never with white. See the rationale in palette.ts.
  *
  * Values are space separated RGB channels so Tailwind's <alpha-value>
  * modifier works (e.g. bg-primary/20).
+ *
+ * Mirrored by src/theme/palette.ts — __tests__/theme.test.ts asserts parity.
  */
 
 @layer base {
   :root {
-    --color-background: 255 255 255;
+    --color-background: 247 245 242;
     --color-surface: 255 255 255;
-    --color-surface-alt: 247 247 248;
+    --color-surface-alt: 239 237 232;
     --color-surface-raised: 255 255 255;
 
-    --color-border: 225 225 229;
-    --color-border-strong: 200 200 207;
+    --color-border: 226 222 214;
+    --color-border-strong: 195 189 177;
+    --color-outline: 20 19 26;
 
-    --color-foreground: 16 16 20;
-    --color-muted: 110 110 122;
-    --color-subtle: 154 154 165;
+    --color-foreground: 18 17 20;
+    --color-muted: 99 97 92;
+    --color-subtle: 142 139 132;
 
-    --color-primary: 201 74 10;      /* brand-650 — 4.70:1 with white, WCAG AA */
+    --color-primary: 201 74 10;      /* 4.70:1 with white, WCAG AA */
     --color-primary-fg: 255 255 255;
-    --color-primary-soft: 255 244 236;
+    --color-primary-soft: 255 241 228;
 
-    --color-accent: 192 31 31;       /* danger-600 */
+    --color-highlight: 255 145 76;   /* brand plate — 8.0:1 with near-black */
+    --color-highlight-fg: 20 19 26;
+
+    --color-accent: 192 31 31;
     --color-accent-fg: 255 255 255;
-    --color-accent-soft: 255 241 241;
+    --color-accent-soft: 255 239 239;
 
     --color-success: 21 128 61;
     --color-warning: 180 83 9;
     --color-info: 29 78 216;
 
-    --color-overlay: 11 11 13;
+    --color-disabled: 228 224 216;
+    --color-disabled-fg: 142 139 132;
+
+    --color-overlay: 20 19 26;
   }
 
   .dark:root,
   .dark {
-    --color-background: 11 11 13;
-    --color-surface: 20 20 26;
-    --color-surface-alt: 26 26 32;
-    --color-surface-raised: 34 34 42;
+    --color-background: 12 11 14;
+    --color-surface: 22 21 26;
+    --color-surface-alt: 29 28 34;
+    --color-surface-raised: 38 36 44;
 
-    --color-border: 46 46 55;
-    --color-border-strong: 74 74 85;
+    --color-border: 48 46 56;
+    --color-border-strong: 76 74 86;
+    --color-outline: 10 9 12;
 
-    --color-foreground: 247 247 248;
-    --color-muted: 168 168 178;
-    --color-subtle: 122 122 134;
+    --color-foreground: 247 246 244;
+    --color-muted: 171 168 176;
+    --color-subtle: 126 123 134;
 
-    --color-primary: 251 128 56;     /* brand-400 — AA on #14141A */
-    --color-primary-fg: 26 12 3;
-    --color-primary-soft: 44 27 17;
+    --color-primary: 255 145 71;
+    --color-primary-fg: 26 13 3;
+    --color-primary-soft: 46 28 16;
 
-    --color-accent: 246 90 90;       /* danger-400 */
+    --color-highlight: 255 145 76;
+    --color-highlight-fg: 20 19 26;
+
+    --color-accent: 246 90 90;
     --color-accent-fg: 32 8 8;
-    --color-accent-soft: 48 22 22;
+    --color-accent-soft: 52 24 24;
 
     --color-success: 74 222 128;
     --color-warning: 251 191 36;
     --color-info: 125 175 255;
+
+    --color-disabled: 38 36 44;
+    --color-disabled-fg: 107 104 116;
 
     --color-overlay: 0 0 0;
   }

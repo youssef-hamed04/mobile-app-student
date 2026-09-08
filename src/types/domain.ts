@@ -414,3 +414,64 @@ export interface HomeFeed {
     streakDays: number;
   };
 }
+
+// ---------------------------------------------------------------------------
+// Advertisements
+// ---------------------------------------------------------------------------
+
+/**
+ * Where tapping a promotion sends the student.
+ *
+ * `NONE` is a first-class case, not a fallback: a purely informational banner
+ * should be inert rather than pretending to be tappable.
+ */
+export type AdTargetType =
+  | 'NONE'
+  | 'COURSE'
+  | 'SECTION'
+  | 'LESSON'
+  | 'EXTERNAL_URL'
+  | 'APP_SCREEN';
+
+export interface AdTarget {
+  type: AdTargetType;
+  /** Entity id for COURSE / SECTION / LESSON. */
+  entityId: string | null;
+  /**
+   * Absolute http(s) URL for EXTERNAL_URL, or an in-app path for APP_SCREEN
+   * and SECTION.
+   *
+   * The destination is expressed by the server rather than derived from a
+   * client-side map, so the admin dashboard can add destinations without an
+   * app release. See `resolveAdTarget` for how it is validated before use.
+   */
+  url: string | null;
+}
+
+/**
+ * A promotional banner served to the student home screen.
+ *
+ * Shaped for an admin-managed catalogue: `active`, `startsAt` and `endsAt`
+ * are enforced server-side (the client never receives what it should not
+ * show), and are present here only so a persisted cache can be re-checked
+ * before an expired banner is painted from disk.
+ */
+export interface Advertisement {
+  id: string;
+  imageUrl: string;
+  /**
+   * Aspect ratio the artwork was authored at (width / height).
+   *
+   * Supplied by the server so the carousel can reserve the exact box before
+   * the image resolves — without it, banners of differing ratios reflow the
+   * home screen after paint.
+   */
+  aspectRatio: number | null;
+  title: string | null;
+  description: string | null;
+  ctaLabel: string | null;
+  target: AdTarget;
+  displayOrder: number;
+  startsAt: string | null;
+  endsAt: string | null;
+}

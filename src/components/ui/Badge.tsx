@@ -8,6 +8,7 @@ import { Text } from './Text';
 
 export type BadgeTone =
   | 'neutral'
+  | 'highlight'
   | 'primary'
   | 'success'
   | 'warning'
@@ -16,6 +17,9 @@ export type BadgeTone =
 
 const TONES: Record<BadgeTone, { bg: string; fg: string }> = {
   neutral: { bg: 'bg-surface-alt border border-border', fg: 'text-muted' },
+  // The brand mark's plate: orange fill, black ink, hard rule. Reads as a
+  // stamp rather than a tint, which is what makes it carry across a busy card.
+  highlight: { bg: 'bg-highlight border border-outline', fg: 'text-highlight-fg' },
   primary: { bg: 'bg-primary-soft border border-primary/30', fg: 'text-primary' },
   success: { bg: 'bg-success/12 border border-success/30', fg: 'text-success' },
   warning: { bg: 'bg-warning/12 border border-warning/30', fg: 'text-warning' },

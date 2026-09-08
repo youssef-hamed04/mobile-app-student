@@ -12,6 +12,7 @@ import { useAuth } from '@/features/auth/AuthProvider';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/hooks/use-translation';
 import { registerPushToken, setBadgeCount } from '@/services/notifications';
+import { strokeWidth } from '@/theme/tokens';
 
 type TabName = 'index' | 'courses' | 'my-courses' | 'search' | 'notifications' | 'profile';
 
@@ -80,12 +81,15 @@ export default function TabsLayout() {
         tabBarInactiveTintColor: colors.subtle,
         tabBarStyle: {
           backgroundColor: colors.surface,
+          // A defined rule rather than a hairline: the tab bar reads as a
+          // separate plate sitting on the page, matching the card treatment.
           borderTopColor: colors.border,
-          height: Platform.OS === 'ios' ? 84 : 64,
-          paddingTop: 6,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 8,
+          borderTopWidth: strokeWidth.rule,
+          height: Platform.OS === 'ios' ? 88 : 68,
+          paddingTop: 8,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 10,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
+        tabBarLabelStyle: { fontSize: 11, fontWeight: '700', letterSpacing: 0.2 },
         // The tab bar itself does not need manual RTL handling: the native
         // view tree is mirrored, so the order flips with the layout.
         tabBarHideOnKeyboard: true,

@@ -1,4 +1,9 @@
 {
+  "ads": {
+    "label": "Featured",
+    "carouselLabel": "Promotions",
+    "slidePosition": "{{position}} of {{total}}"
+  },
   "common": {
     "appName": "EduPlatform",
     "ok": "OK",

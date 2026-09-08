@@ -5,7 +5,7 @@ import { createLogger } from '@/services/logger';
 import type { Paginated, RequestOptions } from '@/types/api';
 import type {
   AccessState,
-  AppNotification,
+  Advertisement,
   AttachmentTicket,
   AuthorizedDevice,
   ContinueWatchingItem,
@@ -25,6 +25,7 @@ import { ApiError } from '../errors';
 import {
   academicYears,
   accessCodes,
+  advertisements,
   courses,
   currentUser,
   departments,
@@ -308,6 +309,22 @@ function continueWatching(): ContinueWatchingItem[] {
       ];
     });
 }
+
+// ---- ads ------------------------------------------------------------------
+
+/**
+ * Mirrors the shape the real endpoint will serve: already filtered to active,
+ * in-window promotions for this student and ordered by displayOrder, so the
+ * app never has to do audience or scheduling logic of its own.
+ */
+route('GET', '/ads', (): Advertisement[] => {
+  requireAuth();
+  const now = Date.now();
+  return advertisements
+    .filter((ad) => !ad.startsAt || Date.parse(ad.startsAt) <= now)
+    .filter((ad) => !ad.endsAt || Date.parse(ad.endsAt) >= now)
+    .sort((a, b) => a.displayOrder - b.displayOrder);
+});
 
 // ---- courses --------------------------------------------------------------
 

@@ -1,5 +1,6 @@
 import type {
   AcademicYear,
+  Advertisement,
   AppNotification,
   Attachment,
   CourseDetail,
@@ -627,3 +628,76 @@ export const accessCodes: Record<string, string[]> = {
 };
 
 export const usedCodes = new Set<string>();
+
+// ---------------------------------------------------------------------------
+// Advertisements (development fixture)
+// ---------------------------------------------------------------------------
+
+/**
+ * Renders a placeholder banner as an inline SVG data URI.
+ *
+ * Every other fixture in this file leaves `thumbnailUrl` null rather than
+ * pointing at a stock-photo host, and promotions keep that property: the
+ * banner is generated locally, so the dev build pulls no images over the
+ * network and the carousel renders identically offline and in CI.
+ */
+const devBanner = (bg: string, ink: string, label: string): string =>
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="350">` +
+      `<rect width="800" height="350" fill="${bg}"/>` +
+      `<rect x="14" y="14" width="772" height="322" fill="none" stroke="${ink}" stroke-width="10"/>` +
+      `<text x="400" y="196" text-anchor="middle" font-family="sans-serif" ` +
+      `font-size="64" font-weight="bold" fill="${ink}">${label}</text>` +
+      `</svg>`
+  );
+
+/**
+ * Development-only promotions.
+ *
+ * Reachable exclusively through the mock transport, which `useMocks` forces
+ * off in production builds — no production code path can serve these. They
+ * exist to exercise the carousel's real branches: multiple slides, a mix of
+ * captioned and bare artwork, and one of each target kind including an inert
+ * one.
+ */
+export const advertisements: Advertisement[] = [
+  {
+    id: 'ad-1',
+    imageUrl: devBanner('#FF8C42', '#14131A', 'STUDENT CENTER'),
+    aspectRatio: 16 / 7,
+    title: 'ابدأ رحلتك الدراسية',
+    description: 'كل المواد في مكان واحد',
+    ctaLabel: 'تصفح الكورسات',
+    target: { type: 'APP_SCREEN', entityId: null, url: '/(tabs)/courses' },
+    displayOrder: 1,
+    startsAt: null,
+    endsAt: null,
+  },
+  {
+    id: 'ad-2',
+    imageUrl: devBanner('#14131A', '#FF8C42', 'NEW COURSE'),
+    aspectRatio: 16 / 7,
+    title: 'تحليل الإشارات',
+    description: null,
+    ctaLabel: 'اعرف أكثر',
+    target: { type: 'COURSE', entityId: 'c1', url: null },
+    displayOrder: 2,
+    startsAt: null,
+    endsAt: null,
+  },
+  {
+    // No caption and no destination — the purely decorative case, which must
+    // render as an image rather than announcing a button that does nothing.
+    id: 'ad-3',
+    imageUrl: devBanner('#C94A0A', '#FFFFFF', 'OFFERS'),
+    aspectRatio: 16 / 7,
+    title: null,
+    description: null,
+    ctaLabel: null,
+    target: { type: 'NONE', entityId: null, url: null },
+    displayOrder: 3,
+    startsAt: null,
+    endsAt: null,
+  },
+];

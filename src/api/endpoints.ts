@@ -33,6 +33,15 @@ export const Endpoints = {
     feed: '/home/feed',
   },
 
+  ads: {
+    /**
+     * GET — active, in-window promotions for the current student, already
+     * ordered. Filtering by schedule and audience is the server's job; the
+     * app renders what it is given.
+     */
+    list: '/ads',
+  },
+
   courses: {
     list: '/courses',
     detail: (id: string) => `/courses/${id}`,

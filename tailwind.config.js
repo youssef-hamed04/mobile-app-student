@@ -17,17 +17,17 @@ module.exports = {
       colors: {
         // ---- Brand (fixed, identical in both themes) --------------------
         brand: {
-          50: '#FFF4EC',
-          100: '#FFE4D1',
-          200: '#FFC5A3',
-          300: '#FFA06B',
-          400: '#FB8038',
-          500: '#F26A1B', // primary orange
-          600: '#D9520C',
+          50: '#FFF1E4',
+          100: '#FFE1C7',
+          200: '#FFC79B',
+          300: '#FFA96C',
+          400: '#FF914C', // the mark's orange plate — ink it with black
+          500: '#F97316',
+          600: '#E25C0B',
           650: '#C94A0A', // AA-safe with white text
-          700: '#B33F09',
-          800: '#8A310A',
-          900: '#5E220A',
+          700: '#A93E08',
+          800: '#823009',
+          900: '#59210A',
         },
         danger: {
           50: '#FFF1F1',
@@ -63,18 +63,23 @@ module.exports = {
         'surface-raised': withOpacity('--color-surface-raised'),
         border: withOpacity('--color-border'),
         'border-strong': withOpacity('--color-border-strong'),
+        outline: withOpacity('--color-outline'),
         foreground: withOpacity('--color-foreground'),
         muted: withOpacity('--color-muted'),
         subtle: withOpacity('--color-subtle'),
         primary: withOpacity('--color-primary'),
         'primary-fg': withOpacity('--color-primary-fg'),
         'primary-soft': withOpacity('--color-primary-soft'),
+        highlight: withOpacity('--color-highlight'),
+        'highlight-fg': withOpacity('--color-highlight-fg'),
         accent: withOpacity('--color-accent'),
         'accent-fg': withOpacity('--color-accent-fg'),
         'accent-soft': withOpacity('--color-accent-soft'),
         success: withOpacity('--color-success'),
         warning: withOpacity('--color-warning'),
         info: withOpacity('--color-info'),
+        disabled: withOpacity('--color-disabled'),
+        'disabled-fg': withOpacity('--color-disabled-fg'),
         overlay: withOpacity('--color-overlay'),
       },
       fontFamily: {
@@ -86,9 +91,12 @@ module.exports = {
         xs: '4px',
         sm: '8px',
         md: '12px',
-        lg: '16px',
-        xl: '20px',
+        lg: '18px',
+        xl: '22px',
         '2xl': '28px',
+      },
+      borderWidth: {
+        3: '3px',
       },
       spacing: {
         4.5: '18px',

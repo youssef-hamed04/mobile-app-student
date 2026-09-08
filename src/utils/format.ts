@@ -92,7 +92,7 @@ export function formatDateTime(iso: string | null, lang: Language): string {
   }).format(d);
 }
 
-const RELATIVE_STEPS: [Intl.RelativeTimeFormatUnit, number][] = [
+const RELATIVE_STEPS: [Intl.RelativeTimeFormatUnitSingular, number][] = [
   ['second', 60],
   ['minute', 60],
   ['hour', 24],
@@ -107,7 +107,10 @@ const RELATIVE_STEPS: [Intl.RelativeTimeFormatUnit, number][] = [
  * Hermes on Android, which supports `NumberFormat`/`DateTimeFormat` but not
  * this API. Not grammatically exhaustive, just readable.
  */
-const RELATIVE_UNIT_LABEL: Record<Language, Record<Intl.RelativeTimeFormatUnit, string>> = {
+const RELATIVE_UNIT_LABEL: Record<
+  Language,
+  Record<Intl.RelativeTimeFormatUnitSingular, string>
+> = {
   en: {
     second: 'second',
     minute: 'minute',
@@ -132,7 +135,7 @@ const RELATIVE_UNIT_LABEL: Record<Language, Record<Intl.RelativeTimeFormatUnit, 
 
 function formatRelativeManual(
   value: number,
-  unit: Intl.RelativeTimeFormatUnit,
+  unit: Intl.RelativeTimeFormatUnitSingular,
   lang: Language
 ): string {
   const n = Math.round(Math.abs(value));
