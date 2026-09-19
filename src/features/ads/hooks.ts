@@ -1,52 +1,41 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 
-import { qk } from '@/api/query-keys';
+import { useHomeFeed } from '@/features/courses/hooks';
 import type { Advertisement } from '@/types/domain';
 
-import { type AdPlacement, adsApi } from './api';
-
-/** Promotions change on an editorial cadence, not a per-session one. */
-const STALE_TIME = 10 * 60_000;
+import { type AdPlacement, announcementToBanner } from './api';
 
 /**
- * Advertisements for a placement.
+ * Banners for a placement.
  *
- * Deliberately its own query rather than part of the home feed: a promotion
- * failing or being slow must never delay or break the course content next to
- * it, and giving it a separate cache entry means a banner refresh doesn't
- * invalidate the student's courses.
+ * Derived from the home feed rather than fetched. There is no `/ads` endpoint
+ * to fetch from, and announcements already arrive with the feed — so the
+ * carousel costs no extra request, cannot fail independently of the screen it
+ * sits on, and cannot be slower than the content beside it.
  *
- * `retry: 1` and a long `staleTime` keep a decorative surface from generating
- * meaningful network traffic on a student's mobile data.
+ * That is a change in kind from the previous implementation, which gave the
+ * banner its own query precisely so it could fail alone. With no endpoint
+ * behind it, a separate query bought nothing but a guaranteed 404.
+ *
+ * The return shape is kept query-like — `{ data, isLoading, isError }` — so the
+ * carousel, which renders a skeleton while loading and nothing on error, did
+ * not have to change.
  */
-export function useAdvertisements(placement: AdPlacement = 'HOME') {
-  return useQuery({
-    queryKey: qk.ads.list(placement),
-    queryFn: ({ signal }) => adsApi.list(placement, signal),
-    staleTime: STALE_TIME,
-    gcTime: 30 * 60_000,
-    retry: 1,
-    select: selectDisplayable,
-  });
-}
+export function useAdvertisements(_placement: AdPlacement = 'HOME') {
+  const feed = useHomeFeed();
 
-/**
- * Server-side scheduling is authoritative — this is a second pass over what
- * came back, not a substitute for it.
- *
- * It earns its place because query results are persisted to disk: without it,
- * a student who opens the app offline can be shown a campaign that expired
- * while they were away.
- */
-function selectDisplayable(ads: Advertisement[]): Advertisement[] {
-  const now = Date.now();
+  const data = useMemo<Advertisement[] | undefined>(() => {
+    if (!feed.data) return undefined;
 
-  return [...ads]
-    .filter((ad) => {
-      if (!ad.imageUrl) return false;
-      if (ad.startsAt && Date.parse(ad.startsAt) > now) return false;
-      if (ad.endsAt && Date.parse(ad.endsAt) < now) return false;
-      return true;
-    })
-    .sort((a, b) => a.displayOrder - b.displayOrder);
+    return feed.data.announcements
+      .map((announcement, index) => announcementToBanner(announcement, index))
+      .filter((banner): banner is Advertisement => banner !== null)
+      .sort((a, b) => a.displayOrder - b.displayOrder);
+  }, [feed.data]);
+
+  return {
+    data,
+    isLoading: feed.isLoading,
+    isError: feed.isError,
+  };
 }

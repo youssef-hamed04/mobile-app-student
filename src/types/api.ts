@@ -63,6 +63,22 @@ export type ApiErrorCode =
   | 'PAYMENT_FAILED'
   | 'INVALID_CODE'
   | 'CODE_ALREADY_USED'
+  | 'ALREADY_ENROLLED'
+  // wallet / library
+  //
+  // Credit is spent on the Library alone. INSUFFICIENT_CREDIT can therefore
+  // never arrive from a course or course-part action, and the UI must not
+  // offer a top-up in that context.
+  | 'INSUFFICIENT_CREDIT'
+  | 'WALLET_LOCKED'
+  | 'AMOUNT_BELOW_MINIMUM'
+  | 'CODE_NOT_RECHARGEABLE'
+  // generic state
+  | 'CONFLICT'
+  | 'INVALID_STATE'
+  | 'STORAGE_UNAVAILABLE'
+  | 'UPLOAD_FAILED'
+  | 'INSUFFICIENT_ROLE'
   // playback
   | 'PLAYBACK_DENIED'
   | 'PLAYBACK_TICKET_EXPIRED'

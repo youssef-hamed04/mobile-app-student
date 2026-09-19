@@ -8,15 +8,15 @@ import { resetQueryCache } from '@/api/query-client';
 import { AppBar } from '@/components/layout/AppBar';
 import { ListItem, ListSection } from '@/components/ui/ListItem';
 import { Screen } from '@/components/ui/Screen';
+import { Select } from '@/components/ui/Select';
+import { Sheet } from '@/components/ui/Sheet';
 import { env, isDev } from '@/config/env';
-import { changeLanguage } from '@/i18n';
 import { useTranslation } from '@/hooks/use-translation';
+import { changeLanguage } from '@/i18n';
 import { support } from '@/services/support';
+import { useLanguageStore, type Language } from '@/store/language-store';
 import { type ThemePreference, useThemeStore } from '@/store/theme-store';
 import { toast } from '@/store/ui-store';
-import { useLanguageStore, type Language } from '@/store/language-store';
-import { Sheet } from '@/components/ui/Sheet';
-import { Select } from '@/components/ui/Select';
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
@@ -112,6 +112,28 @@ export default function SettingsScreen() {
           />
         </ListSection>
 
+        {/*
+          Library and wallet sit together, because the wallet only exists to
+          pay for the library. Separating them would invite the reading that
+          credit is a general-purpose balance, which it is not.
+        */}
+        <ListSection title={t('library.title')} footer={t('wallet.scopeBody')}>
+          <ListItem
+            icon="document"
+            title={t('library.browseTitle')}
+            subtitle={t('library.browseSubtitle')}
+            showChevron
+            onPress={() => router.push('/library')}
+          />
+          <ListItem
+            icon="price"
+            title={t('wallet.title')}
+            subtitle={t('wallet.settingsSubtitle')}
+            showChevron
+            onPress={() => router.push('/wallet')}
+          />
+        </ListSection>
+
         <ListSection title={t('settings.account')}>
           <ListItem
             icon="shield"
@@ -129,6 +151,18 @@ export default function SettingsScreen() {
         </ListSection>
 
         <ListSection title={t('settings.support')}>
+          <ListItem
+            icon="help"
+            title={t('support.title')}
+            subtitle={t('support.settingsSubtitle')}
+            showChevron
+            onPress={() => router.push('/support')}
+          />
+          {/*
+            Kept alongside the ticket list rather than replaced by it: WhatsApp
+            is the channel that still works when the account itself is the
+            problem.
+          */}
           <ListItem
             icon="whatsapp"
             title={t('settings.contactSupport')}

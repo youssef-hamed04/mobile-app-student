@@ -33,15 +33,6 @@ export const Endpoints = {
     feed: '/home/feed',
   },
 
-  ads: {
-    /**
-     * GET — active, in-window promotions for the current student, already
-     * ordered. Filtering by schedule and audience is the server's job; the
-     * app renders what it is given.
-     */
-    list: '/ads',
-  },
-
   courses: {
     list: '/courses',
     detail: (id: string) => `/courses/${id}`,
@@ -51,6 +42,70 @@ export const Endpoints = {
     enroll: (id: string) => `/courses/${id}/enroll`,
     redeemCode: (id: string) => `/courses/${id}/redeem`,
     attachments: (id: string) => `/courses/${id}/attachments`,
+    /**
+     * The parts of a course and what the student already holds.
+     *
+     * `hasParts: false` means the course is sold whole — a legitimate answer,
+     * not a failure.
+     */
+    parts: (id: string) => `/courses/${id}/parts`,
+  },
+
+  courseParts: {
+    /** Parts the student holds, with the value frozen at acquisition. */
+    myPurchases: '/me/part-purchases',
+  },
+
+  codes: {
+    /**
+     * POST — checks a card without consuming it, so the student can see what
+     * it unlocks before committing. Unknown and expired cards answer
+     * identically, so this cannot be used to hunt for valid codes.
+     */
+    validate: '/codes/validate',
+  },
+
+  /**
+   * Wallet credit exists for the Library and nothing else.
+   *
+   * No course and no course part ever debits it — those are unlocked by access
+   * cards, paid for offline. There is deliberately no wallet call anywhere in
+   * the course flow.
+   */
+  wallet: {
+    summary: '/wallet',
+    transactions: '/wallet/transactions',
+    /** Redeems a recharge card. The credit comes from the card, not the body. */
+    redeem: '/wallet/redeem',
+  },
+
+  library: {
+    materials: '/library/materials',
+    material: (id: string) => `/library/materials/${id}`,
+    mine: '/library/me',
+    myPurchases: '/library/me/purchases',
+    /** Prices an item without buying it: balance, shortfall, overlap. */
+    quote: '/library/quote',
+    purchase: '/library/purchase',
+    /**
+     * POST — a short-lived signed URL bound to the reader, plus the watermark
+     * to render over it. The storage key is never sent to the client.
+     */
+    open: (partId: string) => `/library/parts/${partId}/open`,
+  },
+
+  support: {
+    tickets: '/support/tickets',
+    ticket: (id: string) => `/support/tickets/${id}`,
+    reply: (id: string) => `/support/tickets/${id}/messages`,
+  },
+
+  storage: {
+    /**
+     * POST — presigns an avatar upload and returns the object key. The bytes
+     * are PUT straight to storage; this API never accepts image bytes.
+     */
+    avatarUpload: '/storage/uploads/avatar',
   },
 
   lessons: {

@@ -4,8 +4,8 @@ import * as React from 'react';
 import { ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AppBar } from '@/components/layout/AppBar';
 import { NetworkBanner } from '@/components/feedback/NetworkBanner';
+import { AppBar } from '@/components/layout/AppBar';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { Chip } from '@/components/ui/Chip';
@@ -15,11 +15,12 @@ import { Icon } from '@/components/ui/Icon';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { CardSkeleton, Skeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
-import { AttachmentRow } from '@/features/lessons/AttachmentRow';
+import { PartsPanel } from '@/features/course-parts/PartsPanel';
 import { AccessPanel } from '@/features/courses/components/AccessPanel';
 import { SectionAccordion } from '@/features/courses/components/SectionAccordion';
 import { courseAccessFlags, useCourse } from '@/features/courses/hooks';
 import { EnrollSheet } from '@/features/enrollment/EnrollSheet';
+import { AttachmentRow } from '@/features/lessons/AttachmentRow';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/hooks/use-translation';
 import { support } from '@/services/support';
@@ -147,6 +148,14 @@ export default function CourseDetailScreen() {
               onContactAdmin={contactAdmin}
             />
           </View>
+
+          {/*
+            Directly under the access panel, because "what do I own here" is
+            the same question the panel above answers — for the whole course
+            rather than for a part. The panel renders nothing when the course
+            is sold whole, so a course without parts is unchanged.
+          */}
+          <PartsPanel courseId={course.id} onRedeem={() => setEnrollOpen(true)} />
         </View>
 
         {/* ---- tabs ------------------------------------------------------ */}

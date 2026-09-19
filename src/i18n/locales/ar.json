@@ -55,9 +55,9 @@
     "select": "اختيار",
     "selected": "تم الاختيار",
     "notSet": "غير محدد",
-    "learnMore": "معرفة المزيد"
+    "learnMore": "معرفة المزيد",
+    "showLess": "عرض أقل"
   },
-
   "auth": {
     "welcomeBack": "أهلًا بعودتك",
     "loginSubtitle": "سجّل الدخول لمتابعة التعلّم",
@@ -113,7 +113,6 @@
       "strong": "قوية"
     }
   },
-
   "validation": {
     "required": "هذا الحقل مطلوب",
     "fullNameParts": "من فضلك اكتب ثلاثة مقاطع على الأقل من اسمك",
@@ -127,7 +126,6 @@
     "selectOption": "من فضلك اختر أحد الخيارات",
     "codeFormat": "أدخل كود وصول صحيح"
   },
-
   "tabs": {
     "home": "الرئيسية",
     "courses": "الكورسات",
@@ -136,7 +134,6 @@
     "notifications": "الإشعارات",
     "profile": "حسابي"
   },
-
   "home": {
     "greetingMorning": "صباح الخير يا {{name}}",
     "greetingAfternoon": "مساء الخير يا {{name}}",
@@ -158,7 +155,6 @@
     "noCoursesTitle": "لم تنضم إلى أي كورس بعد",
     "noCoursesBody": "تصفّح الكورسات المتاحة وانضم إلى أول كورس لك."
   },
-
   "courses": {
     "title": "الكورسات",
     "allCourses": "كل الكورسات",
@@ -213,7 +209,6 @@
       "lessonsBody": "تابعنا قريبًا — تتم إضافة دروس جديدة باستمرار."
     }
   },
-
   "access": {
     "notEnrolled": "غير مشترك",
     "active": "مشترك",
@@ -259,7 +254,6 @@
     "archivedTitle": "تمت أرشفة هذا الكورس",
     "archivedBody": "المحتوى لم يعد متاحًا، مع الاحتفاظ بسجلاتك."
   },
-
   "lesson": {
     "lesson": "درس",
     "lessons": "الدروس",
@@ -287,7 +281,6 @@
       "MANUAL": "حدّد الدرس كمكتمل عند الانتهاء."
     }
   },
-
   "player": {
     "play": "تشغيل",
     "pause": "إيقاف مؤقت",
@@ -328,7 +321,6 @@
     "concurrentTitle": "الحساب قيد المشاهدة في مكان آخر",
     "concurrentBody": "هذا الحساب يشاهد من جلسة أخرى. أوقفها ثم حاول مجددًا."
   },
-
   "progress": {
     "courseProgress": "تقدّم الكورس",
     "lessonsCompleted": "{{done}} من {{total}} درسًا",
@@ -336,7 +328,6 @@
     "inProgress": "قيد التقدم",
     "completed": "مكتمل"
   },
-
   "search": {
     "title": "بحث",
     "placeholder": "ابحث عن كورسات أو دروس أو محاضرين…",
@@ -361,7 +352,6 @@
     },
     "minChars": "اكتب {{count}} حروف على الأقل"
   },
-
   "notifications": {
     "title": "الإشعارات",
     "markAllRead": "تحديد الكل كمقروء",
@@ -391,7 +381,6 @@
       "SECURITY": "الأمان"
     }
   },
-
   "profile": {
     "title": "حسابي",
     "editProfile": "تعديل الملف الشخصي",
@@ -412,9 +401,13 @@
       "PENDING": "بانتظار التفعيل",
       "SUSPENDED": "موقوف",
       "DISABLED": "معطّل"
-    }
+    },
+    "avatarUpdated": "تم تحديث الصورة.",
+    "avatarRemoved": "تمت إزالة الصورة.",
+    "avatarPermissionDenied": "اسمح بالوصول إلى الصور لاختيار صورة.",
+    "avatar_unsupportedType": "استخدم صورة بصيغة JPEG أو PNG أو WebP.",
+    "avatar_tooLarge": "حجم الصورة أكبر من ٥ ميجابايت."
   },
-
   "settings": {
     "title": "الإعدادات",
     "appearance": "المظهر",
@@ -465,7 +458,6 @@
     "clearCache": "مسح ذاكرة التخزين المؤقت",
     "cacheCleared": "تم مسح الذاكرة المؤقتة"
   },
-
   "security": {
     "title": "الخصوصية والأمان",
     "protectedContentTitle": "محتوى محمي",
@@ -481,7 +473,6 @@
     "integrityTitle": "جهاز غير مدعوم",
     "integrityBody": "لا يمكن تشغيل الدروس المحمية على الأجهزة المعدّلة (روت/جيلبريك) أو المحاكيات."
   },
-
   "devices": {
     "title": "الأجهزة",
     "authorized": "الجهاز المصرّح به",
@@ -492,7 +483,6 @@
     "limitTitle": "تم الوصول إلى الحد الأقصى للأجهزة",
     "limitBody": "وصل هذا الحساب إلى الحد الأقصى من الأجهزة. تواصل مع الإدارة للمساعدة."
   },
-
   "network": {
     "offlineBanner": "أنت غير متصل بالإنترنت",
     "offlineBody": "قد لا يتوفر بعض المحتوى حتى تعود للاتصال.",
@@ -500,7 +490,6 @@
     "slowConnection": "الاتصال بطيء",
     "waitingForNetwork": "بانتظار الاتصال…"
   },
-
   "errors": {
     "title": "حدث خطأ ما",
     "genericBody": "حاول مرة أخرى. إذا استمرت المشكلة تواصل مع الإدارة.",
@@ -549,9 +538,18 @@
       "body": "أوقفنا هذه الشاشة للحفاظ على بياناتك. يمكنك المحاولة مرة أخرى أو إعادة تشغيل التطبيق.",
       "restart": "إعادة تشغيل التطبيق",
       "details": "تفاصيل تقنية"
-    }
+    },
+    "INSUFFICIENT_CREDIT": "رصيدك لا يكفي لهذه العملية.",
+    "WALLET_LOCKED": "رصيدك موقوف مؤقتًا. تواصل مع الدعم.",
+    "AMOUNT_BELOW_MINIMUM": "المبلغ أقل من الحد الأدنى.",
+    "CODE_NOT_RECHARGEABLE": "هذا كرت شحن. استخدمه في شاشة الرصيد.",
+    "ALREADY_ENROLLED": "لديك وصول بالفعل إلى هذا.",
+    "CONFLICT": "هذا يتعارض مع شيء موجود بالفعل.",
+    "INVALID_STATE": "لا يمكن تنفيذ هذا الآن.",
+    "STORAGE_UNAVAILABLE": "تخزين الملفات غير متاح. حاول بعد قليل.",
+    "UPLOAD_FAILED": "فشل الرفع. حاول مرة أخرى.",
+    "INSUFFICIENT_ROLE": "حسابك لا يسمح بهذا."
   },
-
   "a11y": {
     "courseCard": "كورس: {{title}} للمحاضر {{teacher}}",
     "lessonRow": "الدرس {{index}}: {{title}}، المدة {{duration}}",
@@ -562,5 +560,145 @@
     "toggleTheme": "تبديل السمة",
     "unreadBadge": "{{count}} إشعارات غير مقروءة",
     "videoPlayer": "مشغّل فيديو محمي"
+  },
+  "library": {
+    "title": "المكتبة",
+    "browseTitle": "تصفح المكتبة",
+    "browseSubtitle": "كتب وملازم مراجعة، تُشترى بالرصيد",
+    "tabBrowse": "تصفح",
+    "tabMine": "مستنداتي",
+    "searchPlaceholder": "ابحث في المكتبة",
+    "parts": "الأجزاء",
+    "packages": "الباقات",
+    "packagesSubtitle": "عدة أجزاء معًا، وغالبًا بسعر أقل",
+    "priceFrom": "يبدأ من {{price}}",
+    "price": "السعر",
+    "owned": "مملوك",
+    "ownAll": "تمتلك المحتوى كاملًا",
+    "preview": "معاينة مجانية",
+    "read": "قراءة",
+    "buy": "شراء",
+    "buyPackage": "شراء الباقة",
+    "opening": "جارٍ فتح المستند…",
+    "pricing": "جارٍ التحقق من السعر…",
+    "unavailable": "غير متاح",
+    "notPurchasable": "هذا غير متاح للشراء حاليًا.",
+    "shortfall": "المتبقي المطلوب",
+    "included": "يشمل",
+    "confirmTitle": "تأكيد الشراء",
+    "confirmBuy": "ادفع {{price}}",
+    "purchaseSuccessBody": "أصبح {{title}} في مكتبتك.",
+    "alreadyOwnedBody": "تمتلك هذا بالفعل — لم يُخصم أي مبلغ.",
+    "packageOverlap": "تمتلك بالفعل {{owned}} من {{total}} أجزاء في هذه الباقة.",
+    "empty": {
+      "browseTitle": "لا يوجد شيء بعد",
+      "browseBody": "تظهر الكتب والملازم الجديدة هنا فور نشرها.",
+      "searchTitle": "لا توجد نتائج",
+      "searchBody": "جرّب كلمة أخرى، أو امسح البحث.",
+      "mineTitle": "لم تشترِ شيئًا بعد",
+      "mineBody": "تظهر هنا المستندات التي تشتريها، جاهزة للقراءة.",
+      "partsTitle": "لا توجد أجزاء بعد",
+      "partsBody": "لم يُقسّم هذا المحتوى إلى أجزاء."
+    },
+    "partCount_zero": "لا توجد أجزاء",
+    "partCount_one": "جزء واحد",
+    "partCount_two": "جزآن",
+    "partCount_few": "{{count}} أجزاء",
+    "partCount_many": "{{count}} جزءًا",
+    "partCount_other": "{{count}} جزء",
+    "packageCount_zero": "لا توجد باقات",
+    "packageCount_one": "باقة واحدة",
+    "packageCount_two": "باقتان",
+    "packageCount_few": "{{count}} باقات",
+    "packageCount_many": "{{count}} باقةً",
+    "packageCount_other": "{{count}} باقة",
+    "pageCount_zero": "لا توجد صفحات",
+    "pageCount_one": "صفحة واحدة",
+    "pageCount_two": "صفحتان",
+    "pageCount_few": "{{count}} صفحات",
+    "pageCount_many": "{{count}} صفحةً",
+    "pageCount_other": "{{count}} صفحة"
+  },
+  "wallet": {
+    "title": "الرصيد",
+    "balance": "الرصيد",
+    "history": "السجل",
+    "topUp": "إضافة رصيد",
+    "redeemCard": "استخدام كرت شحن",
+    "redeemSubtitle": "أدخل الكود المطبوع على الكرت. القيمة تأتي من الكرت نفسه.",
+    "rechargeSuccess": "تمت إضافة {{amount}} إلى رصيدك.",
+    "settingsSubtitle": "الرصيد وكروت الشحن",
+    "openA11y": "افتح رصيدك",
+    "scopeTitle": "الرصيد مخصص للمكتبة",
+    "scopeBody": "الرصيد يُستخدم لشراء مستندات المكتبة فقط. الكورسات وأجزاء الكورسات تُفتح بكروت الوصول، لا بالرصيد.",
+    "tx": {
+      "RECHARGE": "كرت شحن",
+      "PURCHASE": "شراء من المكتبة",
+      "ADJUSTMENT": "تسوية",
+      "REFUND": "استرداد"
+    },
+    "empty": {
+      "title": "لا يوجد شيء بعد",
+      "body": "سيظهر هنا استخدام كرت شحن أو شراء مستند."
+    }
+  },
+  "parts": {
+    "title": "أجزاء الكورس",
+    "subtitle": "هذا الكورس يُباع على أجزاء. يمكنك امتلاك بعضها دون البعض.",
+    "ownsAllSubtitle": "تمتلك كل أجزاء هذا الكورس.",
+    "owned": "مملوك",
+    "ownedViaCourse": "مشمول",
+    "locked": "مُقفل",
+    "whatsInside": "ماذا يشمل",
+    "howToUnlockTitle": "كيف تفتح جزءًا",
+    "howToUnlockBody": "تُفتح الأجزاء بكرت وصول، تمامًا كما يُفتح الكورس كاملًا. الرصيد لا يُستخدم للكورسات.",
+    "sectionCount_zero": "لا توجد أقسام",
+    "sectionCount_one": "قسم واحد",
+    "sectionCount_two": "قسمان",
+    "sectionCount_few": "{{count}} أقسام",
+    "sectionCount_many": "{{count}} قسمًا",
+    "sectionCount_other": "{{count}} قسم"
+  },
+  "support": {
+    "title": "الدعم",
+    "settingsSubtitle": "راسلنا، أو تابع طلبًا",
+    "directTitle": "تواصل الآن",
+    "callUs": "اتصل بنا",
+    "whatsapp": "واتساب",
+    "email": "البريد الإلكتروني",
+    "ticketsTitle": "الطلبات المتابَعة",
+    "ticketsBody": "افتح طلبًا وتابع الردود هنا.",
+    "newTicket": "طلب جديد",
+    "subject": "الموضوع",
+    "subjectError": "بين ٣ و٢٠٠ حرف.",
+    "category": "التصنيف",
+    "message": "الرسالة",
+    "messageError": "بين ٣ و٤٠٠٠ حرف.",
+    "messageHint": "اذكر ما حدث، وما الذي كنت تتوقعه بدلًا منه.",
+    "reply": "رد",
+    "send": "إرسال",
+    "you": "أنت",
+    "staff": "الدعم",
+    "closedBody": "هذا الطلب مغلق. افتح طلبًا جديدًا إذا كنت ما زلت بحاجة إلى مساعدة.",
+    "responseTimeNote": "نرد خلال ساعات العمل. لأي أمر عاجل، استخدم واتساب.",
+    "ticketCreatedBody": "تم فتح الطلب {{reference}}.",
+    "status": {
+      "OPEN": "مفتوح",
+      "PENDING": "بانتظار ردك",
+      "RESOLVED": "تم الحل",
+      "CLOSED": "مغلق"
+    },
+    "categories": {
+      "GENERAL": "عام",
+      "TECHNICAL": "تقني",
+      "PAYMENT": "الدفع",
+      "ACCESS": "الوصول",
+      "CONTENT": "المحتوى",
+      "OTHER": "أخرى"
+    },
+    "empty": {
+      "title": "لا توجد طلبات بعد",
+      "body": "سيظهر هنا أي طلب تفتحه مع ردوده."
+    }
   }
 }

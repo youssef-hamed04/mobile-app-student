@@ -18,9 +18,9 @@ import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { updateProfileSchema } from '@/features/auth/schemas';
+import { useChangeAvatar, useRemoveAvatar } from '@/features/profile/hooks';
 import { messageParams, useFormErrors } from '@/hooks/use-form-errors';
 import { useTranslation } from '@/hooks/use-translation';
-import { support } from '@/services/support';
 import { toast } from '@/store/ui-store';
 import type { User } from '@/types/domain';
 import { localizedName, maskPhone } from '@/utils/format';
@@ -42,6 +42,8 @@ export default function EditProfileScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { user, refreshUser } = useAuth();
+  const changeAvatar = useChangeAvatar();
+  const removeAvatar = useRemoveAvatar();
   const { translate, applyServerErrors } = useFormErrors<FormValues>();
 
   const [formError, setFormError] = React.useState<unknown>(null);
@@ -79,21 +81,36 @@ export default function EditProfileScreen() {
       <AppBar title={t('profile.editProfile')} />
 
       <Screen hideNetworkBanner edges={[]} keyboardAvoiding contentClassName="pt-5">
+        {/*
+          The picture is the one thing on this screen a student can change
+          without an administrator. It goes straight to storage: the app
+          presigns an upload, PUTs the bytes, and hands the server back only
+          the key it chose. No image bytes ever pass through the API.
+        */}
         <View className="mb-6 items-center">
           <Avatar name={user.fullName} uri={user.avatarUrl} size={92} />
-          <Button
-            label={t('profile.changePhoto')}
-            variant="link"
-            size="sm"
-            className="mt-2"
-            onPress={() =>
-              void support.whatsapp({
-                reason: 'general',
-                fullName: user.fullName,
-                phone: user.phone,
-              })
-            }
-          />
+
+          <View className="mt-2 flex-row items-center gap-1">
+            <Button
+              label={t('profile.changePhoto')}
+              variant="link"
+              size="sm"
+              loading={changeAvatar.isPending}
+              disabled={removeAvatar.isPending}
+              onPress={() => changeAvatar.mutate()}
+            />
+
+            {user.avatarUrl ? (
+              <Button
+                label={t('profile.removePhoto')}
+                variant="link"
+                size="sm"
+                loading={removeAvatar.isPending}
+                disabled={changeAvatar.isPending}
+                onPress={() => removeAvatar.mutate()}
+              />
+            ) : null}
+          </View>
         </View>
 
         {formError ? (

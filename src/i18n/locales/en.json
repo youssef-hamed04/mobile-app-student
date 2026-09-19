@@ -47,9 +47,9 @@
     "select": "Select",
     "selected": "Selected",
     "notSet": "Not set",
-    "learnMore": "Learn more"
+    "learnMore": "Learn more",
+    "showLess": "Show less"
   },
-
   "auth": {
     "welcomeBack": "Welcome back",
     "loginSubtitle": "Sign in to continue learning",
@@ -105,7 +105,6 @@
       "strong": "Strong"
     }
   },
-
   "validation": {
     "required": "This field is required",
     "fullNameParts": "Please enter at least three parts of your name",
@@ -119,7 +118,6 @@
     "selectOption": "Please choose an option",
     "codeFormat": "Enter a valid access code"
   },
-
   "tabs": {
     "home": "Home",
     "courses": "Courses",
@@ -128,7 +126,6 @@
     "notifications": "Alerts",
     "profile": "Profile"
   },
-
   "home": {
     "greetingMorning": "Good morning, {{name}}",
     "greetingAfternoon": "Good afternoon, {{name}}",
@@ -150,7 +147,6 @@
     "noCoursesTitle": "You haven't joined a course yet",
     "noCoursesBody": "Browse the catalogue and join your first course."
   },
-
   "courses": {
     "title": "Courses",
     "allCourses": "All courses",
@@ -198,7 +194,6 @@
       "lessonsBody": "Check back soon — new lessons are added regularly."
     }
   },
-
   "access": {
     "notEnrolled": "Not enrolled",
     "active": "Enrolled",
@@ -244,7 +239,6 @@
     "archivedTitle": "This course has been archived",
     "archivedBody": "The content is no longer available. Your records are preserved."
   },
-
   "lesson": {
     "lesson": "Lesson",
     "lessons": "Lessons",
@@ -272,7 +266,6 @@
       "MANUAL": "Mark this lesson complete when you're done."
     }
   },
-
   "player": {
     "play": "Play",
     "pause": "Pause",
@@ -313,7 +306,6 @@
     "concurrentTitle": "Already playing somewhere else",
     "concurrentBody": "This account is watching on another session. Stop it and try again."
   },
-
   "progress": {
     "courseProgress": "Course progress",
     "lessonsCompleted": "{{done}} of {{total}} lessons",
@@ -321,7 +313,6 @@
     "inProgress": "In progress",
     "completed": "Completed"
   },
-
   "search": {
     "title": "Search",
     "placeholder": "Search courses, lessons, teachers…",
@@ -346,7 +337,6 @@
     },
     "minChars": "Type at least {{count}} characters"
   },
-
   "notifications": {
     "title": "Notifications",
     "markAllRead": "Mark all as read",
@@ -376,7 +366,6 @@
       "SECURITY": "Security"
     }
   },
-
   "profile": {
     "title": "Profile",
     "editProfile": "Edit profile",
@@ -397,9 +386,13 @@
       "PENDING": "Pending activation",
       "SUSPENDED": "Suspended",
       "DISABLED": "Disabled"
-    }
+    },
+    "avatarUpdated": "Photo updated.",
+    "avatarRemoved": "Photo removed.",
+    "avatarPermissionDenied": "Allow photo access to choose a picture.",
+    "avatar_unsupportedType": "Use a JPEG, PNG or WebP image.",
+    "avatar_tooLarge": "That image is larger than 5 MB."
   },
-
   "settings": {
     "title": "Settings",
     "appearance": "Appearance",
@@ -450,7 +443,6 @@
     "clearCache": "Clear cache",
     "cacheCleared": "Cache cleared"
   },
-
   "security": {
     "title": "Privacy and security",
     "protectedContentTitle": "Protected content",
@@ -466,7 +458,6 @@
     "integrityTitle": "Unsupported device",
     "integrityBody": "Protected lessons can't be played on rooted, jailbroken or emulated devices."
   },
-
   "devices": {
     "title": "Devices",
     "authorized": "Authorized device",
@@ -477,7 +468,6 @@
     "limitTitle": "Device limit reached",
     "limitBody": "This account has already reached its device limit. Contact the administration for help."
   },
-
   "network": {
     "offlineBanner": "You're offline",
     "offlineBody": "Some content may be unavailable until you reconnect.",
@@ -485,7 +475,6 @@
     "slowConnection": "Slow connection",
     "waitingForNetwork": "Waiting for a connection…"
   },
-
   "errors": {
     "title": "Something went wrong",
     "genericBody": "Please try again. If the problem continues, contact the administration.",
@@ -534,9 +523,18 @@
       "body": "We've stopped this screen to keep your data safe. You can try again or restart the app.",
       "restart": "Restart app",
       "details": "Technical details"
-    }
+    },
+    "INSUFFICIENT_CREDIT": "You do not have enough credit for this.",
+    "WALLET_LOCKED": "Your credit is on hold. Contact support.",
+    "AMOUNT_BELOW_MINIMUM": "That amount is below the minimum.",
+    "CODE_NOT_RECHARGEABLE": "That is a recharge card. Use it on the credit screen.",
+    "ALREADY_ENROLLED": "You already have access to this.",
+    "CONFLICT": "That conflicts with something that already exists.",
+    "INVALID_STATE": "That cannot be done right now.",
+    "STORAGE_UNAVAILABLE": "File storage is unavailable. Try again shortly.",
+    "UPLOAD_FAILED": "The upload failed. Try again.",
+    "INSUFFICIENT_ROLE": "Your account does not allow this."
   },
-
   "a11y": {
     "courseCard": "Course: {{title}} by {{teacher}}",
     "lessonRow": "Lesson {{index}}: {{title}}, {{duration}}",
@@ -547,5 +545,129 @@
     "toggleTheme": "Switch theme",
     "unreadBadge": "{{count}} unread notifications",
     "videoPlayer": "Protected video player"
+  },
+  "library": {
+    "title": "Library",
+    "browseTitle": "Browse the library",
+    "browseSubtitle": "Books and revision papers, bought with credit",
+    "tabBrowse": "Browse",
+    "tabMine": "My documents",
+    "searchPlaceholder": "Search the library",
+    "parts": "Parts",
+    "packages": "Bundles",
+    "packagesSubtitle": "Several parts together, usually for less",
+    "priceFrom": "From {{price}}",
+    "price": "Price",
+    "owned": "Owned",
+    "ownAll": "You own all of it",
+    "preview": "Free preview",
+    "read": "Read",
+    "buy": "Buy",
+    "buyPackage": "Buy bundle",
+    "opening": "Opening the document…",
+    "pricing": "Checking the price…",
+    "unavailable": "Unavailable",
+    "notPurchasable": "This is not available to buy right now.",
+    "shortfall": "Still needed",
+    "included": "Included",
+    "confirmTitle": "Confirm purchase",
+    "confirmBuy": "Pay {{price}}",
+    "purchaseSuccessBody": "{{title}} is now in your library.",
+    "alreadyOwnedBody": "You already own this — nothing was charged.",
+    "packageOverlap": "You already own {{owned}} of the {{total}} parts in this bundle.",
+    "empty": {
+      "browseTitle": "Nothing here yet",
+      "browseBody": "New books and papers appear here as they are published.",
+      "searchTitle": "No matches",
+      "searchBody": "Try a different word, or clear the search.",
+      "mineTitle": "You have not bought anything yet",
+      "mineBody": "Documents you buy appear here, ready to read.",
+      "partsTitle": "No parts yet",
+      "partsBody": "This material has not been split into parts."
+    },
+    "partCount_one": "{{count}} part",
+    "partCount_other": "{{count}} parts",
+    "packageCount_one": "{{count}} bundle",
+    "packageCount_other": "{{count}} bundles",
+    "pageCount_one": "{{count}} page",
+    "pageCount_other": "{{count}} pages"
+  },
+  "wallet": {
+    "title": "Credit",
+    "balance": "Balance",
+    "history": "History",
+    "topUp": "Add credit",
+    "redeemCard": "Redeem a recharge card",
+    "redeemSubtitle": "Enter the code printed on the card. The amount comes from the card.",
+    "rechargeSuccess": "{{amount}} added to your balance.",
+    "settingsSubtitle": "Balance and recharge cards",
+    "openA11y": "Open your credit balance",
+    "scopeTitle": "Credit is for the library",
+    "scopeBody": "Credit buys library documents only. Courses and course parts are unlocked with access cards, not with credit.",
+    "tx": {
+      "RECHARGE": "Recharge card",
+      "PURCHASE": "Library purchase",
+      "ADJUSTMENT": "Adjustment",
+      "REFUND": "Refund"
+    },
+    "empty": {
+      "title": "Nothing yet",
+      "body": "Redeeming a recharge card or buying a document will show up here."
+    }
+  },
+  "parts": {
+    "title": "Course parts",
+    "subtitle": "This course is sold in parts. You can hold some and not others.",
+    "ownsAllSubtitle": "You have every part of this course.",
+    "owned": "Owned",
+    "ownedViaCourse": "Included",
+    "locked": "Locked",
+    "whatsInside": "What is inside",
+    "howToUnlockTitle": "How to unlock a part",
+    "howToUnlockBody": "Parts are unlocked with an access card, the same way a whole course is. Credit is not used for courses.",
+    "sectionCount_one": "{{count}} section",
+    "sectionCount_other": "{{count}} sections"
+  },
+  "support": {
+    "title": "Support",
+    "settingsSubtitle": "Message us, or track a request",
+    "directTitle": "Talk to someone now",
+    "callUs": "Call us",
+    "whatsapp": "WhatsApp",
+    "email": "Email",
+    "ticketsTitle": "Tracked requests",
+    "ticketsBody": "Open a request and follow the replies here.",
+    "newTicket": "New request",
+    "subject": "Subject",
+    "subjectError": "Between 3 and 200 characters.",
+    "category": "Category",
+    "message": "Message",
+    "messageError": "Between 3 and 4000 characters.",
+    "messageHint": "Tell us what happened, and what you expected instead.",
+    "reply": "Reply",
+    "send": "Send",
+    "you": "You",
+    "staff": "Support",
+    "closedBody": "This request is closed. Open a new one if you still need help.",
+    "responseTimeNote": "We reply during working hours. For anything urgent, use WhatsApp.",
+    "ticketCreatedBody": "Request {{reference}} opened.",
+    "status": {
+      "OPEN": "Open",
+      "PENDING": "Waiting for you",
+      "RESOLVED": "Resolved",
+      "CLOSED": "Closed"
+    },
+    "categories": {
+      "GENERAL": "General",
+      "TECHNICAL": "Technical",
+      "PAYMENT": "Payment",
+      "ACCESS": "Access",
+      "CONTENT": "Content",
+      "OTHER": "Other"
+    },
+    "empty": {
+      "title": "No requests yet",
+      "body": "Anything you open will appear here with its replies."
+    }
   }
 }

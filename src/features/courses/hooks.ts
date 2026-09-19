@@ -97,6 +97,19 @@ export function useEnroll(courseId: string) {
   });
 }
 
+/**
+ * Redeeming an access card.
+ *
+ * One endpoint serves every card scope. A course card grants the whole course,
+ * a section card one section, a teacher card every course frozen into it, and a
+ * part card one part of this course — the server decides which, and the client
+ * is told only the resulting enrollment state. That is why the parts list is
+ * invalidated unconditionally: the app cannot know from the response whether a
+ * part changed hands, so it re-asks rather than guessing.
+ *
+ * No wallet cache is touched here, and none should be. Cards are paid for
+ * offline; credit is for the Library.
+ */
 export function useRedeemCode(courseId: string) {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
@@ -106,6 +119,8 @@ export function useRedeemCode(courseId: string) {
     onSuccess: async (result) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: qk.courses.detail(courseId) }),
+        queryClient.invalidateQueries({ queryKey: qk.courses.parts(courseId) }),
+        queryClient.invalidateQueries({ queryKey: qk.courses.myParts({}) }),
         queryClient.invalidateQueries({ queryKey: qk.courses.all }),
         queryClient.invalidateQueries({ queryKey: qk.home.all }),
       ]);

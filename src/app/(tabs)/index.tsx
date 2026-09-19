@@ -78,10 +78,33 @@ export default function HomeScreen() {
       {/*
         Promotions sit between the header and the student's own content: high
         enough to be seen, but never above the greeting or ahead of the
-        courses they came here for. Its query is independent of the feed, so
-        it cannot delay anything below it.
+        courses they came here for.
+
+        They are derived from the feed's own announcements rather than fetched
+        — there is no advertisement endpoint — so the carousel cannot be slower
+        than, or fail independently of, the content below it.
       */}
       <AdBanner className="mb-6 mt-3" />
+
+      {/*
+        The Library's entry point. It is not a tab: the bar already carries six
+        destinations, and this is somewhere students go deliberately rather
+        than switch to mid-task.
+      */}
+      <View className="mb-6 px-4">
+        <Card onPress={() => router.push('/library')}>
+          <CardBody className="flex-row items-center gap-3">
+            <Icon name="document" size={22} />
+            <View className="flex-1 gap-0.5">
+              <Text variant="label">{t('library.title')}</Text>
+              <Text variant="caption" tone="muted">
+                {t('library.browseSubtitle')}
+              </Text>
+            </View>
+            <Icon name="chevron-right" size={18} />
+          </CardBody>
+        </Card>
+      </View>
 
       {data ? (
         <View className="mb-6 mt-3 flex-row gap-2 px-4">

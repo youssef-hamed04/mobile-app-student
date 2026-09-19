@@ -475,3 +475,329 @@ export interface Advertisement {
   startsAt: string | null;
   endsAt: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// Course parts
+// ---------------------------------------------------------------------------
+
+/**
+ * A sellable slice of a course.
+ *
+ * Parts are acquired **only** by redeeming a part-scoped access card through
+ * `POST /courses/:courseId/redeem` — the same endpoint a whole-course card uses.
+ * There is no purchase route and the wallet is never debited for a course or a
+ * part; the money changed hands offline when the card was sold. The wallet
+ * belongs to the Library alone.
+ */
+export interface CoursePartSection {
+  id: string;
+  title: string;
+  titleAr: string | null;
+  sortOrder: number;
+  /** True until the student owns the part. Titles are visible; content is not. */
+  locked: boolean;
+}
+
+/** Why the student holds this part — the badge wording depends on it. */
+export type CoursePartOwnership = 'PART_PURCHASE' | 'FULL_COURSE';
+
+export interface CoursePart {
+  id: string;
+  title: string;
+  titleAr: string | null;
+  description: string | null;
+  sortOrder: number;
+  /** EGP. Null when the course has no price or its split is misconfigured. */
+  price: number | null;
+  pricePercent: number | null;
+  currency: string;
+  owned: boolean;
+  ownedSince: string | null;
+  ownedVia: CoursePartOwnership | null;
+  purchasable: boolean;
+  sectionCount: number;
+  sections: CoursePartSection[];
+}
+
+export interface CoursePartsResponse {
+  courseId: string;
+  /**
+   * False means the course is sold whole — not an error, and the UI must tell
+   * it apart from "parts failed to load".
+   */
+  hasParts: boolean;
+  coursePrice: number | null;
+  ownsAllParts: boolean;
+  parts: CoursePart[];
+}
+
+/** How the student came to hold a part. */
+export type CoursePartAcquisition = 'CODE' | 'WALLET';
+
+export interface CoursePartPurchase {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  partId: string;
+  partTitle: string;
+  /** Frozen at acquisition; a later price change never shows here. */
+  valueAtAcquisition: number;
+  currency: string;
+  /**
+   * `CODE` is the only path that writes new rows. `WALLET` appears only on
+   * historical rows from a withdrawn build — courses have not debited the
+   * wallet since, and must not again.
+   */
+  acquiredVia: CoursePartAcquisition;
+  acquiredAt: string;
+}
+
+// ---------------------------------------------------------------------------
+// Access codes
+// ---------------------------------------------------------------------------
+
+/**
+ * The result of checking a card without consuming it.
+ *
+ * Unknown and expired codes come back as the same error server-side, so this
+ * cannot be used to hunt for valid codes.
+ */
+export type CodeTargetType = 'COURSE' | 'PART' | 'SECTION' | 'TEACHER';
+
+export interface CodeValidation {
+  valid: boolean;
+  course: { id: string; title: string } | null;
+  targetType: CodeTargetType;
+  section: { id: string; title: string } | null;
+  teacher: { id: string; fullName: string } | null;
+  remainingRedemptions: number;
+  accessDurationType: string | null;
+  accessDurationDays: number | null;
+  expiresAt: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Wallet
+// ---------------------------------------------------------------------------
+
+/**
+ * Wallet credit exists for the Library and nothing else.
+ *
+ * No course and no course part ever debits it. Credit arrives by redeeming a
+ * recharge card; it leaves only through a Library purchase or an administrative
+ * adjustment.
+ */
+export interface WalletSummary {
+  balance: number;
+  currency: string;
+  totalRecharged: number;
+  totalSpent: number;
+  transactionCount: number;
+  updatedAt: string;
+}
+
+export type WalletTxDirection = 'CREDIT' | 'DEBIT';
+
+export interface WalletTransaction {
+  id: string;
+  type: string;
+  direction: WalletTxDirection;
+  source: string;
+  amount: number;
+  currency: string;
+  balanceBefore: number;
+  balanceAfter: number;
+  referenceType: string | null;
+  referenceId: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface RechargeResult {
+  codeId: string;
+  code: string;
+  credited: number;
+  balance: number;
+  currency: string;
+  transactionId: string | null;
+}
+
+// ---------------------------------------------------------------------------
+// Library
+// ---------------------------------------------------------------------------
+
+export interface LibrarySubject {
+  id: string;
+  name: string;
+}
+
+export interface LibraryMaterialSummary {
+  id: string;
+  title: string;
+  titleAr: string | null;
+  description: string | null;
+  coverUrl: string | null;
+  subject: LibrarySubject | null;
+  partCount: number;
+  packageCount: number;
+  /** Cheapest single part, and the part-by-part total a package undercuts. */
+  priceFrom: number | null;
+  priceTotal: number | null;
+}
+
+export interface LibraryPart {
+  id: string;
+  title: string;
+  titleAr: string | null;
+  description: string | null;
+  sortOrder: number;
+  price: number;
+  currency: string;
+  pageCount: number | null;
+  mimeType: string | null;
+  isPreview: boolean;
+  owned: boolean;
+  ownedSince: string | null;
+  purchasable: boolean;
+}
+
+export interface LibraryPackage {
+  id: string;
+  title: string;
+  titleAr: string | null;
+  description: string | null;
+  price: number;
+  currency: string;
+  partCount: number;
+  partIds: string[];
+  /** So an overlapping bundle is visible before the student spends. */
+  partsAlreadyOwned: number;
+  fullyOwned: boolean;
+}
+
+export interface LibraryMaterialDetail {
+  id: string;
+  title: string;
+  titleAr: string | null;
+  description: string | null;
+  coverUrl: string | null;
+  subject: LibrarySubject | null;
+  ownsAllParts: boolean;
+  parts: LibraryPart[];
+  packages: LibraryPackage[];
+}
+
+export interface MyLibraryItem {
+  entitlementId: string;
+  partId: string;
+  title: string;
+  titleAr: string | null;
+  materialId: string;
+  materialTitle: string;
+  pageCount: number | null;
+  mimeType: string | null;
+  source: string;
+  grantedAt: string;
+  /** Withdrawn material stays listed — it was bought — but cannot be opened. */
+  available: boolean;
+}
+
+export type LibraryPurchaseKind = 'PART' | 'PACKAGE';
+
+export interface LibraryQuote {
+  kind: LibraryPurchaseKind;
+  targetId: string;
+  title: string;
+  materialTitle: string | null;
+  price: number;
+  currency: string;
+  balance: number;
+  sufficientCredit: boolean;
+  shortfall: number;
+  partCount: number;
+  partsAlreadyOwned: number;
+  fullyOwned: boolean;
+  purchasable: boolean;
+}
+
+export interface LibraryPurchaseResult {
+  purchaseId: string;
+  kind: LibraryPurchaseKind;
+  targetId: string;
+  title: string;
+  pricePaid: number;
+  currency: string;
+  balanceAfter: number;
+  partsGranted: number;
+  partsAlreadyOwned: number;
+  purchasedAt: string;
+  /** A retry of the same purchase returns the original rather than charging again. */
+  alreadyPurchased: boolean;
+}
+
+export interface LibraryPurchaseHistoryItem {
+  id: string;
+  kind: LibraryPurchaseKind;
+  targetId: string | null;
+  title: string;
+  materialTitle: string | null;
+  pricePaid: number;
+  currency: string;
+  partCount: number;
+  purchasedAt: string;
+}
+
+/**
+ * Permission to read one purchased document.
+ *
+ * `url` is short-lived and bound to the user, session and device. The storage
+ * key behind it is never sent, and nothing here may be cached to disk.
+ */
+export interface LibraryDocumentTicket {
+  libraryPartId: string;
+  title: string;
+  url: string;
+  mimeType: string | null;
+  pageCount: number | null;
+  expiresAt: string;
+  watermark: WatermarkPayload;
+}
+
+// ---------------------------------------------------------------------------
+// Support
+// ---------------------------------------------------------------------------
+
+export type SupportTicketStatus = 'OPEN' | 'PENDING' | 'RESOLVED' | 'CLOSED';
+export type SupportTicketPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+export type SupportTicketCategory =
+  | 'GENERAL'
+  | 'TECHNICAL'
+  | 'PAYMENT'
+  | 'ACCESS'
+  | 'CONTENT'
+  | 'OTHER';
+
+export interface SupportTicketSummary {
+  id: string;
+  reference: string;
+  subject: string;
+  category: SupportTicketCategory;
+  status: SupportTicketStatus;
+  priority: SupportTicketPriority;
+  lastMessageAt: string;
+  createdAt: string;
+}
+
+export interface SupportMessage {
+  id: string;
+  body: string;
+  isInternal: boolean;
+  authorRole: UserRole;
+  author: { id: string; fullName: string; role: UserRole } | null;
+  createdAt: string;
+}
+
+export interface SupportTicketDetail extends SupportTicketSummary {
+  courseId: string | null;
+  messages: SupportMessage[];
+}

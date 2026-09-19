@@ -5,7 +5,6 @@ import { createLogger } from '@/services/logger';
 import type { Paginated, RequestOptions } from '@/types/api';
 import type {
   AccessState,
-  Advertisement,
   AttachmentTicket,
   AuthorizedDevice,
   ContinueWatchingItem,
@@ -25,7 +24,6 @@ import { ApiError } from '../errors';
 import {
   academicYears,
   accessCodes,
-  advertisements,
   courses,
   currentUser,
   departments,
@@ -310,21 +308,12 @@ function continueWatching(): ContinueWatchingItem[] {
     });
 }
 
-// ---- ads ------------------------------------------------------------------
-
-/**
- * Mirrors the shape the real endpoint will serve: already filtered to active,
- * in-window promotions for this student and ordered by displayOrder, so the
- * app never has to do audience or scheduling logic of its own.
+/*
+ * There is no `/ads` route here, because there is no `/ads` endpoint: the
+ * backend has no advertisement concept at all. Promotional banners are derived
+ * from the home feed's announcements, which `/home/feed` above already returns
+ * — including their `imageUrl` and `route`.
  */
-route('GET', '/ads', (): Advertisement[] => {
-  requireAuth();
-  const now = Date.now();
-  return advertisements
-    .filter((ad) => !ad.startsAt || Date.parse(ad.startsAt) <= now)
-    .filter((ad) => !ad.endsAt || Date.parse(ad.endsAt) >= now)
-    .sort((a, b) => a.displayOrder - b.displayOrder);
-});
 
 // ---- courses --------------------------------------------------------------
 
@@ -424,6 +413,14 @@ route('POST', '/courses/:id/redeem', ({ params, body }): EnrollmentResult => {
 
   usedCodes.add(code);
   enrollments.set(course.id, 'ACTIVE');
+
+  // One endpoint, every card scope — exactly as the backend behaves. A card
+  // whose code names a part grants that part; the response says nothing about
+  // it, which is why the app re-reads the parts list rather than guessing.
+  // No credit is touched here, because a course never debits the wallet.
+  if (code.startsWith('PART1')) ownedPartIds.add('part-1');
+  if (code.startsWith('PART2')) ownedPartIds.add('part-2');
+
   return { state: 'ACTIVE', courseId: course.id, payment: null };
 });
 
@@ -746,6 +743,18 @@ route('PUT', '/profile/password', ({ body }) => {
   return { ok: true };
 });
 
+route('PUT', '/profile/avatar', ({ body }) => {
+  requireAuth();
+  // The server takes a storage key, never image bytes — and it is the server
+  // that turns the key into a URL. Mirrored here so the mock cannot teach the
+  // app to expect a URL it invented itself.
+  mockUser = {
+    ...mockUser,
+    avatarUrl: body.avatarUrl ? `https://example.invalid/${String(body.avatarUrl)}` : null,
+  };
+  return mockUser;
+});
+
 // ---- devices --------------------------------------------------------------
 
 route('GET', '/devices', (): AuthorizedDevice[] => {
@@ -801,6 +810,492 @@ function base64url(input: string): string {
   return out;
 }
 
+// ---- course parts ---------------------------------------------------------
+
+/*
+ * A small but load-bearing detail: `mockParts` starts with nothing owned, and
+ * the only way to own one is `POST /courses/:id/redeem`. There is deliberately
+ * no mock purchase route and no wallet debit anywhere in this section, because
+ * there is none in the backend either — a mock that let credit buy a course
+ * part would teach the wrong model to anyone developing against it.
+ */
+const ownedPartIds = new Set<string>();
+
+const mockParts = [
+  {
+    id: 'part-1',
+    title: 'Part 1 — Before mid',
+    titleAr: 'الجزء الأول — قبل الميدترم',
+    description: null,
+    sortOrder: 1,
+    price: 150,
+    pricePercent: 60,
+    currency: 'EGP',
+    sectionCount: 2,
+  },
+  {
+    id: 'part-2',
+    title: 'Part 2 — After mid',
+    titleAr: 'الجزء الثاني — بعد الميدترم',
+    description: null,
+    sortOrder: 2,
+    price: 100,
+    pricePercent: 40,
+    currency: 'EGP',
+    sectionCount: 1,
+  },
+];
+
+route('GET', '/courses/:id/parts', ({ params }) => {
+  requireAuth();
+  const courseId = params.id!;
+
+  return {
+    courseId,
+    hasParts: true,
+    coursePrice: 250,
+    ownsAllParts: mockParts.every((p) => ownedPartIds.has(p.id)),
+    parts: mockParts.map((part) => {
+      const owned = ownedPartIds.has(part.id);
+      return {
+        ...part,
+        owned,
+        ownedSince: owned ? new Date().toISOString() : null,
+        ownedVia: owned ? 'PART_PURCHASE' : null,
+        purchasable: !owned,
+        sections: Array.from({ length: part.sectionCount }, (_v, i) => ({
+          id: `${part.id}-sec-${i + 1}`,
+          title: `Section ${i + 1}`,
+          titleAr: `القسم ${i + 1}`,
+          sortOrder: i + 1,
+          locked: !owned,
+        })),
+      };
+    }),
+  };
+});
+
+route('GET', '/me/part-purchases', ({ query }) => {
+  requireAuth();
+  const rows = mockParts
+    .filter((p) => ownedPartIds.has(p.id))
+    .map((p) => ({
+      id: `cpp-${p.id}`,
+      courseId: 'course-1',
+      courseTitle: 'Human Anatomy',
+      partId: p.id,
+      partTitle: p.title,
+      valueAtAcquisition: p.price,
+      currency: p.currency,
+      acquiredVia: 'CODE' as const,
+      acquiredAt: new Date().toISOString(),
+    }));
+  return paginate(rows, Number(query.page ?? 1), Number(query.pageSize ?? 20));
+});
+
+route('POST', '/codes/validate', ({ body }) => {
+  requireAuth();
+  const code = String(body.code ?? '').toUpperCase();
+  if (!code.startsWith('PART') && !code.startsWith('VALID')) {
+    fail('INVALID_CODE', 400, 'Unknown code');
+  }
+  return {
+    valid: true,
+    course: { id: 'course-1', title: 'Human Anatomy' },
+    targetType: code.startsWith('PART') ? 'PART' : 'COURSE',
+    section: null,
+    teacher: null,
+    remainingRedemptions: 1,
+    accessDurationType: 'LIFETIME',
+    accessDurationDays: null,
+    expiresAt: null,
+  };
+});
+
+// ---- wallet ---------------------------------------------------------------
+
+let mockBalance = 200;
+const mockTransactions: Record<string, unknown>[] = [];
+
+route('GET', '/wallet', () => {
+  requireAuth();
+  return {
+    balance: mockBalance,
+    currency: 'EGP',
+    totalRecharged: 200,
+    totalSpent: 200 - mockBalance,
+    transactionCount: mockTransactions.length,
+    updatedAt: new Date().toISOString(),
+  };
+});
+
+route('GET', '/wallet/transactions', ({ query }) => {
+  requireAuth();
+  return paginate(mockTransactions, Number(query.page ?? 1), Number(query.pageSize ?? 20));
+});
+
+route('POST', '/wallet/redeem', ({ body }) => {
+  requireAuth();
+  const code = String(body.code ?? '').toUpperCase();
+  if (usedCodes.has(code)) fail('CODE_ALREADY_USED', 409, 'Already redeemed');
+  if (!code.startsWith('TOPUP')) fail('INVALID_CODE', 400, 'Unknown card');
+
+  usedCodes.add(code);
+  const credited = 100;
+  const before = mockBalance;
+  mockBalance += credited;
+
+  mockTransactions.unshift({
+    id: `wtx-${mockTransactions.length + 1}`,
+    type: 'RECHARGE',
+    direction: 'CREDIT',
+    source: 'CODE',
+    amount: credited,
+    currency: 'EGP',
+    balanceBefore: before,
+    balanceAfter: mockBalance,
+    referenceType: null,
+    referenceId: null,
+    note: null,
+    createdAt: new Date().toISOString(),
+  });
+
+  return {
+    codeId: 'rc-1',
+    code,
+    credited,
+    balance: mockBalance,
+    currency: 'EGP',
+    transactionId: `wtx-${mockTransactions.length}`,
+  };
+});
+
+// ---- library --------------------------------------------------------------
+
+const ownedLibraryParts = new Set<string>(['lib-part-preview']);
+
+const libraryParts = [
+  {
+    id: 'lib-part-preview',
+    title: 'Sample chapter',
+    titleAr: 'فصل تجريبي',
+    description: null,
+    sortOrder: 1,
+    price: 0,
+    currency: 'EGP',
+    pageCount: 4,
+    mimeType: 'application/pdf',
+    isPreview: true,
+  },
+  {
+    id: 'lib-part-1',
+    title: 'Chapter 1 — Foundations',
+    titleAr: 'الفصل الأول — الأساسيات',
+    description: null,
+    sortOrder: 2,
+    price: 60,
+    currency: 'EGP',
+    pageCount: 42,
+    mimeType: 'application/pdf',
+    isPreview: false,
+  },
+];
+
+function libraryPart(id: string) {
+  const part = libraryParts.find((p) => p.id === id);
+  if (!part) fail('NOT_FOUND', 404, 'Library part not found');
+  return part!;
+}
+
+route('GET', '/library/materials', ({ query }) => {
+  requireAuth();
+  const rows = [
+    {
+      id: 'lib-1',
+      title: 'Physics Revision Papers',
+      titleAr: 'ملازم مراجعة الفيزياء',
+      description: 'Past papers with worked answers.',
+      coverUrl: null,
+      subject: { id: 'subj-1', name: 'Physics' },
+      partCount: libraryParts.length,
+      packageCount: 1,
+      priceFrom: 0,
+      priceTotal: 60,
+    },
+  ].filter((m) =>
+    query.q ? m.title.toLowerCase().includes(String(query.q).toLowerCase()) : true
+  );
+
+  return paginate(rows, Number(query.page ?? 1), Number(query.pageSize ?? 20));
+});
+
+route('GET', '/library/materials/:id', ({ params }) => {
+  requireAuth();
+  return {
+    id: params.id!,
+    title: 'Physics Revision Papers',
+    titleAr: 'ملازم مراجعة الفيزياء',
+    description: 'Past papers with worked answers.',
+    coverUrl: null,
+    subject: { id: 'subj-1', name: 'Physics' },
+    ownsAllParts: libraryParts.every((p) => ownedLibraryParts.has(p.id)),
+    parts: libraryParts.map((part) => ({
+      ...part,
+      owned: part.isPreview || ownedLibraryParts.has(part.id),
+      ownedSince: ownedLibraryParts.has(part.id) ? new Date().toISOString() : null,
+      purchasable: !ownedLibraryParts.has(part.id) && !part.isPreview && part.price > 0,
+    })),
+    packages: [
+      {
+        id: 'lib-pkg-1',
+        title: 'Complete set',
+        titleAr: 'المجموعة الكاملة',
+        description: null,
+        price: 50,
+        currency: 'EGP',
+        partCount: libraryParts.length,
+        partIds: libraryParts.map((p) => p.id),
+        partsAlreadyOwned: libraryParts.filter((p) => ownedLibraryParts.has(p.id)).length,
+        fullyOwned: libraryParts.every((p) => ownedLibraryParts.has(p.id)),
+      },
+    ],
+  };
+});
+
+route('GET', '/library/me', ({ query }) => {
+  requireAuth();
+  const rows = libraryParts
+    .filter((p) => ownedLibraryParts.has(p.id))
+    .map((p) => ({
+      entitlementId: `ent-${p.id}`,
+      partId: p.id,
+      title: p.title,
+      titleAr: p.titleAr,
+      materialId: 'lib-1',
+      materialTitle: 'Physics Revision Papers',
+      pageCount: p.pageCount,
+      mimeType: p.mimeType,
+      source: 'PURCHASE',
+      grantedAt: new Date().toISOString(),
+      available: true,
+    }));
+  return paginate(rows, Number(query.page ?? 1), Number(query.pageSize ?? 20));
+});
+
+route('GET', '/library/me/purchases', ({ query }) =>
+  paginate([], Number(query.page ?? 1), Number(query.pageSize ?? 20))
+);
+
+/** The price is read here, never taken from the request — same as the server. */
+function libraryTarget(kind: string, targetId: string) {
+  if (kind === 'PACKAGE') {
+    return {
+      title: 'Complete set',
+      materialTitle: 'Physics Revision Papers',
+      price: 50,
+      partIds: libraryParts.map((p) => p.id),
+    };
+  }
+  const part = libraryPart(targetId);
+  return {
+    title: part.title,
+    materialTitle: 'Physics Revision Papers',
+    price: part.price,
+    partIds: [part.id],
+  };
+}
+
+route('POST', '/library/quote', ({ body }) => {
+  requireAuth();
+  const kind = String(body.kind ?? 'PART');
+  const target = libraryTarget(kind, String(body.targetId ?? ''));
+  const owned = target.partIds.filter((id) => ownedLibraryParts.has(id));
+
+  return {
+    kind,
+    targetId: body.targetId,
+    title: target.title,
+    materialTitle: target.materialTitle,
+    price: target.price,
+    currency: 'EGP',
+    balance: mockBalance,
+    sufficientCredit: mockBalance >= target.price,
+    shortfall: Math.max(0, target.price - mockBalance),
+    partCount: target.partIds.length,
+    partsAlreadyOwned: owned.length,
+    fullyOwned: owned.length === target.partIds.length,
+    purchasable: target.price > 0,
+  };
+});
+
+route('POST', '/library/purchase', ({ body }) => {
+  requireAuth();
+  const kind = String(body.kind ?? 'PART');
+  const target = libraryTarget(kind, String(body.targetId ?? ''));
+
+  if (mockBalance < target.price) {
+    fail('INSUFFICIENT_CREDIT', 402, 'Not enough credit');
+  }
+
+  const toGrant = target.partIds.filter((id) => !ownedLibraryParts.has(id));
+  const before = mockBalance;
+  mockBalance -= target.price;
+  toGrant.forEach((id) => ownedLibraryParts.add(id));
+
+  mockTransactions.unshift({
+    id: `wtx-${mockTransactions.length + 1}`,
+    type: 'PURCHASE',
+    direction: 'DEBIT',
+    source: 'LIBRARY',
+    amount: target.price,
+    currency: 'EGP',
+    balanceBefore: before,
+    balanceAfter: mockBalance,
+    referenceType: 'library_purchase',
+    referenceId: 'lp-1',
+    note: target.title,
+    createdAt: new Date().toISOString(),
+  });
+
+  return {
+    purchaseId: 'lp-1',
+    kind,
+    targetId: body.targetId,
+    title: target.title,
+    pricePaid: target.price,
+    currency: 'EGP',
+    balanceAfter: mockBalance,
+    partsGranted: toGrant.length,
+    partsAlreadyOwned: target.partIds.length - toGrant.length,
+    purchasedAt: new Date().toISOString(),
+    alreadyPurchased: false,
+  };
+});
+
+route('POST', '/library/parts/:partId/open', ({ params }) => {
+  requireAuth();
+  const part = libraryPart(params.partId!);
+  if (!part.isPreview && !ownedLibraryParts.has(part.id)) {
+    fail('PAYMENT_REQUIRED', 402, 'Not purchased');
+  }
+
+  return {
+    libraryPartId: part.id,
+    title: part.title,
+    url: 'https://example.invalid/mock-document.pdf?exp=1&sig=mock',
+    mimeType: part.mimeType,
+    pageCount: part.pageCount,
+    expiresAt: new Date(Date.now() + 120_000).toISOString(),
+    watermark: {
+      primary: mockUser.fullName,
+      secondary: `ID: ${mockUser.id.slice(-8).toUpperCase()}`,
+      sessionTag: 'mocksessiontag01',
+      opacity: 0.12,
+      moveIntervalSeconds: 20,
+    },
+  };
+});
+
+// ---- support --------------------------------------------------------------
+
+interface MockTicket {
+  id: string;
+  reference: string;
+  subject: string;
+  category: string;
+  status: string;
+  priority: string;
+  courseId: string | null;
+  lastMessageAt: string;
+  createdAt: string;
+  messages: {
+    id: string;
+    body: string;
+    isInternal: boolean;
+    authorRole: string;
+    author: { id: string; fullName: string; role: string };
+    createdAt: string;
+  }[];
+}
+
+const mockTickets: MockTicket[] = [];
+
+route('GET', '/support/tickets', ({ query }) => {
+  requireAuth();
+  return paginate(
+    mockTickets.map(({ messages: _messages, courseId: _courseId, ...rest }) => rest),
+    Number(query.page ?? 1),
+    Number(query.pageSize ?? 20)
+  );
+});
+
+route('GET', '/support/tickets/:id', ({ params }) => {
+  requireAuth();
+  const ticket = mockTickets.find((t) => t.id === params.id);
+  if (!ticket) fail('NOT_FOUND', 404, 'Ticket not found');
+  return ticket;
+});
+
+route('POST', '/support/tickets', ({ body }) => {
+  requireAuth();
+  const n = mockTickets.length + 1;
+  const now = new Date().toISOString();
+  const ticket = {
+    id: `tkt-${n}`,
+    reference: `SUP-${String(n).padStart(4, '0')}`,
+    subject: String(body.subject ?? ''),
+    category: String(body.category ?? 'GENERAL'),
+    status: 'OPEN',
+    priority: 'NORMAL',
+    courseId: (body.courseId as string) ?? null,
+    lastMessageAt: now,
+    createdAt: now,
+    messages: [
+      {
+        id: `msg-${n}-1`,
+        body: String(body.body ?? ''),
+        isInternal: false,
+        authorRole: 'STUDENT',
+        author: { id: mockUser.id, fullName: mockUser.fullName, role: 'STUDENT' },
+        createdAt: now,
+      },
+    ],
+  };
+  mockTickets.unshift(ticket);
+  return ticket;
+});
+
+route('POST', '/support/tickets/:id/messages', ({ params, body }) => {
+  requireAuth();
+  const ticket = mockTickets.find((t) => t.id === params.id);
+  if (!ticket) fail('NOT_FOUND', 404, 'Ticket not found');
+  if (ticket!.status === 'CLOSED') fail('INVALID_STATE', 409, 'Ticket is closed');
+
+  const now = new Date().toISOString();
+  ticket!.messages.push({
+    id: `msg-${ticket!.messages.length + 1}`,
+    body: String(body.body ?? ''),
+    isInternal: false,
+    authorRole: 'STUDENT',
+    author: { id: mockUser.id, fullName: mockUser.fullName, role: 'STUDENT' },
+    createdAt: now,
+  });
+  ticket!.lastMessageAt = now;
+  return ticket;
+});
+
+// ---- storage --------------------------------------------------------------
+
+route('POST', '/storage/uploads/avatar', ({ body }) => {
+  requireAuth();
+  return {
+    uploadUrl: 'https://example.invalid/mock-upload',
+    objectKey: `avatars/${mockUser.id}/mock.jpg`,
+    expiresIn: 900,
+    requiredHeaders: { 'Content-Type': String(body.contentType ?? 'image/jpeg') },
+  };
+});
+
 export async function mockRequest<T>(
   config: AxiosRequestConfig & { url: string },
   _options: RequestOptions = {}
@@ -850,4 +1345,13 @@ export function __resetMockState() {
   usedCodes.clear();
   enrollments.clear();
   courses.forEach((c) => enrollments.set(c.id, c.access.state));
+
+  // Parts, credit, library and tickets are mutable too; leaving them behind
+  // would let one test's purchase decide another test's starting balance.
+  ownedPartIds.clear();
+  mockBalance = 200;
+  mockTransactions.length = 0;
+  ownedLibraryParts.clear();
+  ownedLibraryParts.add('lib-part-preview');
+  mockTickets.length = 0;
 }

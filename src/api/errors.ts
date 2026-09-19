@@ -40,6 +40,8 @@ const RETRYABLE = new Set<ApiErrorCode>([
   'SERVER_ERROR',
   'RATE_LIMITED',
   'PLAYBACK_TICKET_EXPIRED',
+  // Object storage being briefly unreachable says nothing about the request.
+  'STORAGE_UNAVAILABLE',
 ]);
 
 /** Errors that must terminate the session and bounce to login. */
@@ -70,6 +72,22 @@ const STATUS_FALLBACK: Record<number, ApiErrorCode> = {
   503: 'MAINTENANCE',
 };
 
+/**
+ * Codes the backend can actually send.
+ *
+ * Anything absent here is silently downgraded to the status fallback below,
+ * which is how a precise refusal turns into a vague one. Two cases made that
+ * concrete and are the reason the wallet and conflict codes were added:
+ *
+ *  - `INSUFFICIENT_CREDIT` is HTTP 402, so it fell through to
+ *    `PAYMENT_REQUIRED` — a course-purchase code. In a Library context that
+ *    would have invited the student toward a checkout that does not exist,
+ *    when the correct answer is "top up your credit".
+ *  - `ALREADY_ENROLLED` is HTTP 409 and became `VALIDATION_ERROR`, reading as
+ *    though the code they typed were malformed rather than already spent.
+ *
+ * Keep this in step with `ErrorCode` in the backend.
+ */
 const KNOWN_CODES = new Set<string>([
   'NETWORK_OFFLINE','NETWORK_TIMEOUT','SERVER_ERROR','UNKNOWN','VALIDATION_ERROR',
   'RATE_LIMITED','MAINTENANCE','APP_UPDATE_REQUIRED','INVALID_CREDENTIALS',
@@ -78,8 +96,10 @@ const KNOWN_CODES = new Set<string>([
   'DEVICE_CHANGE_PENDING','DEVICE_INTEGRITY_FAILED','FORBIDDEN','NOT_FOUND',
   'COURSE_NOT_AVAILABLE','COURSE_ARCHIVED','ACCESS_EXPIRED','NOT_ENROLLED',
   'ENROLLMENT_PENDING','PAYMENT_REQUIRED','PAYMENT_FAILED','INVALID_CODE',
-  'CODE_ALREADY_USED','PLAYBACK_DENIED','PLAYBACK_TICKET_EXPIRED',
+  'CODE_ALREADY_USED','ALREADY_ENROLLED','PLAYBACK_DENIED','PLAYBACK_TICKET_EXPIRED',
   'CONCURRENT_STREAM_LIMIT','VIDEO_NOT_READY','VIDEO_UNAVAILABLE','CAPTURE_DETECTED',
+  'INSUFFICIENT_CREDIT','WALLET_LOCKED','AMOUNT_BELOW_MINIMUM','CODE_NOT_RECHARGEABLE',
+  'CONFLICT','INVALID_STATE','STORAGE_UNAVAILABLE','UPLOAD_FAILED','INSUFFICIENT_ROLE',
 ]);
 
 export function toApiError(status: number, body: unknown): ApiError {
