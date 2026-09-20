@@ -20,7 +20,8 @@ export default function AboutScreen() {
 
       <Screen hideNetworkBanner edges={[]} contentClassName="pt-8">
         <View className="mb-8 items-center">
-          <BrandMark size={120} />
+          {/* The name is printed underneath, so the wordmark would repeat it. */}
+          <BrandMark variant="mark" width={96} />
           <Text variant="h3" className="mt-4">
             {t('common.appName')}
           </Text>

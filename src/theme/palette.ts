@@ -10,17 +10,20 @@
  * __tests__/theme.test.ts asserts both define the same token set.
  *
  * ---------------------------------------------------------------------------
- * Visual identity: "Student Center" badge
+ * Visual identity: "Student Center" mark
  * ---------------------------------------------------------------------------
- * The brand mark is a hard-edged black badge with an orange plate and heavy
- * black outlines. Two rules follow from it and are encoded here:
+ * The mark is a red cog-and-C on a flat amber plate — two colours, no
+ * gradients, no outline. Both are sampled from the artwork: the plate is
+ * #FBB150 and the ink is #D52027. Three rules follow and are encoded here:
  *
- *  1. Orange is a SURFACE, not a text colour. The mark's orange (#FF914C)
- *     paired with white is only ~2.3:1 — it fails WCAG AA outright. What
- *     actually gives the badge its punch is black ink on orange (~8:1). So
- *     `highlight` / `highlightFg` is the orange plate, and the darker
- *     `primary` stays the colour that carries white text on buttons.
- *  2. Depth comes from outline weight, not blur. `outline` is the near-black
+ *  1. Orange is a SURFACE, not a text colour. The plate against white is only
+ *     1.8:1 — it fails WCAG AA outright. What gives the mark its punch is dark
+ *     ink on amber (10.1:1). So `highlight` / `highlightFg` is the plate, and
+ *     the much darker `primary` is what carries white text on buttons.
+ *  2. The plate is amber (H34), not the coral orange it replaced. Every step
+ *     of the brand ramp holds that hue, so a lighter or darker brand surface
+ *     still reads as the same colour rather than drifting toward red.
+ *  3. Depth comes from outline weight, not blur. `outline` is the near-black
  *     rule used on orange/light fills; see `elevation` in tokens.ts for the
  *     matching hard, low-blur shadows.
  */
@@ -69,16 +72,17 @@ export const lightPalette: Palette = {
   foreground: '#121114',
   muted: '#63615C',
   subtle: '#8E8B84',
-  // Deliberately a shade darker than the mark's orange: white-on-orange only
-  // clears WCAG AA (4.5:1) from about #C94A0A down. See __tests__/theme.test.ts.
-  primary: '#C94A0A',
+  // Deliberately far darker than the plate: at this hue, white-on-amber only
+  // clears WCAG AA (4.5:1) from about #AD6507 down. See __tests__/theme.test.ts.
+  primary: '#A85F06',
   primaryFg: '#FFFFFF',
-  primarySoft: '#FFF1E4',
-  highlight: '#FF914C',
+  primarySoft: '#FFF5E8',
+  highlight: '#FBB150',
   highlightFg: '#14131A',
-  accent: '#C01F1F',
+  // The mark's ink, unmodified — it clears AA with white on its own.
+  accent: '#D52027',
   accentFg: '#FFFFFF',
-  accentSoft: '#FFEFEF',
+  accentSoft: '#FFEDEE',
   success: '#15803D',
   warning: '#B45309',
   info: '#1D4ED8',
@@ -100,15 +104,16 @@ export const darkPalette: Palette = {
   foreground: '#F7F6F4',
   muted: '#ABA8B0',
   subtle: '#7E7B86',
-  // Lifted from the light-mode primary to hold contrast on dark surfaces.
-  primary: '#FF9147',
-  primaryFg: '#1A0D03',
-  primarySoft: '#2E1C10',
-  highlight: '#FF914C',
+  // On a near-black ground the plate itself clears 9.9:1, so dark mode can use
+  // the brand colour undiluted where light mode has to darken it.
+  primary: '#FBB150',
+  primaryFg: '#2A1206',
+  primarySoft: '#3A2408',
+  highlight: '#FBB150',
   highlightFg: '#14131A',
-  accent: '#F65A5A',
-  accentFg: '#200808',
-  accentSoft: '#341818',
+  accent: '#F44E54',
+  accentFg: '#2B0709',
+  accentSoft: '#3A1416',
   success: '#4ADE80',
   warning: '#FBBF24',
   info: '#7DAFFF',
@@ -124,12 +129,15 @@ export const palettes: Record<ThemeName, Palette> = {
 
 /** Brand colors that never change between themes. */
 export const brand = {
-  /** The plate colour lifted from the brand mark. */
-  orange: '#FF914C',
-  orangeDeep: '#F26A1B',
-  orangeDark: '#C94A0A',
-  red: '#E0322F',
-  redDark: '#C01F1F',
+  /** The plate colour, sampled from the mark's ground. */
+  orange: '#FBB150',
+  orangeDeep: '#F99B1F',
+  orangeDark: '#A85F06',
+  /** The ink colour, sampled from the cog and wordmark. */
+  red: '#D52027',
+  redDark: '#AF1D22',
+  /** Readable as *text* on the plate (6.5:1), where `red` is only 2.8:1. */
+  redDeep: '#700F13',
   white: '#FFFFFF',
   black: '#14131A',
 } as const;

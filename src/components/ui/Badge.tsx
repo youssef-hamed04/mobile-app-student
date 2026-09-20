@@ -9,6 +9,7 @@ import { Text } from './Text';
 export type BadgeTone =
   | 'neutral'
   | 'highlight'
+  | 'onPlate'
   | 'primary'
   | 'success'
   | 'warning'
@@ -20,6 +21,10 @@ const TONES: Record<BadgeTone, { bg: string; fg: string }> = {
   // The brand mark's plate: orange fill, black ink, hard rule. Reads as a
   // stamp rather than a tint, which is what makes it carry across a busy card.
   highlight: { bg: 'bg-highlight border border-outline', fg: 'text-highlight-fg' },
+  // For a badge sitting *on* the plate, where `highlight` would be orange on
+  // orange. The surface flips with the theme and the ink follows it, so this
+  // stays legible even though the plate underneath never changes.
+  onPlate: { bg: 'bg-surface border-2 border-outline', fg: 'text-foreground' },
   primary: { bg: 'bg-primary-soft border border-primary/30', fg: 'text-primary' },
   success: { bg: 'bg-success/12 border border-success/30', fg: 'text-success' },
   warning: { bg: 'bg-warning/12 border border-warning/30', fg: 'text-warning' },

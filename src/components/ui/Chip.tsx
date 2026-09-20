@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
+import { brand } from '@/theme/palette';
 import { cn } from '@/utils/cn';
 
 import { Icon, type IconName } from './Icon';
@@ -15,6 +16,12 @@ export interface ChipProps {
   onRemove?: () => void;
   removeAccessibilityLabel?: string;
   disabled?: boolean;
+  /**
+   * On the brand plate. A white pill is 1.8:1 there and the selected cream is
+   * worse, so selection is carried by the mark's red fill instead of a tint,
+   * and both states get the plate's hard rule.
+   */
+  onPlate?: boolean;
 }
 
 export function Chip({
@@ -25,6 +32,7 @@ export function Chip({
   onRemove,
   removeAccessibilityLabel,
   disabled,
+  onPlate = false,
 }: ChipProps) {
   const { colors } = useTheme();
 
@@ -38,9 +46,13 @@ export function Chip({
       hitSlop={6}
       className={cn(
         'h-9 flex-row items-center gap-1.5 rounded-full border px-3',
-        selected
-          ? 'border-primary bg-primary-soft'
-          : 'border-border bg-surface active:bg-surface-alt',
+        onPlate
+          ? selected
+            ? 'border-2 border-outline bg-danger-500'
+            : 'border-2 border-outline bg-surface active:bg-surface-alt'
+          : selected
+            ? 'border-primary bg-primary-soft'
+            : 'border-border bg-surface active:bg-surface-alt',
         disabled && 'opacity-50'
       )}
     >
@@ -48,11 +60,22 @@ export function Chip({
         <Icon
           name={icon}
           size={14}
-          color={selected ? colors.primary : colors.muted}
+          color={
+            onPlate && selected
+              ? brand.white
+              : selected
+                ? colors.primary
+                : colors.muted
+          }
         />
       ) : null}
 
-      <Text variant="caption" tone={selected ? 'primary' : 'default'} numberOfLines={1}>
+      <Text
+        variant="caption"
+        tone={onPlate && selected ? undefined : selected ? 'primary' : 'default'}
+        className={onPlate && selected ? 'text-ink-0' : undefined}
+        numberOfLines={1}
+      >
         {label}
       </Text>
 

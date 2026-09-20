@@ -12,7 +12,12 @@ export interface ProgressBarProps {
   percent: number;
   size?: 'xs' | 'sm' | 'md';
   showLabel?: boolean;
-  tone?: 'primary' | 'success';
+  /**
+   * `onPlate` is for the brand-plate screens: the usual cream track is 1.7:1
+   * on orange and the amber fill 2.8:1, so both are restated in the plate's
+   * own ink instead of being left invisible.
+   */
+  tone?: 'primary' | 'success' | 'onPlate';
   className?: string;
 }
 
@@ -27,7 +32,13 @@ export function ProgressBar({
   const value = clamp(Math.round(percent || 0), 0, 100);
 
   const height = size === 'xs' ? 4 : size === 'sm' ? 6 : 10;
-  const fill = tone === 'success' ? 'bg-success' : 'bg-primary';
+  const fill =
+    tone === 'success'
+      ? 'bg-success'
+      : tone === 'onPlate'
+        ? 'bg-outline'
+        : 'bg-primary';
+  const track = tone === 'onPlate' ? 'bg-outline/25' : 'bg-surface-alt';
 
   return (
     <View className={cn('gap-1', className)}>
@@ -36,7 +47,7 @@ export function ProgressBar({
         accessibilityRole="progressbar"
         accessibilityLabel={t('a11y.progressBar', { percent: value })}
         accessibilityValue={{ min: 0, max: 100, now: value }}
-        className="w-full overflow-hidden rounded-full bg-surface-alt"
+        className={cn('w-full overflow-hidden rounded-full', track)}
         style={{ height }}
       >
         {/* Width percentage is direction-agnostic: the track fills from the

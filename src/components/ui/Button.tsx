@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 
 import { useTheme } from '@/hooks/use-theme';
+import { brand } from '@/theme/palette';
 import { MIN_TOUCH_TARGET } from '@/theme/tokens';
 import { cn } from '@/utils/cn';
 
@@ -17,6 +18,13 @@ export type ButtonVariant =
   | 'primary'
   /** The brand mark's plate: orange fill, black ink, heavy rule. */
   | 'highlight'
+  /**
+   * The inverse pair, for a button sitting *on* the plate: the mark's red
+   * fill with a white label. Fixed in both themes, because the surface it is
+   * made for is fixed too. The rule is not decoration — red on orange is only
+   * 2.8:1, so without it the button would have no legible edge.
+   */
+  | 'onPlate'
   | 'secondary'
   | 'outline'
   | 'ghost'
@@ -28,6 +36,7 @@ export type ButtonSize = 'sm' | 'md' | 'lg';
 const CONTAINER: Record<ButtonVariant, string> = {
   primary: 'bg-primary active:opacity-85',
   highlight: 'bg-highlight border-2 border-outline active:opacity-85',
+  onPlate: 'bg-danger-500 border-2 border-outline active:opacity-85',
   secondary: 'bg-surface-alt border border-border active:bg-surface-raised',
   outline: 'border-2 border-primary bg-transparent active:bg-primary-soft',
   ghost: 'bg-transparent active:bg-surface-alt',
@@ -38,6 +47,7 @@ const CONTAINER: Record<ButtonVariant, string> = {
 const LABEL: Record<ButtonVariant, string> = {
   primary: 'text-primary-fg',
   highlight: 'text-highlight-fg',
+  onPlate: 'text-ink-0',
   secondary: 'text-foreground',
   outline: 'text-primary',
   ghost: 'text-foreground',
@@ -106,7 +116,9 @@ export const Button = React.forwardRef<View, ButtonProps>(function Button(
         ? colors.highlightFg
         : variant === 'danger'
           ? colors.accentFg
-          : colors.primary;
+          : variant === 'onPlate'
+            ? brand.white
+            : colors.primary;
 
   const iconColor =
     variant === 'primary'
@@ -115,9 +127,11 @@ export const Button = React.forwardRef<View, ButtonProps>(function Button(
         ? colors.highlightFg
         : variant === 'danger'
           ? colors.accentFg
-          : variant === 'outline' || variant === 'link'
-            ? colors.primary
-            : colors.foreground;
+          : variant === 'onPlate'
+            ? brand.white
+            : variant === 'outline' || variant === 'link'
+              ? colors.primary
+              : colors.foreground;
 
   return (
     <Pressable

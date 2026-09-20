@@ -64,9 +64,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     versionCode: 1,
     adaptiveIcon: {
       foregroundImage: './assets/images/adaptive-icon.png',
-      // White, not the theme's dark background: the mark is black line art
-      // and would vanish against it.
-      backgroundColor: '#FFFFFF',
+      // The mark's own plate. The foreground is the red cog alone, so the
+      // launcher composites exactly the logo as it is drawn.
+      backgroundColor: '#FBB150',
     },
     permissions: [
       'android.permission.INTERNET',
@@ -84,9 +84,16 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-splash-screen',
       {
-        image: './assets/images/splash.png',
+        // The cog alone, not the lockup. Android 12+ draws this inside a
+        // circular mask, which crops a 1.9:1 wordmark at both ends; the cog is
+        // square and survives it — and it is the same shape as the launcher
+        // icon the student just tapped.
+        image: './assets/images/logo-mark.png',
+        // Default is 100dp, which is what made the mark look lost on the
+        // plate. 192dp is the largest Android guarantees inside the mask.
+        imageWidth: 192,
         resizeMode: 'contain',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#FBB150',
       },
     ],
     'expo-secure-store',
@@ -97,7 +104,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-notifications',
       {
         icon: './assets/images/notification-icon.png',
-        color: '#FF914C',
+        // Android keeps only this icon's alpha and tints the silhouette. The
+        // plate would sit at 1.8:1 on a white notification shade, so the tint
+        // is the mark's ink instead.
+        color: '#D52027',
       },
     ],
     [

@@ -32,6 +32,13 @@ export interface ScreenProps {
   scrollProps?: Omit<ScrollViewProps, 'children'>;
   /** Sticky footer (primary action bars). */
   footer?: React.ReactNode;
+  /**
+   * Replaces the themed ground with a fixed one. For brand surfaces such as
+   * the auth screens, which stay on the mark's plate in both themes. Passed
+   * instead of `bg-*` in `className` so there is no conflicting utility to
+   * resolve — the ground is chosen once, here.
+   */
+  background?: string;
 }
 
 /**
@@ -55,6 +62,7 @@ export function Screen({
   keyboardAvoiding = false,
   scrollProps,
   footer,
+  background,
 }: ScreenProps) {
   const { colors } = useTheme();
 
@@ -100,7 +108,10 @@ export function Screen({
   );
 
   return (
-    <SafeAreaView edges={edges} className={cn('flex-1 bg-background', className)}>
+    <SafeAreaView
+      edges={edges}
+      className={cn('flex-1', background ?? 'bg-background', className)}
+    >
       {hideNetworkBanner ? null : <NetworkBanner />}
       {wrapped}
       {footer ? (

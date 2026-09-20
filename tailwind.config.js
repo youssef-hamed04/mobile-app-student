@@ -16,30 +16,33 @@ module.exports = {
     extend: {
       colors: {
         // ---- Brand (fixed, identical in both themes) --------------------
+        // Both ramps hold a single hue and walk lightness, so a step is always
+        // "same colour, more or less of it". The hues are sampled straight off
+        // the logo artwork: the plate at H34, the ink at H358.
         brand: {
-          50: '#FFF1E4',
-          100: '#FFE1C7',
-          200: '#FFC79B',
-          300: '#FFA96C',
-          400: '#FF914C', // the mark's orange plate — ink it with black
-          500: '#F97316',
-          600: '#E25C0B',
-          650: '#C94A0A', // AA-safe with white text
-          700: '#A93E08',
-          800: '#823009',
-          900: '#59210A',
+          50: '#FFF5E8',
+          100: '#FFE9CC',
+          200: '#FED39A',
+          300: '#FCC173',
+          400: '#FBB150', // the mark's orange plate — ink it dark, never white
+          500: '#F99B1F',
+          600: '#DD8108',
+          650: '#A85F06', // AA-safe with white text
+          700: '#935606',
+          800: '#734407',
+          900: '#4E3009',
         },
         danger: {
-          50: '#FFF1F1',
-          100: '#FFDCDC',
-          200: '#FFBABA',
-          300: '#FF8D8D',
-          400: '#F65A5A',
-          500: '#E0322F', // brand red
-          600: '#C01F1F',
-          700: '#9B1717',
-          800: '#761414',
-          900: '#4E0F0F',
+          50: '#FFEDEE',
+          100: '#FFD6D8',
+          200: '#FFB8BB',
+          300: '#FD9095',
+          400: '#F44E54',
+          500: '#D52027', // the mark's ink
+          600: '#AF1D22',
+          700: '#92161B',
+          800: '#700F13',
+          900: '#4D0A0C',
         },
         ink: {
           0: '#FFFFFF',

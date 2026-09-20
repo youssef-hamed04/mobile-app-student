@@ -54,24 +54,38 @@ export default function LoginScreen() {
   });
 
   return (
-    <Screen keyboardAvoiding edges={['top', 'bottom']} contentClassName="pt-2">
+    /*
+     * The front door sits on the mark's own plate, in both themes — it
+     * continues the splash rather than switching grounds a third of a second
+     * after it. Everything on the plate is inked dark for the same reason the
+     * logo is: nothing light reads on orange.
+     */
+    <Screen
+      keyboardAvoiding
+      edges={['top', 'bottom']}
+      contentClassName="pt-2"
+      background="bg-brand-400"
+    >
       <View className="mb-2 flex-row justify-end">
         <LanguageToggle />
       </View>
 
       <View className="mb-8 items-center">
-        <BrandMark size={112} />
-        <Text variant="h1" className="mt-5 text-center">
+        <BrandMark width={232} onPlate />
+        <Text variant="h1" tone="onHighlight" className="mt-5 text-center">
           {t('auth.welcomeBack')}
         </Text>
-        <Text variant="caption" tone="muted" className="mt-1.5 text-center">
+        <Text
+          variant="caption"
+          className="mt-1.5 text-center text-brand-900"
+        >
           {t('auth.loginSubtitle')}
         </Text>
       </View>
 
       {formError ? (
         <View className="mb-4">
-          <InlineError error={formError} />
+          <InlineError error={formError} onPlate />
         </View>
       ) : null}
 
@@ -92,6 +106,7 @@ export default function LoginScreen() {
               textContentType="telephoneNumber"
               iconStart="phone"
               required
+              onPlate
               forceLTR
               returnKeyType="next"
             />
@@ -112,14 +127,17 @@ export default function LoginScreen() {
                 messageParams(errors.password?.message ?? '')
               )}
               required
+              onPlate
               returnKeyType="go"
               onSubmitEditing={onSubmit}
             />
           )}
         />
 
+        {/* The mark's red is 2.8:1 on the plate, so links take the deep red
+            from the same ramp (6.5:1) rather than the brand value. */}
         <Link href="/(auth)/password-help" asChild>
-          <Text variant="label" tone="primary" className="self-end">
+          <Text variant="label" className="self-end text-danger-800 underline">
             {t('auth.forgotPassword')}
           </Text>
         </Link>
@@ -128,6 +146,7 @@ export default function LoginScreen() {
           label={isSubmitting ? t('auth.loggingIn') : t('auth.login')}
           onPress={onSubmit}
           loading={isSubmitting}
+          variant="onPlate"
           size="lg"
           fullWidth
           className="mt-2"
@@ -135,11 +154,11 @@ export default function LoginScreen() {
       </View>
 
       <View className="mt-8 flex-row items-center justify-center gap-1">
-        <Text variant="caption" tone="muted">
+        <Text variant="caption" className="text-brand-900">
           {t('auth.noAccount')}
         </Text>
         <Link href="/(auth)/register" asChild>
-          <Text variant="label" tone="primary">
+          <Text variant="label" className="text-danger-800 underline">
             {t('auth.createAccount')}
           </Text>
         </Link>

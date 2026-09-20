@@ -177,27 +177,46 @@ export default function RegisterScreen() {
   ) => list?.find((o) => o.value === id)?.label ?? '—';
 
   return (
-    <Screen keyboardAvoiding edges={['top', 'bottom']} padded={false}>
+    /* Same plate as the login screen — the two are one flow, and a user who
+       taps "Create an account" should not feel they left the app. */
+    <Screen
+      keyboardAvoiding
+      edges={['top', 'bottom']}
+      padded={false}
+      background="bg-brand-400"
+    >
       <AppBar
         title={t('auth.createAccount')}
         subtitle={t('auth.stepOf', { current: step + 1, total: TOTAL_STEPS })}
         onBack={goBack}
+        onPlate
       />
 
       <View className="px-4 pt-3">
-        <ProgressBar percent={((step + 1) / TOTAL_STEPS) * 100} size="xs" />
+        <ProgressBar
+          percent={((step + 1) / TOTAL_STEPS) * 100}
+          size="xs"
+          tone="onPlate"
+        />
       </View>
 
-      <Screen padded scroll hideNetworkBanner edges={[]} contentClassName="pt-5">
+      <Screen
+        padded
+        scroll
+        hideNetworkBanner
+        edges={[]}
+        contentClassName="pt-5"
+        background="bg-transparent"
+      >
         {formError ? (
           <View className="mb-4">
-            <InlineError error={formError} />
+            <InlineError error={formError} onPlate />
           </View>
         ) : null}
 
         {step === 0 ? (
           <View className="gap-4">
-            <Text variant="h3">{t('auth.accountInfo')}</Text>
+            <Text variant="h3" tone="onHighlight">{t('auth.accountInfo')}</Text>
 
             <Controller
               control={accountForm.control}
@@ -218,6 +237,7 @@ export default function RegisterScreen() {
                   textContentType="name"
                   iconStart="personOutline"
                   required
+                  onPlate
                 />
               )}
             />
@@ -239,6 +259,7 @@ export default function RegisterScreen() {
                   autoComplete="tel"
                   iconStart="phone"
                   required
+                  onPlate
                   forceLTR
                 />
               )}
@@ -263,10 +284,11 @@ export default function RegisterScreen() {
                     textContentType="newPassword"
                     autoComplete="new-password"
                     required
+                    onPlate
                   />
                 )}
               />
-              <PasswordStrengthMeter value={password} />
+              <PasswordStrengthMeter value={password} onPlate />
             </View>
 
             <Controller
@@ -282,6 +304,7 @@ export default function RegisterScreen() {
                     accountForm.formState.errors.confirmPassword?.message
                   )}
                   required
+                  onPlate
                 />
               )}
             />
@@ -290,7 +313,7 @@ export default function RegisterScreen() {
 
         {step === 1 ? (
           <View className="gap-4">
-            <Text variant="h3">{t('auth.academicInfo')}</Text>
+            <Text variant="h3" tone="onHighlight">{t('auth.academicInfo')}</Text>
 
             <Controller
               control={academicForm.control}
@@ -306,6 +329,7 @@ export default function RegisterScreen() {
                     academicForm.formState.errors.universityId?.message
                   )}
                   required
+                  onPlate
                 />
               )}
             />
@@ -326,6 +350,7 @@ export default function RegisterScreen() {
                     academicForm.formState.errors.facultyId?.message
                   )}
                   required
+                  onPlate
                 />
               )}
             />
@@ -346,6 +371,7 @@ export default function RegisterScreen() {
                     academicForm.formState.errors.departmentId?.message
                   )}
                   required
+                  onPlate
                 />
               )}
             />
@@ -364,6 +390,7 @@ export default function RegisterScreen() {
                     academicForm.formState.errors.academicYearId?.message
                   )}
                   required
+                  onPlate
                 />
               )}
             />
@@ -373,21 +400,23 @@ export default function RegisterScreen() {
               name="gender"
               render={({ field }) => (
                 <View className="gap-2">
-                  <Text variant="label">{t('auth.gender')}</Text>
+                  <Text variant="label" tone="onHighlight">{t('auth.gender')}</Text>
                   <View className="flex-row gap-2">
                     <Chip
                       label={t('auth.male')}
                       selected={field.value === 'MALE'}
                       onPress={() => field.onChange('MALE')}
+                      onPlate
                     />
                     <Chip
                       label={t('auth.female')}
                       selected={field.value === 'FEMALE'}
                       onPress={() => field.onChange('FEMALE')}
+                      onPlate
                     />
                   </View>
                   {academicForm.formState.errors.gender ? (
-                    <Text variant="caption" tone="accent">
+                    <Text variant="caption" className="text-danger-800">
                       {academicErrors.translate(
                         academicForm.formState.errors.gender.message
                       )}
@@ -401,12 +430,12 @@ export default function RegisterScreen() {
 
         {step === 2 ? (
           <View className="gap-4">
-            <Text variant="h3">{t('auth.reviewInfo')}</Text>
-            <Text variant="caption" tone="muted">
+            <Text variant="h3" tone="onHighlight">{t('auth.reviewInfo')}</Text>
+            <Text variant="caption" className="text-brand-900">
               {t('auth.reviewNote')}
             </Text>
 
-            <View className="overflow-hidden rounded-lg border border-border">
+            <View className="overflow-hidden rounded-lg border-2 border-outline">
               <ListItem title={t('auth.fullName')} value={values.fullName} />
               <ListItem title={t('auth.phone')} value={values.phone} />
               <ListItem
@@ -431,7 +460,7 @@ export default function RegisterScreen() {
               />
             </View>
 
-            <Card className="border-primary/30 bg-primary-soft">
+            <Card className="border-2 border-outline bg-primary-soft">
               <CardBody className="flex-row gap-3">
                 <Icon name="device" size={20} color={colors.primary} />
                 <View className="flex-1">
@@ -445,21 +474,31 @@ export default function RegisterScreen() {
               </CardBody>
             </Card>
 
-            <Text variant="caption" tone="subtle">
+            <Text variant="caption" className="text-brand-900">
               {t('auth.termsNotice')}
             </Text>
           </View>
         ) : null}
       </Screen>
 
-      <View className="gap-3 border-t border-border bg-surface px-4 pb-6 pt-3">
+      {/* The action bar stays on the plate rather than sitting on a white
+          slab, so the screen reads as one surface the way login does. */}
+      <View className="gap-3 border-t border-outline px-4 pb-6 pt-3">
         {step < 2 ? (
-          <Button label={t('common.next')} onPress={goNext} size="lg" fullWidth iconEnd="chevron-right" />
+          <Button
+            label={t('common.next')}
+            onPress={goNext}
+            variant="onPlate"
+            size="lg"
+            fullWidth
+            iconEnd="chevron-right"
+          />
         ) : (
           <Button
             label={submitting ? t('auth.registering') : t('auth.register')}
             onPress={submit}
             loading={submitting}
+            variant="onPlate"
             size="lg"
             fullWidth
           />
@@ -467,17 +506,21 @@ export default function RegisterScreen() {
 
         {step === 0 ? (
           <View className="flex-row items-center justify-center gap-1">
-            <Text variant="caption" tone="muted">
+            <Text variant="caption" className="text-brand-900">
               {t('auth.haveAccount')}
             </Text>
             <Link href="/(auth)/login" asChild>
-              <Text variant="label" tone="primary">
+              <Text variant="label" className="text-danger-800 underline">
                 {t('auth.login')}
               </Text>
             </Link>
           </View>
         ) : (
-          <Badge label={t('auth.stepOf', { current: step + 1, total: TOTAL_STEPS })} className="self-center" />
+          <Badge
+            label={t('auth.stepOf', { current: step + 1, total: TOTAL_STEPS })}
+            tone="onPlate"
+            className="self-center"
+          />
         )}
       </View>
     </Screen>

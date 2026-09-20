@@ -9,6 +9,7 @@ import {
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/hooks/use-translation';
 import { useLanguageStore } from '@/store/language-store';
+import { brand } from '@/theme/palette';
 import { cn } from '@/utils/cn';
 
 import { Icon, type IconName } from './Icon';
@@ -25,6 +26,12 @@ export interface InputProps extends Omit<TextInputProps, 'className'> {
   iconEndAccessibilityLabel?: string;
   required?: boolean;
   containerClassName?: string;
+  /**
+   * Renders the field for a brand-plate ground (the auth screens). A white
+   * field on the plate is only 1.8:1, so the edge comes from the near-black
+   * rule instead of the usual hairline, and the label is inked to match.
+   */
+  onPlate?: boolean;
   /**
    * Latin-only fields (phone, codes) stay LTR even in an Arabic UI, because
    * a phone number rendered RTL is unreadable.
@@ -54,6 +61,7 @@ export const Input = React.forwardRef<TextInput, InputProps>(function Input(
     iconEndAccessibilityLabel,
     required,
     containerClassName,
+    onPlate = false,
     forceLTR = false,
     editable = true,
     onFocus,
@@ -73,11 +81,18 @@ export const Input = React.forwardRef<TextInput, InputProps>(function Input(
     <View className={cn('gap-1.5', containerClassName)}>
       {label ? (
         <View className="flex-row items-center gap-1">
-          <Text variant="label" tone={error ? 'accent' : 'default'}>
+          <Text
+            variant="label"
+            tone={error ? 'accent' : onPlate ? 'onHighlight' : 'default'}
+          >
             {label}
           </Text>
           {required ? (
-            <Text variant="label" tone="accent" accessibilityElementsHidden>
+            <Text
+              variant="label"
+              tone={onPlate ? 'onHighlight' : 'accent'}
+              accessibilityElementsHidden
+            >
               *
             </Text>
           ) : null}
@@ -87,11 +102,14 @@ export const Input = React.forwardRef<TextInput, InputProps>(function Input(
       <View
         className={cn(
           'min-h-[52px] flex-row items-center gap-2 rounded-md border bg-surface px-3',
+          onPlate && 'border-2',
           error
             ? 'border-accent'
             : focused
               ? 'border-primary'
-              : 'border-border',
+              : onPlate
+                ? 'border-outline'
+                : 'border-border',
           focused && !error && 'border-2',
           !editable && 'bg-surface-alt opacity-70'
         )}
@@ -145,13 +163,22 @@ export const Input = React.forwardRef<TextInput, InputProps>(function Input(
 
       {error ? (
         <View className="flex-row items-center gap-1">
-          <Icon name="error" size={14} color={colors.accent} />
-          <Text variant="caption" tone="accent" className="flex-1">
+          {/* On the plate the usual accent red is 2.8:1 — still red, but a
+              deep enough one to be readable on orange. */}
+          <Icon
+            name="error"
+            size={14}
+            color={onPlate ? brand.redDeep : colors.accent}
+          />
+          <Text
+            variant="caption"
+            className={cn('flex-1', onPlate ? 'text-danger-800' : 'text-accent')}
+          >
             {error}
           </Text>
         </View>
       ) : hint ? (
-        <Text variant="caption" tone="subtle">
+        <Text variant="caption" tone={onPlate ? 'onHighlight' : 'subtle'}>
           {hint}
         </Text>
       ) : null}

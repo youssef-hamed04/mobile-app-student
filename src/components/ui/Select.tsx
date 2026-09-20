@@ -32,6 +32,8 @@ export interface SelectProps<T extends string> {
   /** Message shown inside the sheet when there are no options yet. */
   emptyMessage?: string;
   containerClassName?: string;
+  /** See `Input.onPlate` — same treatment, so the two line up in a form. */
+  onPlate?: boolean;
 }
 
 /**
@@ -54,6 +56,7 @@ export function Select<T extends string>({
   loading,
   emptyMessage,
   containerClassName,
+  onPlate = false,
 }: SelectProps<T>) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -66,11 +69,18 @@ export function Select<T extends string>({
     <View className={cn('gap-1.5', containerClassName)}>
       {label ? (
         <View className="flex-row items-center gap-1">
-          <Text variant="label" tone={error ? 'accent' : 'default'}>
+          <Text
+            variant="label"
+            tone={error ? 'accent' : onPlate ? 'onHighlight' : 'default'}
+          >
             {label}
           </Text>
           {required ? (
-            <Text variant="label" tone="accent" accessibilityElementsHidden>
+            <Text
+              variant="label"
+              tone={onPlate ? 'onHighlight' : 'accent'}
+              accessibilityElementsHidden
+            >
               *
             </Text>
           ) : null}
@@ -86,7 +96,8 @@ export function Select<T extends string>({
         onPress={() => setOpen(true)}
         className={cn(
           'flex-row items-center gap-2 rounded-md border bg-surface px-3',
-          error ? 'border-accent' : 'border-border',
+          onPlate && 'border-2',
+          error ? 'border-accent' : onPlate ? 'border-outline' : 'border-border',
           isDisabled && 'bg-surface-alt opacity-70'
         )}
         style={{ minHeight: MIN_TOUCH_TARGET + 4 }}

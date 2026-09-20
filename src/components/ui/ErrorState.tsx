@@ -5,6 +5,7 @@ import { ApiError, asApiError } from '@/api/errors';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/hooks/use-translation';
 import { isDev } from '@/config/env';
+import { brand } from '@/theme/palette';
 import { cn } from '@/utils/cn';
 
 import { Button } from './Button';
@@ -99,7 +100,18 @@ export function ErrorState({
 }
 
 /** Inline variant for form-level and card-level failures. */
-export function InlineError({ error }: { error: unknown }) {
+export function InlineError({
+  error,
+  /**
+   * Rendered on the brand plate (the auth screens). The usual pale pink tile
+   * is 1.9:1 against orange and would float; on the plate it takes the same
+   * hard rule as everything else there, and a deeper red that survives it.
+   */
+  onPlate = false,
+}: {
+  error: unknown;
+  onPlate?: boolean;
+}) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const apiError = asApiError(error);
@@ -107,10 +119,20 @@ export function InlineError({ error }: { error: unknown }) {
   return (
     <View
       accessibilityRole="alert"
-      className="flex-row items-start gap-2 rounded-md border border-accent/30 bg-accent-soft p-3"
+      className={cn(
+        'flex-row items-start gap-2 rounded-md bg-accent-soft p-3',
+        onPlate ? 'border-2 border-outline' : 'border border-accent/30'
+      )}
     >
-      <Icon name="error" size={18} color={colors.accent} />
-      <Text variant="caption" tone="accent" className="flex-1">
+      <Icon
+        name="error"
+        size={18}
+        color={onPlate ? brand.redDeep : colors.accent}
+      />
+      <Text
+        variant="caption"
+        className={cn('flex-1', onPlate ? 'text-danger-800' : 'text-accent')}
+      >
         {t(apiError.i18nKey, { defaultValue: t('errors.genericBody') })}
       </Text>
     </View>

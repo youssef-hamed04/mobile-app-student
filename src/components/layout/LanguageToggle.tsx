@@ -48,10 +48,12 @@ export function LanguageToggle() {
       accessibilityLabel={`${t('settings.language')}: ${nextLabel}`}
       onPress={onPress}
       hitSlop={10}
-      className="h-10 flex-row items-center gap-1.5 rounded-full border border-border bg-surface px-3 active:bg-surface-alt"
+      // Only ever rendered on the auth plate, where a white pill is 1.8:1
+      // against the orange — hence the hard rule rather than a hairline.
+      className="h-10 flex-row items-center gap-1.5 rounded-full border-2 border-outline bg-surface px-3 active:bg-surface-alt"
     >
-      <Icon name="language" size={16} color={colors.muted} />
-      <Text variant="label" tone="muted">
+      <Icon name="language" size={16} color={colors.outline} />
+      <Text variant="label" tone="onHighlight">
         {nextLabel}
       </Text>
     </Pressable>

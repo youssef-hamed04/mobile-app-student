@@ -17,6 +17,12 @@ export interface AppBarProps {
   right?: React.ReactNode;
   /** Transparent variant for hero headers that scroll under the bar. */
   transparent?: boolean;
+  /**
+   * Sitting on the brand plate: no bar fill, and both lines inked dark. The
+   * subtitle can't stay `muted` here — grey on orange is 3.4:1, under the
+   * 4.5:1 a step counter needs.
+   */
+  onPlate?: boolean;
   className?: string;
 }
 
@@ -35,6 +41,7 @@ export function AppBar({
   onBack,
   right,
   transparent = false,
+  onPlate = false,
   className,
 }: AppBarProps) {
   const router = useRouter();
@@ -51,7 +58,9 @@ export function AppBar({
     <View
       className={cn(
         'min-h-[56px] flex-row items-center gap-1 px-1',
-        transparent ? 'bg-transparent' : 'border-b border-border bg-surface',
+        transparent || onPlate
+          ? 'bg-transparent'
+          : 'border-b border-border bg-surface',
         className
       )}
     >
@@ -68,12 +77,22 @@ export function AppBar({
 
       <View className="flex-1 px-1">
         {title ? (
-          <Text variant="title" numberOfLines={1} accessibilityRole="header">
+          <Text
+            variant="title"
+            tone={onPlate ? 'onHighlight' : 'default'}
+            numberOfLines={1}
+            accessibilityRole="header"
+          >
             {title}
           </Text>
         ) : null}
         {subtitle ? (
-          <Text variant="caption" tone="muted" numberOfLines={1}>
+          <Text
+            variant="caption"
+            numberOfLines={1}
+            tone={onPlate ? undefined : 'muted'}
+            className={onPlate ? 'text-brand-900' : undefined}
+          >
             {subtitle}
           </Text>
         ) : null}

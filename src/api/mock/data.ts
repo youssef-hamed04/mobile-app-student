@@ -664,7 +664,7 @@ const devBanner = (bg: string, ink: string, label: string): string =>
 export const advertisements: Advertisement[] = [
   {
     id: 'ad-1',
-    imageUrl: devBanner('#FF8C42', '#14131A', 'STUDENT CENTER'),
+    imageUrl: devBanner('#FBB150', '#14131A', 'STUDENT CENTER'),
     aspectRatio: 16 / 7,
     title: 'ابدأ رحلتك الدراسية',
     description: 'كل المواد في مكان واحد',
@@ -676,7 +676,7 @@ export const advertisements: Advertisement[] = [
   },
   {
     id: 'ad-2',
-    imageUrl: devBanner('#14131A', '#FF8C42', 'NEW COURSE'),
+    imageUrl: devBanner('#14131A', '#FBB150', 'NEW COURSE'),
     aspectRatio: 16 / 7,
     title: 'تحليل الإشارات',
     description: null,
@@ -690,7 +690,7 @@ export const advertisements: Advertisement[] = [
     // No caption and no destination — the purely decorative case, which must
     // render as an image rather than announcing a button that does nothing.
     id: 'ad-3',
-    imageUrl: devBanner('#C94A0A', '#FFFFFF', 'OFFERS'),
+    imageUrl: devBanner('#A85F06', '#FFFFFF', 'OFFERS'),
     aspectRatio: 16 / 7,
     title: null,
     description: null,
