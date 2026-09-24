@@ -75,19 +75,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ---- teardown ---------------------------------------------------------
 
+  // True while a sign-out is in progress, so a 401 raised *by* the teardown
+  // (or by queries still in flight) cannot start a second teardown and show
+  // a "session expired" toast after a voluntary logout.
+  const tearingDown = React.useRef(false);
+
   const teardown = React.useCallback(
     async (error?: ApiError) => {
-      setStatus('unauthenticated');
-      setUser(null);
-      setLastSessionError(error ?? null);
+      if (tearingDown.current) return;
+      tearingDown.current = true;
 
-      await Promise.allSettled([
-        clearTokens(),
-        resetQueryCache(),
-        unregisterPushToken(),
-      ]);
-      clearUserScope();
-      queryClient.removeQueries();
+      try {
+        setStatus('unauthenticated');
+        setUser(null);
+        setLastSessionError(error ?? null);
+
+        // Unregister the push token FIRST, while the access token is still
+        // present. Running it in parallel with clearTokens() sent the DELETE
+        // without credentials, so the backend kept delivering this student's
+        // notifications to the device after sign-out.
+        await unregisterPushToken().catch(() => undefined);
+
+        await Promise.allSettled([clearTokens(), resetQueryCache()]);
+        clearUserScope();
+        queryClient.removeQueries();
+      } finally {
+        tearingDown.current = false;
+      }
     },
     [queryClient]
   );
@@ -97,6 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(
     () =>
       onSessionEnded((error) => {
+        if (tearingDown.current) return;
         log.warn('session ended by server', { code: error.code });
         void teardown(error);
         toast.error(
@@ -180,9 +195,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const logout = React.useCallback(async () => {
-    // Tell the server first so the refresh token and the streaming
-    // concurrency slot are revoked, but never block local teardown on it.
-    await authApi.logout().catch(() => undefined);
+    // Order matters: the push token is removed while the session is still
+    // valid, then the server revokes the refresh token and the streaming
+    // concurrency slot. Neither may block local teardown.
+    tearingDown.current = true;
+    try {
+      await unregisterPushToken().catch(() => undefined);
+      await authApi.logout().catch(() => undefined);
+    } finally {
+      tearingDown.current = false;
+    }
     await teardown();
   }, [teardown]);
 

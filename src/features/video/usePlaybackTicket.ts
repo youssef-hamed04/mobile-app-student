@@ -201,9 +201,15 @@ export function usePlaybackTicket(
 
     // Proactive rotation shortly before the manifest URL stops working, so
     // the student never sees a mid-lesson stall.
+    // Measured from the ticket's absolute expiry, not its original TTL: after
+    // a heartbeat that did not rotate, `ttlSeconds` still describes the whole
+    // lifetime and would schedule the rotation after the URL had expired.
+    const expiresAtMs = new Date(ticket.expiresAt).getTime();
     const msUntilRefresh = Math.max(
       5_000,
-      (ticket.ttlSeconds - TICKET_REFRESH_LEAD_SECONDS) * 1000
+      Number.isFinite(expiresAtMs)
+        ? expiresAtMs - Date.now() - TICKET_REFRESH_LEAD_SECONDS * 1000
+        : (ticket.ttlSeconds - TICKET_REFRESH_LEAD_SECONDS) * 1000
     );
     const rotateId = setTimeout(() => {
       setPhase('refreshing');

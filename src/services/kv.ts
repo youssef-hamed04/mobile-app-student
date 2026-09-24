@@ -27,6 +27,7 @@ export const KvKeys = {
   recentSearches: 'search.recent',
   progressQueue: 'progress.queue',
   pushToken: 'push.token',
+  lastHandledNotification: 'push.lastHandledNotification',
 } as const;
 
 export type KvKey = (typeof KvKeys)[keyof typeof KvKeys];

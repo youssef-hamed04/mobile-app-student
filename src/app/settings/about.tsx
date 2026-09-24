@@ -11,6 +11,16 @@ import { env } from '@/config/env';
 import { useTranslation } from '@/hooks/use-translation';
 import { support } from '@/services/support';
 
+/**
+ * Privacy policy and terms open the published pages when their URLs are
+ * configured for the build (both stores require the privacy policy to be
+ * reachable from inside the app); otherwise support is the fallback.
+ */
+async function openLegalOrSupport(page: 'privacyPolicy' | 'terms') {
+  const opened = await support.openLegal(page);
+  if (!opened) await support.email({ reason: 'general' });
+}
+
 export default function AboutScreen() {
   const { t } = useTranslation();
 
@@ -39,13 +49,13 @@ export default function AboutScreen() {
             icon="document"
             title={t('settings.terms')}
             showChevron
-            onPress={() => void support.email({ reason: 'general' })}
+            onPress={() => void openLegalOrSupport('terms')}
           />
           <ListItem
             icon="shield"
             title={t('settings.privacy')}
             showChevron
-            onPress={() => void support.email({ reason: 'general' })}
+            onPress={() => void openLegalOrSupport('privacyPolicy')}
           />
           <ListItem
             icon="lock"

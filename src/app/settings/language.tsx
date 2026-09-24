@@ -1,11 +1,10 @@
-import * as Updates from 'expo-updates';
+import { reloadAppAsync } from 'expo';
 import * as React from 'react';
 import { Alert } from 'react-native';
 
 import { AppBar } from '@/components/layout/AppBar';
 import { ListItem, ListSection } from '@/components/ui/ListItem';
 import { Screen } from '@/components/ui/Screen';
-import { isDev } from '@/config/env';
 import { changeLanguage } from '@/i18n';
 import { useTranslation } from '@/hooks/use-translation';
 import { type Language, SUPPORTED_LANGUAGES, useLanguageStore } from '@/store/language-store';
@@ -40,8 +39,11 @@ export default function LanguageScreen() {
       {
         text: t('settings.restartNow'),
         onPress: async () => {
-          if (isDev) return;
-          await Updates.reloadAsync();
+          // reloadAppAsync works in every build type. Updates.reloadAsync
+          // throws ERR_UPDATES_DISABLED whenever expo-updates is off, which
+          // left the student on a half-mirrored layout after switching to
+          // or from Arabic.
+          await reloadAppAsync('Layout direction changed').catch(() => undefined);
         },
       },
     ]);

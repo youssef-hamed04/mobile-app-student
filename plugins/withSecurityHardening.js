@@ -25,6 +25,26 @@ const path = require('path');
  *    pulled out over USB.
  */
 
+/**
+ * Local-network cleartext is a development convenience (Android emulator →
+ * 10.0.2.2, a backend on localhost). It must not be present in a store
+ * build: even scoped to loopback addresses, a release manifest that permits
+ * cleartext is flagged by Play pre-launch reports and security reviews, and
+ * the production API is HTTPS-only.
+ */
+const IS_PRODUCTION_VARIANT = process.env.APP_VARIANT === 'production';
+
+const LOCAL_CLEARTEXT_DOMAINS = IS_PRODUCTION_VARIANT
+  ? ''
+  : `
+  <!-- Non-production variants only: a local dev backend over http. -->
+  <domain-config cleartextTrafficPermitted="true">
+    <domain includeSubdomains="true">10.0.2.2</domain>
+    <domain includeSubdomains="true">localhost</domain>
+    <domain includeSubdomains="true">127.0.0.1</domain>
+  </domain-config>
+`;
+
 const NETWORK_SECURITY_CONFIG = `<?xml version="1.0" encoding="utf-8"?>
 <network-security-config>
   <!-- Release: system CAs only. A user-installed root (proxy) is rejected,
@@ -36,20 +56,14 @@ const NETWORK_SECURITY_CONFIG = `<?xml version="1.0" encoding="utf-8"?>
     </trust-anchors>
   </base-config>
 
-  <!-- Debug builds only: allows a local proxy and a cleartext dev backend. -->
+  <!-- Debug builds only: allows a local proxy. -->
   <debug-overrides>
     <trust-anchors>
       <certificates src="system" />
       <certificates src="user" />
     </trust-anchors>
   </debug-overrides>
-
-  <domain-config cleartextTrafficPermitted="true">
-    <domain includeSubdomains="true">10.0.2.2</domain>
-    <domain includeSubdomains="true">localhost</domain>
-    <domain includeSubdomains="true">127.0.0.1</domain>
-  </domain-config>
-</network-security-config>
+${LOCAL_CLEARTEXT_DOMAINS}</network-security-config>
 `;
 
 const DATA_EXTRACTION_RULES = `<?xml version="1.0" encoding="utf-8"?>
@@ -102,8 +116,11 @@ function withAndroidManifestHardening(config) {
     app.$['android:allowBackup'] = 'false';
     app.$['android:networkSecurityConfig'] = '@xml/network_security_config';
     app.$['android:dataExtractionRules'] = '@xml/data_extraction_rules';
-    // Blocks the "copy protected text out of the app" vector on Android 13+.
-    app.$['android:enableOnBackInvokedCallback'] = 'true';
+    // android:enableOnBackInvokedCallback is intentionally NOT forced here.
+    // Expo owns it through `android.predictiveBackGestureEnabled` (default
+    // false), which is the configuration React Native's back handling and
+    // expo-router's Android back button are tested against. Forcing it to
+    // true had no content-protection effect.
 
     return cfg;
   });
@@ -120,7 +137,13 @@ function withGradleHardening(config) {
     };
 
     set('android.enableR8.fullMode', 'true');
-    set('org.gradle.jvmargs', '-Xmx4096m -XX:MaxMetaspaceSize=1024m');
+    // The locale/encoding flags keep Gradle's code generators (Room/KSP in
+    // expo-updates) from emitting Arabic-Indic digits on a machine whose
+    // system locale is Arabic, which breaks local release builds.
+    set(
+      'org.gradle.jvmargs',
+      '-Xmx4096m -XX:MaxMetaspaceSize=1024m -Duser.language=en -Duser.country=US -Dfile.encoding=UTF-8'
+    );
     return cfg;
   });
 }
@@ -129,7 +152,8 @@ function withIOSHardening(config) {
   return withInfoPlist(config, (cfg) => {
     cfg.modResults.NSAppTransportSecurity = {
       NSAllowsArbitraryLoads: false,
-      NSAllowsLocalNetworking: true,
+      // Local-network http is only needed to reach a dev backend.
+      NSAllowsLocalNetworking: !IS_PRODUCTION_VARIANT,
       NSExceptionDomains: {},
     };
 

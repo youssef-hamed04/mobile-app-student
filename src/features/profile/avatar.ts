@@ -56,18 +56,27 @@ export interface PickedImage {
 export async function pickAvatar(): Promise<
   { ok: true; image: PickedImage } | { ok: false; reason: 'cancelled' | 'denied' }
 > {
-  const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!permission.granted) return { ok: false, reason: 'denied' };
-
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
-    allowsEditing: true,
-    aspect: [1, 1],
-    // Re-encoded well below the 5 MB ceiling. A phone camera original is
-    // routinely larger than that, and rejecting it after the upload has
-    // started would be a poor way to discover the limit.
-    quality: 0.8,
-  });
+  // No runtime permission request: the image library is opened through the
+  // system photo picker (PHPicker on iOS, the Android photo picker), which
+  // runs outside the app and only returns the image the student chose. This
+  // is what lets the build ship without CAMERA / storage permissions and
+  // without a full photo-library prompt. `denied` is kept in the return type
+  // for callers, and is still reported if the platform refuses to open.
+  let result: ImagePicker.ImagePickerResult;
+  try {
+    result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      // Re-encoded well below the 5 MB ceiling. A phone camera original is
+      // routinely larger than that, and rejecting it after the upload has
+      // started would be a poor way to discover the limit.
+      quality: 0.8,
+    });
+  } catch (e) {
+    log.warn('image picker failed to open', { e: String(e) });
+    return { ok: false, reason: 'denied' };
+  }
 
   if (result.canceled || !result.assets[0]) return { ok: false, reason: 'cancelled' };
 

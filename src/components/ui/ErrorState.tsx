@@ -15,6 +15,7 @@ import { Text } from './Text';
 const ICON_FOR: Partial<Record<ApiError['code'], IconName>> = {
   NETWORK_OFFLINE: 'wifiOff',
   NETWORK_TIMEOUT: 'wifiOff',
+  SERVER_UNREACHABLE: 'error',
   DEVICE_NOT_AUTHORIZED: 'device',
   DEVICE_LIMIT_REACHED: 'device',
   DEVICE_CHANGE_PENDING: 'device',

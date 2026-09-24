@@ -146,7 +146,10 @@ export const Endpoints = {
     markAllRead: '/notifications/read-all',
     unreadCount: '/notifications/unread-count',
     registerPushToken: '/notifications/devices',
-    unregisterPushToken: (token: string) => `/notifications/devices/${token}`,
+    // Expo tokens look like `ExponentPushToken[xxxx]` — the brackets must be
+    // percent-encoded to survive as a single path segment.
+    unregisterPushToken: (token: string) =>
+      `/notifications/devices/${encodeURIComponent(token)}`,
     preferences: '/notifications/preferences',
   },
 

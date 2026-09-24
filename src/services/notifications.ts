@@ -149,9 +149,13 @@ export async function unregisterPushToken(): Promise<void> {
   if (!token) return;
 
   try {
+    // skipRefresh: this runs during sign-out. A 401 here means the session
+    // is already gone, and trying to refresh it would re-trigger the
+    // session-ended teardown that is currently running.
     await api.delete(Endpoints.notifications.unregisterPushToken(token), {
       retries: 0,
       timeoutMs: 5000,
+      skipRefresh: true,
     });
   } catch {
     /* best effort */
@@ -192,8 +196,16 @@ export function addNotificationResponseListener(
   return Notifications.addNotificationResponseReceivedListener(fn);
 }
 
+export async function getInitialNotificationResponse(): Promise<Notifications.NotificationResponse | null> {
+  try {
+    return await Notifications.getLastNotificationResponseAsync();
+  } catch {
+    return null;
+  }
+}
+
 export async function getInitialNotificationRoute(): Promise<string | null> {
-  const response = await Notifications.getLastNotificationResponseAsync();
+  const response = await getInitialNotificationResponse();
   return response ? routeFromNotification(response) : null;
 }
 

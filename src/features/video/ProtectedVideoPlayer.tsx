@@ -15,7 +15,7 @@ import { useNetwork } from '@/hooks/use-network';
 import { useTranslation } from '@/hooks/use-translation';
 import { createLogger } from '@/services/logger';
 import { usePlayerStore, type QualityLevel } from '@/store/player-store';
-import type { CompletionRule, PlaybackTicket } from '@/types/domain';
+import type { CompletionRule } from '@/types/domain';
 import { formatTimecode } from '@/utils/format';
 
 import { PlayerControls } from './components/PlayerControls';
@@ -183,28 +183,71 @@ export function ProtectedVideoPlayer({
   const playerRef = React.useRef(player);
   playerRef.current = player;
 
+  // ---- continuity across source swaps -------------------------------------
+  //
+  // `useVideoPlayer` builds a NEW native player whenever the source changes,
+  // and the source changes on every ticket rotation (the backend re-signs the
+  // manifest a little before expiry), on a quality change and on a caption
+  // change. A new player starts at 0:00, paused — so without this the lesson
+  // jumped back to the beginning and stopped every few minutes. The last
+  // position and play state are carried over and re-applied once the new
+  // player is ready.
+  const lastPositionRef = React.useRef(0);
+  const wasPlayingRef = React.useRef(false);
+  const mutedRef = React.useRef(false);
+  const pendingRestoreRef = React.useRef<{ position: number; play: boolean } | null>(null);
+  const firstPlayerRef = React.useRef(player);
+
+  React.useEffect(() => {
+    if (!player || player === firstPlayerRef.current) return;
+    player.muted = mutedRef.current;
+    if (lastPositionRef.current > 0) {
+      pendingRestoreRef.current = {
+        position: lastPositionRef.current,
+        play: wasPlayingRef.current,
+      };
+    }
+  }, [player]);
+
+  const [playerFailed, setPlayerFailed] = React.useState(false);
+
   // ---- player events -----------------------------------------------------
 
   React.useEffect(() => {
     if (!player) return;
 
     const subs = [
-      player.addListener('playingChange', ({ isPlaying }) => setPlaying(isPlaying)),
+      player.addListener('playingChange', ({ isPlaying }) => {
+        wasPlayingRef.current = isPlaying;
+        setPlaying(isPlaying);
+      }),
 
       player.addListener('statusChange', ({ status, error: playerError }) => {
         setBuffering(status === 'loading');
         if (status === 'error') {
+          // e.g. the CDN refused an expired/revoked manifest, or the stream
+          // could not be decoded. Surface it instead of an endless spinner.
           log.error('player error', { e: String(playerError?.message) });
+          setPlayerFailed(true);
         }
         if (status === 'readyToPlay') {
+          setPlayerFailed(false);
           setDuration(player.duration || 0);
           setActiveQualityLabel(
             preferredQuality === 'auto' ? null : preferredQuality
           );
+          const restore = pendingRestoreRef.current;
+          if (restore) {
+            pendingRestoreRef.current = null;
+            player.currentTime = restore.position;
+            if (restore.play) player.play();
+          }
         }
       }),
 
       player.addListener('timeUpdate', ({ currentTime }) => {
+        if (pendingRestoreRef.current) return; // new player not yet repositioned
+        lastPositionRef.current = currentTime;
         setPosition(currentTime);
         progress.onTick(currentTime, player.duration || 0);
       }),
@@ -378,6 +421,23 @@ export function ProtectedVideoPlayer({
     );
   }
 
+  if (playerFailed) {
+    return (
+      <Blocked
+        title={t('errors.title')}
+        body={t('errors.genericBody')}
+        actionLabel={t('player.reload')}
+        onAction={() => {
+          setPlayerFailed(false);
+          // A fresh ticket re-signs the manifest; the position is restored by
+          // the continuity logic above.
+          reload();
+        }}
+        onClose={onClose}
+      />
+    );
+  }
+
   if (!ticket || !source) {
     return (
       <View className="flex-1 items-center justify-center bg-black">
@@ -452,6 +512,7 @@ export function ProtectedVideoPlayer({
               bumpControls();
               const next = !muted;
               setMuted(next);
+              mutedRef.current = next;
               player.muted = next;
             }}
             onToggleFullscreen={() => void toggleFullscreen()}

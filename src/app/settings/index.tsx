@@ -1,6 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import * as Updates from 'expo-updates';
 import * as React from 'react';
 import { Alert } from 'react-native';
 
@@ -10,11 +9,10 @@ import { ListItem, ListSection } from '@/components/ui/ListItem';
 import { Screen } from '@/components/ui/Screen';
 import { Select } from '@/components/ui/Select';
 import { Sheet } from '@/components/ui/Sheet';
-import { env, isDev } from '@/config/env';
+import { env } from '@/config/env';
 import { useTranslation } from '@/hooks/use-translation';
-import { changeLanguage } from '@/i18n';
 import { support } from '@/services/support';
-import { useLanguageStore, type Language } from '@/store/language-store';
+import { useLanguageStore } from '@/store/language-store';
 import { type ThemePreference, useThemeStore } from '@/store/theme-store';
 import { toast } from '@/store/ui-store';
 
@@ -36,26 +34,6 @@ export default function SettingsScreen() {
         ? 'settings.themeLight'
         : 'settings.themeDark'
   );
-
-  const switchLanguage = async (next: Language) => {
-    if (next === language) return;
-
-    const { restartRequired } = await changeLanguage(next);
-    toast.success(t('settings.languageChanged'));
-
-    if (!restartRequired) return;
-
-    Alert.alert(t('settings.restartNeeded'), t('settings.restartNeededBody'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('settings.restartNow'),
-        onPress: async () => {
-          if (isDev) return;
-          await Updates.reloadAsync();
-        },
-      },
-    ]);
-  };
 
   const clearCache = () => {
     Alert.alert(t('settings.clearCache'), t('settings.storage'), [
@@ -147,6 +125,13 @@ export default function SettingsScreen() {
             title={t('settings.authorizedDevice')}
             showChevron
             onPress={() => router.push('/settings/devices')}
+          />
+          <ListItem
+            icon="trash"
+            title={t('deleteAccount.title')}
+            subtitle={t('deleteAccount.settingsSubtitle')}
+            showChevron
+            onPress={() => router.push('/settings/delete-account')}
           />
         </ListSection>
 

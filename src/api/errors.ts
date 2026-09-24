@@ -37,6 +37,7 @@ export class ApiError extends Error {
 const RETRYABLE = new Set<ApiErrorCode>([
   'NETWORK_OFFLINE',
   'NETWORK_TIMEOUT',
+  'SERVER_UNREACHABLE',
   'SERVER_ERROR',
   'RATE_LIMITED',
   'PLAYBACK_TICKET_EXPIRED',
@@ -120,11 +121,33 @@ export function toApiError(status: number, body: unknown): ApiError {
   });
 }
 
-export const networkError = (timeout: boolean) =>
+/**
+ * Transport failure (no HTTP response at all).
+ *
+ *  - `offline`     — the device itself has no usable connection
+ *  - `timeout`     — the request was sent but no answer arrived in time
+ *  - `unreachable` — the device is online but the API host could not be
+ *                    reached (DNS failure, connection refused, TLS failure,
+ *                    backend down). Reporting this as "you are offline" sent
+ *                    students to check a Wi-Fi that was working fine.
+ */
+export type TransportFailure = 'offline' | 'timeout' | 'unreachable';
+
+export const networkError = (kind: TransportFailure) =>
   new ApiError({
-    code: timeout ? 'NETWORK_TIMEOUT' : 'NETWORK_OFFLINE',
+    code:
+      kind === 'timeout'
+        ? 'NETWORK_TIMEOUT'
+        : kind === 'unreachable'
+          ? 'SERVER_UNREACHABLE'
+          : 'NETWORK_OFFLINE',
     status: 0,
-    message: timeout ? 'Request timed out' : 'No network connection',
+    message:
+      kind === 'timeout'
+        ? 'Request timed out'
+        : kind === 'unreachable'
+          ? 'Server unreachable'
+          : 'No network connection',
   });
 
 export const unknownError = (e: unknown) =>

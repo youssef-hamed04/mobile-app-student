@@ -33,6 +33,8 @@ export type ApiErrorCode =
   // transport / generic
   | 'NETWORK_OFFLINE'
   | 'NETWORK_TIMEOUT'
+  /** Device is online but the API host did not answer (DNS, refused, TLS, down). */
+  | 'SERVER_UNREACHABLE'
   | 'SERVER_ERROR'
   | 'UNKNOWN'
   | 'VALIDATION_ERROR'

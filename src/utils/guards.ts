@@ -20,7 +20,8 @@ export function safeJson<T>(raw: string | null | undefined, fallback: T): T {
  * in-app absolute paths so a malicious payload can't push the user to an
  * external URL or a native scheme.
  */
-const ALLOWED_ROUTE = /^\/(?:course|lesson|player|viewer|settings|profile|search|notifications)(?:\/[A-Za-z0-9._~-]+)*\/?$/;
+const ALLOWED_ROUTE =
+  /^\/(?:course|lesson|player|viewer|settings|profile|search|notifications|library|wallet|support)(?:\/[A-Za-z0-9._~-]+)*\/?$/;
 
 export function isSafeInternalRoute(route: string | null | undefined): route is string {
   if (!route) return false;

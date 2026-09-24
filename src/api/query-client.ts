@@ -50,7 +50,10 @@ export const persister = createAsyncStoragePersister({
   throttleTime: 2000,
 });
 
-const NEVER_PERSIST = new Set(['playback', 'attachments', 'auth']);
+// 'wallet' (balances, transactions) and 'support' (ticket threads) are also
+// kept in memory only: they are personal records, AsyncStorage is not
+// encrypted, and neither screen is useful offline.
+const NEVER_PERSIST = new Set(['playback', 'attachments', 'auth', 'wallet', 'support']);
 
 export const persistOptions = {
   persister,

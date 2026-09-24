@@ -1,13 +1,12 @@
+import { reloadAppAsync } from 'expo';
 import * as React from 'react';
 import { Alert, Pressable } from 'react-native';
-import * as Updates from 'expo-updates';
 
 import { Text } from '@/components/ui/Text';
 import { Icon } from '@/components/ui/Icon';
 import { changeLanguage } from '@/i18n';
 import { useTranslation } from '@/hooks/use-translation';
 import { useTheme } from '@/hooks/use-theme';
-import { isDev } from '@/config/env';
 
 /**
  * Compact AR ⇄ EN switch for the auth screens.
@@ -34,9 +33,11 @@ export function LanguageToggle() {
       {
         text: t('settings.restartNow'),
         onPress: async () => {
-          // Updates.reloadAsync is unavailable in a plain dev client run.
-          if (isDev) return;
-          await Updates.reloadAsync();
+          // reloadAppAsync works in every build type. Updates.reloadAsync
+          // throws ERR_UPDATES_DISABLED whenever expo-updates is off, which
+          // left the student on a half-mirrored layout after switching to
+          // or from Arabic.
+          await reloadAppAsync('Layout direction changed').catch(() => undefined);
         },
       },
     ]);

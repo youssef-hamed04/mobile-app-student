@@ -533,7 +533,8 @@
     "INVALID_STATE": "That cannot be done right now.",
     "STORAGE_UNAVAILABLE": "File storage is unavailable. Try again shortly.",
     "UPLOAD_FAILED": "The upload failed. Try again.",
-    "INSUFFICIENT_ROLE": "Your account does not allow this."
+    "INSUFFICIENT_ROLE": "Your account does not allow this.",
+    "SERVER_UNREACHABLE": "We can't reach the platform right now. Your internet looks fine — please try again in a moment."
   },
   "a11y": {
     "courseCard": "Course: {{title}} by {{teacher}}",
@@ -669,5 +670,19 @@
       "title": "No requests yet",
       "body": "Anything you open will appear here with its replies."
     }
+  },
+  "deleteAccount": {
+    "title": "Delete account",
+    "settingsSubtitle": "Ask for your account and its data to be deleted",
+    "whatHappensTitle": "What happens when your account is deleted",
+    "whatHappensBody": "When your account is deleted you lose access to your courses, progress, wallet credit and library purchases, and this cannot be undone. Access cards you already redeemed cannot be reused. Some records may be kept where the law requires it.",
+    "processNote": "Your request is sent to the platform administration as a support ticket. You can follow it under Support, and the team will contact you on your registered phone number to confirm before the deletion is completed.",
+    "submit": "Request account deletion",
+    "confirmTitle": "Delete your account?",
+    "confirmBody": "This sends a deletion request for your account. Once it is completed it cannot be undone.",
+    "confirm": "Send request",
+    "webLink": "Request deletion on the web instead",
+    "ticketSubject": "Account deletion request",
+    "ticketBody": "I am asking for my account and its associated data to be deleted.\nName: {{name}}\nPhone: {{phone}}\n(Sent from the mobile app.)"
   }
 }

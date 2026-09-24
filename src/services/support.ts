@@ -33,17 +33,19 @@ function composeMessage(ctx: SupportContext): string {
   return lines.join('\n');
 }
 
+/**
+ * Opens the link directly instead of asking `canOpenURL` first. On Android 11+
+ * `canOpenURL` answers false for `tel:` and `mailto:` unless those schemes are
+ * declared in the manifest's <queries>, which would silently disable the only
+ * password-recovery channels. `openURL` rejects when nothing can handle the
+ * link, which is the signal we actually need.
+ */
 async function open(url: string): Promise<boolean> {
   try {
-    const supported = await Linking.canOpenURL(url);
-    if (!supported) {
-      log.warn('link scheme unsupported', { url: url.split('?')[0] });
-      return false;
-    }
     await Linking.openURL(url);
     return true;
   } catch (e) {
-    log.error('failed to open support link', { e: String(e) });
+    log.warn('failed to open support link', { scheme: url.split(':')[0], e: String(e) });
     return false;
   }
 }
@@ -63,4 +65,21 @@ export const support = {
     ),
 
   openSettings: () => Linking.openSettings(),
+
+  /**
+   * Store-required public pages. Returns false when the URL has not been
+   * configured for this build, so the caller can fall back to support.
+   */
+  openLegal: async (
+    page: 'privacyPolicy' | 'terms' | 'accountDeletion'
+  ): Promise<boolean> => {
+    const url =
+      page === 'privacyPolicy'
+        ? env.legal.privacyPolicyUrl
+        : page === 'terms'
+          ? env.legal.termsUrl
+          : env.legal.accountDeletionUrl;
+    if (!url) return false;
+    return open(url);
+  },
 };

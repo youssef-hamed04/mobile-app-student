@@ -30,6 +30,16 @@ const schema = z.object({
     queryPersistence: boolish,
   }),
   playbackTicketTtlSeconds: z.coerce.number().int().positive(),
+  /**
+   * Public web pages the stores require to be reachable from inside the app.
+   * Optional so development builds work without them; when absent the About
+   * screen falls back to contacting support.
+   */
+  legal: z.object({
+    privacyPolicyUrl: z.string().url().optional(),
+    termsUrl: z.string().url().optional(),
+    accountDeletionUrl: z.string().url().optional(),
+  }),
   appVariant: z.string(),
   appVersion: z.string(),
 });
@@ -56,6 +66,11 @@ function read(): Env {
       queryPersistence: process.env.EXPO_PUBLIC_ENABLE_QUERY_PERSISTENCE ?? 'true',
     },
     playbackTicketTtlSeconds: process.env.EXPO_PUBLIC_PLAYBACK_TICKET_TTL ?? 300,
+    legal: {
+      privacyPolicyUrl: process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL || undefined,
+      termsUrl: process.env.EXPO_PUBLIC_TERMS_URL || undefined,
+      accountDeletionUrl: process.env.EXPO_PUBLIC_ACCOUNT_DELETION_URL || undefined,
+    },
     appVariant: (Constants.expoConfig?.extra?.variant as string) ?? 'development',
     appVersion: Constants.expoConfig?.version ?? '0.0.0',
   };

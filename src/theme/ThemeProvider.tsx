@@ -1,8 +1,12 @@
+// Since SDK 56 expo-router ships its own copy of the navigation theming
+// primitives. Importing them from '@react-navigation/native' makes the Metro
+// bundle fail ("expo-router is no longer compatible with react-navigation"),
+// which broke every release build.
 import {
   DarkTheme as NavDarkTheme,
   DefaultTheme as NavLightTheme,
   ThemeProvider as NavigationThemeProvider,
-} from '@react-navigation/native';
+} from 'expo-router';
 import * as NavigationBar from 'expo-navigation-bar';
 import { StatusBar } from 'expo-status-bar';
 import * as SystemUI from 'expo-system-ui';

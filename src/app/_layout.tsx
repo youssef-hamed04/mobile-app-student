@@ -16,13 +16,14 @@ import { ErrorBoundary } from '@/components/feedback/ErrorBoundary';
 import { PrivacyShield } from '@/components/feedback/PrivacyShield';
 import { ToastHost } from '@/components/feedback/ToastHost';
 import { env } from '@/config/env';
-import { AuthProvider } from '@/features/auth/AuthProvider';
+import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
 import { initI18n } from '@/i18n';
 import { contentProtection } from '@/services/content-protection';
 import { createLogger } from '@/services/logger';
+import { kv, KvKeys } from '@/services/kv';
 import {
   addNotificationResponseListener,
-  getInitialNotificationRoute,
+  getInitialNotificationResponse,
   routeFromNotification,
 } from '@/services/notifications';
 import { ThemeProvider } from '@/theme/ThemeProvider';
@@ -113,6 +114,16 @@ function QueryProviders({ children }: { children: React.ReactNode }) {
 }
 
 function RootNavigator() {
+  const { status } = useAuth();
+
+  // Everything outside index/(auth)/+not-found requires a session. A deep
+  // link or a notification tap that lands on a protected route while signed
+  // out is sent back to the index gate (and from there to login) instead of
+  // rendering a screen whose every request 401s. `loading` is allowed
+  // through so a cold-start deep link is not lost while the session is being
+  // restored; the index gate and the request layer settle it.
+  const signedInOrRestoring = status !== 'unauthenticated';
+
   return (
     <Stack
       screenOptions={{
@@ -125,25 +136,30 @@ function RootNavigator() {
     >
       <Stack.Screen name="index" />
       <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="course/[courseId]" />
-      <Stack.Screen name="lesson/[lessonId]" />
-      <Stack.Screen
-        name="player/[videoId]"
-        options={{
-          presentation: 'fullScreenModal',
-          animation: 'fade',
-          gestureEnabled: false,
-          // Swipe-to-dismiss during playback would tear down the secure
-          // surface mid-frame; dismissal is an explicit button instead.
-        }}
-      />
-      <Stack.Screen
-        name="viewer/[attachmentId]"
-        options={{ presentation: 'fullScreenModal', animation: 'fade' }}
-      />
-      <Stack.Screen name="settings" />
-      <Stack.Screen name="profile/edit" options={{ presentation: 'modal' }} />
+      <Stack.Protected guard={signedInOrRestoring}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="course/[courseId]" />
+        <Stack.Screen name="lesson/[lessonId]" />
+        <Stack.Screen
+          name="player/[videoId]"
+          options={{
+            presentation: 'fullScreenModal',
+            animation: 'fade',
+            gestureEnabled: false,
+            // Swipe-to-dismiss during playback would tear down the secure
+            // surface mid-frame; dismissal is an explicit button instead.
+          }}
+        />
+        <Stack.Screen
+          name="viewer/[attachmentId]"
+          options={{ presentation: 'fullScreenModal', animation: 'fade' }}
+        />
+        <Stack.Screen name="settings" />
+        <Stack.Screen name="profile/edit" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="library" />
+        <Stack.Screen name="wallet" />
+        <Stack.Screen name="support" />
+      </Stack.Protected>
       <Stack.Screen name="+not-found" />
     </Stack>
   );
@@ -158,18 +174,39 @@ function NotificationRouter() {
   const router = useRouter();
 
   React.useEffect(() => {
+    // The same response can be delivered twice — once as the "last response"
+    // on a cold start and once through the listener — and the last response
+    // survives across launches on some platforms. Route each tap once.
+    const handled = new Set<string>();
+    const routeOnce = (id: string | undefined, route: string | null) => {
+      if (!route) return;
+      if (id) {
+        if (handled.has(id) || kv.getString(KvKeys.lastHandledNotification) === id) return;
+        handled.add(id);
+        kv.set(KvKeys.lastHandledNotification, id);
+      }
+      router.push(route as never);
+    };
+
+    let timer: ReturnType<typeof setTimeout> | undefined;
     void (async () => {
-      const initial = await getInitialNotificationRoute();
+      const initial = await getInitialNotificationResponse();
+      if (!initial) return;
       // Defer past the first navigation so we don't race the auth gate.
-      if (initial) setTimeout(() => router.push(initial as never), 400);
+      timer = setTimeout(
+        () => routeOnce(initial.notification.request.identifier, routeFromNotification(initial)),
+        400
+      );
     })();
 
     const sub = addNotificationResponseListener((response) => {
-      const route = routeFromNotification(response);
-      if (route) router.push(route as never);
+      routeOnce(response.notification.request.identifier, routeFromNotification(response));
     });
 
-    return () => sub.remove();
+    return () => {
+      if (timer) clearTimeout(timer);
+      sub.remove();
+    };
   }, [router]);
 
   return null;

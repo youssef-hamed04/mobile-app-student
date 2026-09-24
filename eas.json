@@ -1,15 +1,15 @@
 {
   "cli": {
-    "version": ">= 12.0.0",
+    "version": ">= 16.0.0",
     "appVersionSource": "remote"
   },
   "build": {
     "base": {
-      "node": "20.18.0",
       "env": {}
     },
     "development": {
       "extends": "base",
+      "environment": "development",
       "developmentClient": true,
       "distribution": "internal",
       "channel": "development",
@@ -28,26 +28,26 @@
     },
     "staging": {
       "extends": "base",
+      "environment": "preview",
       "distribution": "internal",
       "channel": "staging",
       "autoIncrement": true,
       "env": {
         "APP_VARIANT": "staging",
         "EXPO_PUBLIC_ENV": "staging",
-        "EXPO_PUBLIC_API_URL": "https://staging-api.example.com/api/v1",
         "EXPO_PUBLIC_USE_MOCKS": "false"
       },
       "android": { "buildType": "apk" }
     },
     "production": {
       "extends": "base",
+      "environment": "production",
       "distribution": "store",
       "channel": "production",
       "autoIncrement": true,
       "env": {
         "APP_VARIANT": "production",
         "EXPO_PUBLIC_ENV": "production",
-        "EXPO_PUBLIC_API_URL": "https://api.example.com/api/v1",
         "EXPO_PUBLIC_USE_MOCKS": "false"
       },
       "android": { "buildType": "app-bundle" }
@@ -55,15 +55,12 @@
   },
   "submit": {
     "production": {
-      "ios": {
-        "appleId": "REPLACE_WITH_APPLE_ID",
-        "ascAppId": "REPLACE_WITH_APP_STORE_CONNECT_APP_ID",
-        "appleTeamId": "REPLACE_WITH_TEAM_ID"
-      },
       "android": {
         "serviceAccountKeyPath": "./credentials/play-service-account.json",
-        "track": "internal"
-      }
+        "track": "internal",
+        "releaseStatus": "draft"
+      },
+      "ios": {}
     }
   }
 }
