@@ -253,6 +253,13 @@ export function ProtectedVideoPlayer({
       }),
 
       player.addListener('playToEnd', () => {
+        // `useVideoPlayer` is called before the ticket exists, so for the first
+        // moments of every lesson there is a native player with NO source.
+        // expo-video reports that empty timeline as already played to its end,
+        // and taking it at face value here closed the screen (or autoplayed the
+        // next video) about 250ms after opening it — the lesson never played.
+        // A real ending always has a source and a known duration.
+        if (!source || (player.duration || 0) <= 0) return;
         setPlaying(false);
         void progress.flush(player.duration || 0);
         onEnded?.();
@@ -274,6 +281,17 @@ export function ProtectedVideoPlayer({
     if (!ticket || appliedResume.current) return;
 
     const resumeAt = ticket.resumePositionSeconds;
+
+    // Already watched to the end last time. Seeking there again puts the player
+    // on a timeline that is over before it starts: expo-video reports
+    // `playToEnd` at once, which closes the screen, so a finished lesson could
+    // never be reopened. Start it over instead — the saved position has served
+    // its purpose.
+    if (duration > 0 && resumeAt >= duration - RESUME_IGNORE_TAIL_SECONDS) {
+      if (player) player.currentTime = 0;
+      appliedResume.current = true;
+      return;
+    }
 
     if (
       resumeAt > RESUME_PROMPT_MIN_SECONDS &&

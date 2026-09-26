@@ -67,7 +67,14 @@ export default function LessonScreen() {
 
   const video = lesson.video;
   const progress = lesson.progress;
-  const notReady = video?.status === 'PROCESSING';
+  // Every status the backend refuses a ticket for, not just PROCESSING: it
+  // rejects UPLOADING and QUEUED the same way (VIDEO_NOT_READY), and showing
+  // "Watch now" for those sent the student into a player that bounced straight
+  // back out.
+  const notReady =
+    video?.status === 'UPLOADING' ||
+    video?.status === 'QUEUED' ||
+    video?.status === 'PROCESSING';
   const unavailable = video?.status === 'FAILED' || video?.status === 'ARCHIVED';
 
   const watch = () => {

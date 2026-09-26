@@ -213,7 +213,13 @@ export interface VideoRef {
   availableQualities: string[];
   hasCaptions: boolean;
   captionLanguages: string[];
-  status: 'PROCESSING' | 'READY' | 'FAILED' | 'ARCHIVED';
+  /**
+   * Mirrors the backend's VideoStatus enum exactly. UPLOADING and QUEUED were
+   * missing here, so code that branched on "not ready yet" silently treated
+   * them as playable and sent students into a player the API then refused
+   * with VIDEO_NOT_READY.
+   */
+  status: 'UPLOADING' | 'QUEUED' | 'PROCESSING' | 'READY' | 'FAILED' | 'ARCHIVED';
 }
 
 export type DrmScheme = 'widevine' | 'fairplay' | 'none';
