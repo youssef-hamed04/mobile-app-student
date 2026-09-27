@@ -12,6 +12,7 @@ yarn-error.*
 **/build/
 **/.gradle/
 
+
 # Secrets & credentials — never commit
 .env
 .env.local

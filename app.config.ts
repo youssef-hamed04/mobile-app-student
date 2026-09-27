@@ -17,7 +17,7 @@ const VARIANT = (process.env.APP_VARIANT as Variant) ?? 'development';
  * UUID used to be the fallback, which made `eas build` target a project that
  * does not exist and made push-token requests fail silently.
  */
-const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID || undefined;
+const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID || 'f5f88e33-01f3-4049-ae16-6c3cd5221f57';
 
 /**
  * Store builds must never ship with a development or placeholder backend.
@@ -76,8 +76,8 @@ function assertProductionEnv() {
   if (problems.length > 0) {
     throw new Error(
       'Production build refused — fix the EAS environment variables for the ' +
-        '"production" environment (eas env:create / expo.dev → Environment variables):\n' +
-        problems.map((p) => `  • ${p}`).join('\n')
+      '"production" environment (eas env:create / expo.dev → Environment variables):\n' +
+      problems.map((p) => `  • ${p}`).join('\n')
     );
   }
 }
@@ -87,7 +87,7 @@ assertProductionEnv();
 const NAME: Record<Variant, string> = {
   development: 'EduPlatform (Dev)',
   staging: 'EduPlatform (Stg)',
-  production: 'EduPlatform',
+  production: 'Student Center',
 };
 
 const BUNDLE_ID: Record<Variant, string> = {
@@ -161,6 +161,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 
   android: {
     package: BUNDLE_ID[VARIANT],
+    googleServicesFile:
+      process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',
     versionCode: 1,
     adaptiveIcon: {
       foregroundImage: './assets/images/adaptive-icon.png',
@@ -277,7 +279,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 
   extra: {
     variant: VARIANT,
-    // Omitted (not faked) until `eas init` has been run — see EAS_PROJECT_ID.
     ...(EAS_PROJECT_ID ? { eas: { projectId: EAS_PROJECT_ID } } : {}),
   },
 });
