@@ -618,7 +618,10 @@
     "pageCount_two": "صفحتان",
     "pageCount_few": "{{count}} صفحات",
     "pageCount_many": "{{count}} صفحةً",
-    "pageCount_other": "{{count}} صفحة"
+    "pageCount_other": "{{count}} صفحة",
+    "androidUnsupportedTitle": "مش قادرين نعرض المستند هنا لسه",
+    "androidUnsupportedBody": "قراءة المستندات جوه التطبيق لسه مش متاحة على أندرويد. مشترياتك في أمان — المستند موجود في مكتبتك وهيفتح أول ما ده يجهز.",
+    "readerFailed": "مش قادرين نفتح المستند ده. اتأكد من الاتصال وجرّب تاني."
   },
   "wallet": {
     "title": "الرصيد",

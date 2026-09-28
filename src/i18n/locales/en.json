@@ -591,7 +591,10 @@
     "packageCount_one": "{{count}} bundle",
     "packageCount_other": "{{count}} bundles",
     "pageCount_one": "{{count}} page",
-    "pageCount_other": "{{count}} pages"
+    "pageCount_other": "{{count}} pages",
+    "androidUnsupportedTitle": "Can't display this document here yet",
+    "androidUnsupportedBody": "Reading documents inside the app isn't available on Android yet. Your purchase is safe — the document stays in your library and will open as soon as this is ready.",
+    "readerFailed": "This document could not be opened. Check your connection and try again."
   },
   "wallet": {
     "title": "Credit",

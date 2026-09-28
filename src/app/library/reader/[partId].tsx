@@ -10,9 +10,11 @@ import { Icon } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
 import { useOpenDocument } from '@/features/library/hooks';
+import { buildPdfHtml } from '@/features/library/pdf-html';
 import { Watermark } from '@/features/video/components/Watermark';
 import { useProtectedScreen } from '@/hooks/use-content-protection';
 import { useTranslation } from '@/hooks/use-translation';
+import { createLogger } from '@/services/logger';
 import { SecureContentView, capabilities } from '@modules/content-protection';
 
 /**
@@ -32,6 +34,8 @@ import { SecureContentView, capabilities } from '@modules/content-protection';
  * The ticket is requested with a mutation rather than a query precisely so it
  * cannot be replayed from cache after it has expired.
  */
+const log = createLogger('library-reader');
+
 export default function LibraryReaderScreen() {
   const { partId } = useLocalSearchParams<{ partId: string }>();
   const { t } = useTranslation();
@@ -101,8 +105,8 @@ export default function LibraryReaderScreen() {
   }
 
   const ticket = open.data;
+
   const origin = new URL(ticket.url).origin;
-  const withoutQuery = ticket.url.split('?')[0] ?? ticket.url;
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -111,7 +115,13 @@ export default function LibraryReaderScreen() {
       <SecureContentView enabled style={{ flex: 1 }}>
         <View className="flex-1">
           <WebView
-            source={{ uri: ticket.url }}
+            source={{
+              html: buildPdfHtml(ticket.url, {
+                loading: t('library.opening'),
+                failed: t('library.readerFailed'),
+              }),
+              baseUrl: origin,
+            }}
             style={{ flex: 1, backgroundColor: 'transparent' }}
             originWhitelist={[origin]}
             allowFileAccess={false}
@@ -125,7 +135,20 @@ export default function LibraryReaderScreen() {
             cacheEnabled={false}
             sharedCookiesEnabled={false}
             thirdPartyCookiesEnabled={false}
-            onShouldStartLoadWithRequest={(req) => req.url.startsWith(withoutQuery)}
+            // The document is fetched by the page, not navigated to, so the
+            // only load that may happen is this page itself. Everything else —
+            // a link inside a PDF, a redirect — is refused.
+            // The page reports whether it managed to draw the document. A
+            // canvas leaves no trace in logs or the view tree, so without this
+            // a failed render is indistinguishable from a blank screen.
+            onMessage={(e) => {
+              const msg = e.nativeEvent.data;
+              if (msg.startsWith('fail:')) log.warn('pdf render failed', { reason: msg.slice(5) });
+              else log.info('pdf rendered', { pages: msg.slice(3) });
+            }}
+            onShouldStartLoadWithRequest={(req) =>
+              req.url === 'about:blank' || req.url.startsWith(origin)
+            }
             injectedJavaScript={`
               document.addEventListener('contextmenu', e => e.preventDefault());
               const s = document.createElement('style');
