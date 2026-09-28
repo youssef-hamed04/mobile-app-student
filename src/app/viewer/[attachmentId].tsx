@@ -1,6 +1,5 @@
-import { SecureContentView, capabilities } from '@modules/content-protection';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
 import { View, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,9 +12,11 @@ import { Icon } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
 import { lessonsApi } from '@/features/lessons/api';
+import { buildPdfHtml } from '@/features/library/pdf-html';
 import { Watermark } from '@/features/video/components/Watermark';
 import { useProtectedScreen } from '@/hooks/use-content-protection';
 import { useTranslation } from '@/hooks/use-translation';
+import { SecureContentView, capabilities } from '@modules/content-protection';
 
 /**
  * Protected document viewer.
@@ -84,6 +85,11 @@ export default function AttachmentViewer() {
 
   const ticket = query.data;
 
+  // Only PDFs need pdf.js; Android's WebView draws images perfectly well and
+  // routing them through a canvas renderer would cost quality for nothing.
+  const isPdf = (ticket.url.split('?')[0] ?? '').toLowerCase().endsWith('.pdf');
+  const origin = new URL(ticket.url).origin;
+
   return (
     <SafeAreaView className="flex-1 bg-background">
       <AppBar title={t('courses.materials')} onBack={close} />
@@ -91,7 +97,18 @@ export default function AttachmentViewer() {
       <SecureContentView enabled style={{ flex: 1 }}>
         <View className="flex-1">
           <WebView
-            source={{ uri: ticket.url, headers: ticket.headers }}
+            source={
+              isPdf
+                ? {
+                    html: buildPdfHtml(
+                      ticket.url,
+                      { loading: t('library.opening'), failed: t('library.readerFailed') },
+                      ticket.headers
+                    ),
+                    baseUrl: origin,
+                  }
+                : { uri: ticket.url, headers: ticket.headers }
+            }
             style={{ flex: 1, backgroundColor: 'transparent' }}
             originWhitelist={[new URL(ticket.url).origin]}
             // Hardening: nothing may leave this view.

@@ -509,7 +509,7 @@
     "CODE_ALREADY_USED": "This access code has already been used.",
     "PLAYBACK_DENIED": "You're not allowed to play this video.",
     "PLAYBACK_TICKET_EXPIRED": "Your playback session expired. Reload the video.",
-    "CONCURRENT_STREAM_LIMIT": "This account is already watching on another device.",
+    "CONCURRENT_STREAM_LIMIT": "The last session is still closing. Wait about a minute and try again — or close the lesson if it's open on another device.",
     "VIDEO_NOT_READY": "This video is still being processed.",
     "VIDEO_UNAVAILABLE": "This video isn't available right now.",
     "CAPTURE_DETECTED": "Playback stopped because a screen capture was detected.",
@@ -591,7 +591,10 @@
     "packageCount_one": "{{count}} bundle",
     "packageCount_other": "{{count}} bundles",
     "pageCount_one": "{{count}} page",
-    "pageCount_other": "{{count}} pages"
+    "pageCount_other": "{{count}} pages",
+    "androidUnsupportedTitle": "Can't display this document here yet",
+    "androidUnsupportedBody": "Reading documents inside the app isn't available on Android yet. Your purchase is safe — the document stays in your library and will open as soon as this is ready.",
+    "readerFailed": "This document could not be opened. Check your connection and try again."
   },
   "wallet": {
     "title": "Credit",
