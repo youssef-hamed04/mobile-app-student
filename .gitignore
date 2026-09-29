@@ -36,3 +36,5 @@ coverage/
 
 expo-env.d.ts
 # @end expo-cli
+# Play Store service account key — never commit
+credentials/

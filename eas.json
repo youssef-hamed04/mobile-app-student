@@ -19,12 +19,19 @@
         "EXPO_PUBLIC_API_URL": "http://10.0.2.2:3000/api/v1",
         "EXPO_PUBLIC_USE_MOCKS": "false"
       },
-      "android": { "buildType": "apk", "gradleCommand": ":app:assembleDebug" },
-      "ios": { "simulator": true }
+      "android": {
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleDebug"
+      },
+      "ios": {
+        "simulator": true
+      }
     },
     "development:device": {
       "extends": "development",
-      "ios": { "simulator": false }
+      "ios": {
+        "simulator": false
+      }
     },
     "staging": {
       "extends": "base",
@@ -35,9 +42,12 @@
       "env": {
         "APP_VARIANT": "staging",
         "EXPO_PUBLIC_ENV": "staging",
-        "EXPO_PUBLIC_USE_MOCKS": "false"
+        "EXPO_PUBLIC_USE_MOCKS": "false",
+        "EXPO_PUBLIC_API_URL": "https://student-backend-814y.onrender.com/api/v1"
       },
-      "android": { "buildType": "apk" }
+      "android": {
+        "buildType": "apk"
+      }
     },
     "production": {
       "extends": "base",
@@ -48,9 +58,15 @@
       "env": {
         "APP_VARIANT": "production",
         "EXPO_PUBLIC_ENV": "production",
-        "EXPO_PUBLIC_USE_MOCKS": "false"
+        "EXPO_PUBLIC_USE_MOCKS": "false",
+        "EXPO_PUBLIC_API_URL": "https://student-backend-814y.onrender.com/api/v1",
+        "EXPO_PUBLIC_SUPPORT_PHONE": "REPLACE_ME",
+        "EXPO_PUBLIC_SUPPORT_WHATSAPP": "REPLACE_ME",
+        "EXPO_PUBLIC_SUPPORT_EMAIL": "REPLACE_ME"
       },
-      "android": { "buildType": "app-bundle" }
+      "android": {
+        "buildType": "app-bundle"
+      }
     }
   },
   "submit": {
