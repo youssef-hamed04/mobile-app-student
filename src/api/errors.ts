@@ -39,7 +39,14 @@ const RETRYABLE = new Set<ApiErrorCode>([
   'NETWORK_TIMEOUT',
   'SERVER_UNREACHABLE',
   'SERVER_ERROR',
-  'RATE_LIMITED',
+  // RATE_LIMITED is deliberately NOT here.
+  //
+  // It is the one response that means "you are already asking too often", and
+  // this set drives two separate retry loops: React Query's `retryPolicy` and
+  // the axios interceptor's backoff. With 429 marked retryable, one refused
+  // request could become nine — during an incident whose direct cause was
+  // request volume. A rate-limited call now surfaces at once, and the screen
+  // tells the student to wait.
   'PLAYBACK_TICKET_EXPIRED',
   // Object storage being briefly unreachable says nothing about the request.
   'STORAGE_UNAVAILABLE',

@@ -5,7 +5,7 @@
     "slidePosition": "{{position}} of {{total}}"
   },
   "common": {
-    "appName": "EduPlatform",
+    "appName": "Student Center",
     "ok": "OK",
     "cancel": "Cancel",
     "save": "Save",

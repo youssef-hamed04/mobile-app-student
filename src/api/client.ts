@@ -18,7 +18,7 @@ import {
   networkError,
   toApiError,
 } from './errors';
-import { mockRequest } from './mock';
+import type * as MockModule from './mock';
 import {
   clearTokens,
   getTokensSync,
@@ -26,6 +26,19 @@ import {
   isAccessTokenStale,
   setTokens,
 } from './token-store';
+
+/**
+ * The mock backend is for development only. It is loaded through a require
+ * behind a build-time constant (EXPO_PUBLIC_* values are inlined), so Metro
+ * drops it — and all of its fake courses and URLs — from production bundles
+ * instead of shipping it as dead code. `useMocks` is false in production
+ * regardless (config/env.ts); this only removes the code itself.
+ */
+const mockRequest: typeof MockModule.mockRequest | null =
+  process.env.EXPO_PUBLIC_ENV !== 'production'
+    ? // eslint-disable-next-line @typescript-eslint/no-require-imports
+      (require('./mock') as typeof MockModule).mockRequest
+    : null;
 
 const log = createLogger('api');
 
@@ -86,7 +99,12 @@ http.interceptors.request.use(async (config) => {
   if (!opts.anonymous) {
     // Proactive refresh: avoids a guaranteed 401 when we already know the
     // access token is past (or nearly past) its exp.
-    if (isAccessTokenStale() && !cfg._didRefresh && !opts.skipRefresh) {
+    if (
+      isAccessTokenStale() &&
+      !cfg._didRefresh &&
+      !opts.skipRefresh &&
+      !isRefreshCoolingDown()
+    ) {
       await refreshTokens().catch(() => undefined);
     }
     const tokens = getTokensSync();
@@ -111,8 +129,44 @@ http.interceptors.request.use(async (config) => {
 
 let refreshPromise: Promise<void> | null = null;
 
+/**
+ * How long to stop trying after a refresh fails for a reason that is not the
+ * token's fault (5xx, 429, a timeout).
+ *
+ * Without this the proactive refresh below is a feedback loop, and it is the
+ * one that turned a Redis quota breach into an outage. `isAccessTokenStale()`
+ * stays true until a refresh *succeeds*, so when `/auth/refresh` started
+ * answering 500 — because Upstash had run out of requests — every single API
+ * call from every open app began attempting its own refresh first. Each of
+ * those is another request to the very endpoint that was failing, and another
+ * rate-limit increment against the Redis that had no budget left.
+ *
+ * A definitive answer (400/401/403) still clears the session immediately; this
+ * only applies to failures that say nothing about the token.
+ */
+const REFRESH_COOLDOWN_MS = 30_000;
+let refreshBlockedUntil = 0;
+
+/** True while a recent refresh failure means another attempt is pointless. */
+export function isRefreshCoolingDown(now = Date.now()): boolean {
+  return now < refreshBlockedUntil;
+}
+
+/** Test seam, and used on sign-in so a fresh session starts unencumbered. */
+export function resetRefreshCooldown(): void {
+  refreshBlockedUntil = 0;
+}
+
 async function refreshTokens(): Promise<void> {
   if (refreshPromise) return refreshPromise;
+
+  if (isRefreshCoolingDown()) {
+    throw new ApiError({
+      code: 'NETWORK_TIMEOUT',
+      status: 0,
+      message: 'A token refresh failed moments ago; not retrying yet.',
+    });
+  }
 
   refreshPromise = (async () => {
     const tokens = getTokensSync() ?? (await hydrateTokens());
@@ -135,6 +189,7 @@ async function refreshTokens(): Promise<void> {
       );
 
       await setTokens(res.data.data);
+      refreshBlockedUntil = 0;
       log.info('token refreshed');
     } catch (e) {
       // Only a definitive answer from the auth server ends the session. A
@@ -148,6 +203,9 @@ async function refreshTokens(): Promise<void> {
           state?.isConnected === false || state?.isInternetReachable === false;
         const timedOut =
           e instanceof AxiosError && (e.code === 'ECONNABORTED' || e.code === 'ETIMEDOUT');
+        // Says nothing about the token, so back off rather than asking again
+        // on the very next request.
+        refreshBlockedUntil = Date.now() + REFRESH_COOLDOWN_MS;
         throw networkError(offline ? 'offline' : timedOut ? 'timeout' : 'unreachable');
       }
 
@@ -157,7 +215,12 @@ async function refreshTokens(): Promise<void> {
         e.response.status === 401 ||
         e.response.status === 403 ||
         SESSION_ENDING.has(err.code);
-      if (!definitive) throw err;
+      if (!definitive) {
+        // A 5xx or a 429 from the auth server. The refresh token is probably
+        // still good; the server is simply unable to answer right now.
+        refreshBlockedUntil = Date.now() + REFRESH_COOLDOWN_MS;
+        throw err;
+      }
 
       await clearTokens();
       broadcastSessionEnded(
@@ -186,7 +249,17 @@ async function refreshTokens(): Promise<void> {
 
 const MAX_RETRIES = 2;
 const MAX_RETRY_AFTER_MS = 10_000;
-const RETRY_STATUS = new Set([408, 425, 429, 500, 502, 503, 504]);
+/*
+ * 429 is deliberately absent.
+ *
+ * It is the one status that means "you are already asking too often", and
+ * retrying it twice with backoff turns one refused request into three. During
+ * the Redis quota incident the API answered 429 and 500 to everything, and
+ * this set quietly tripled the load that was causing it. A 429 is now surfaced
+ * to the caller, which is what lets React Query's own policy decide — and it
+ * does not retry 4xx.
+ */
+const RETRY_STATUS = new Set([408, 425, 500, 502, 503, 504]);
 const IDEMPOTENT = new Set(['get', 'head', 'options']);
 
 http.interceptors.response.use(
@@ -314,7 +387,7 @@ export async function request<T>(
   config: AxiosRequestConfig & { url: string },
   options: RequestOptions = {}
 ): Promise<T> {
-  if (useMocks) {
+  if (useMocks && mockRequest) {
     return mockRequest<T>(config, options);
   }
 

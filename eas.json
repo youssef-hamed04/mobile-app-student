@@ -59,13 +59,16 @@
         "APP_VARIANT": "production",
         "EXPO_PUBLIC_ENV": "production",
         "EXPO_PUBLIC_USE_MOCKS": "false",
-        "EXPO_PUBLIC_API_URL": "https://student-backend-814y.onrender.com/api/v1",
-        "EXPO_PUBLIC_SUPPORT_PHONE": "REPLACE_ME",
-        "EXPO_PUBLIC_SUPPORT_WHATSAPP": "REPLACE_ME",
-        "EXPO_PUBLIC_SUPPORT_EMAIL": "REPLACE_ME"
+        "EXPO_PUBLIC_API_URL": "https://student-backend-814y.onrender.com/api/v1"
       },
       "android": {
         "buildType": "app-bundle"
+      }
+    },
+    "production:apk": {
+      "extends": "production",
+      "android": {
+        "buildType": "apk"
       }
     }
   },

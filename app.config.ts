@@ -73,6 +73,37 @@ function assertProductionEnv() {
     }
   }
 
+  // Both stores require the privacy policy to be reachable from inside the
+  // app, Google Play requires an account-deletion web page, and the About
+  // screen links the terms. Without these the About screen silently falls
+  // back to emailing support, which is not what a reviewer is looking for.
+  const legal: Record<string, string | undefined> = {
+    EXPO_PUBLIC_PRIVACY_POLICY_URL: process.env.EXPO_PUBLIC_PRIVACY_POLICY_URL,
+    EXPO_PUBLIC_TERMS_URL: process.env.EXPO_PUBLIC_TERMS_URL,
+    EXPO_PUBLIC_ACCOUNT_DELETION_URL: process.env.EXPO_PUBLIC_ACCOUNT_DELETION_URL,
+  };
+  for (const [key, value] of Object.entries(legal)) {
+    if (!value) {
+      problems.push(`${key} is not set`);
+      continue;
+    }
+    let legalUrl: URL | null = null;
+    try {
+      legalUrl = new URL(value);
+    } catch {
+      problems.push(`${key} is not a valid URL`);
+    }
+    if (legalUrl) {
+      if (legalUrl.protocol !== 'https:') problems.push(`${key} must use https://`);
+      if (
+        /^(localhost|127\.|10\.|192\.168\.|0\.0\.0\.0)/.test(legalUrl.hostname) ||
+        /(^|\.)example\.(com|org|net)$/.test(legalUrl.hostname)
+      ) {
+        problems.push(`${key} points at a local or placeholder host (${legalUrl.hostname})`);
+      }
+    }
+  }
+
   if (problems.length > 0) {
     throw new Error(
       'Production build refused — fix the EAS environment variables for the ' +

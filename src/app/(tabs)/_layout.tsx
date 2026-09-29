@@ -34,8 +34,32 @@ export default function TabsLayout() {
     queryKey: qk.notifications.unread(),
     queryFn: () => api.get<{ count: number }>(Endpoints.notifications.unreadCount),
     enabled: status === 'authenticated',
-    refetchInterval: 60_000,
-    staleTime: 30_000,
+    /*
+     * Three minutes, not one.
+     *
+     * A badge count is not time-critical: a push notification already wakes
+     * the app for anything that actually matters, and this poll exists to
+     * catch the rest. At 60 seconds every signed-in student generated 1,440
+     * requests a day whether or not they touched the app — all of which pass
+     * through the Redis-backed rate limiter, on a plan billed per Redis
+     * request. Multiply by the user base and this single line was the largest
+     * client-side contributor to the quota.
+     *
+     * `refetchIntervalInBackground: false` is the library default and is
+     * stated explicitly because it is load-bearing: `bootstrapQueryManagers`
+     * wires `focusManager` to React Native's AppState, so a backgrounded app
+     * stops polling entirely. Without that wiring this timer would keep
+     * running in the background and the interval above would be beside the
+     * point.
+     *
+     * `staleTime` matches the interval so returning to the app does not fire a
+     * second, redundant fetch on top of the scheduled one — the two used to
+     * compound, giving roughly double the intended rate for anyone who
+     * switches apps often.
+     */
+    refetchInterval: 180_000,
+    refetchIntervalInBackground: false,
+    staleTime: 180_000,
   });
 
   const unreadCount = unread.data?.count ?? 0;

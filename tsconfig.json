@@ -10,10 +10,19 @@
     "baseUrl": ".",
     "ignoreDeprecations": "6.0",
     "paths": {
-      "@/*": ["src/*"],
-      "@modules/*": ["modules/*"]
+      "@/*": [
+        "src/*"
+      ],
+      "@modules/*": [
+        "modules/*"
+      ]
     },
-    "types": ["jest", "nativewind/types", "expo/types", "node"]
+    "types": [
+      "jest",
+      "nativewind/types",
+      "expo/types",
+      "node"
+    ]
   },
   "include": [
     "**/*.ts",
@@ -22,5 +31,11 @@
     "expo-env.d.ts",
     "nativewind-env.d.ts"
   ],
-  "exclude": ["node_modules", "dist", ".expo", "android", "ios"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    ".expo",
+    "android",
+    "ios"
+  ]
 }

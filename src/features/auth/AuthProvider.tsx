@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import * as React from 'react';
 
-import { onSessionEnded } from '@/api/client';
+import { onSessionEnded, resetRefreshCooldown } from '@/api/client';
 import { ApiError } from '@/api/errors';
 import { qk } from '@/api/query-keys';
 import { resetQueryCache } from '@/api/query-client';
@@ -172,6 +172,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = React.useCallback(
     async (payload: LoginPayload) => {
       const res = await authApi.login(payload);
+      // A successful sign-in clears any refresh back-off left over from a
+      // previous session that died while the server was unwell.
+      resetRefreshCooldown();
       await setTokens(res);
       await persistUser(res.user);
       setLastSessionError(null);
@@ -185,6 +188,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = React.useCallback(
     async (payload: RegisterPayload) => {
       const res = await authApi.register(payload);
+      // A successful sign-in clears any refresh back-off left over from a
+      // previous session that died while the server was unwell.
+      resetRefreshCooldown();
       await setTokens(res);
       await persistUser(res.user);
       setLastSessionError(null);
