@@ -523,6 +523,48 @@ export interface CoursePart {
   purchasable: boolean;
   sectionCount: number;
   sections: CoursePartSection[];
+  /**
+   * The part's own thumbnail key, present so a client can tell an explicitly
+   * chosen image from an inherited one. Not itself renderable.
+   */
+  thumbnailKey?: string | null;
+  /** Whichever image is in force — the part's own, or the course's. */
+  thumbnailUrl?: string | null;
+}
+
+/**
+ * What the student can buy to get into a course.
+ *
+ * `methods` is the server's answer about mechanisms, and the app renders
+ * exactly what it contains — it never invents one. `wallet` is always false
+ * (the wallet belongs to the Library; a course never debits it) and
+ * `onlinePayment` follows the configured provider, which ships disabled.
+ */
+export interface CourseJoinOptions {
+  courseId: string;
+  title: string;
+  titleAr: string | null;
+  fullCourse: {
+    price: number | null;
+    currency: string;
+    isFree: boolean;
+    owned: boolean;
+    purchasable: boolean;
+  };
+  hasParts: boolean;
+  ownsAllParts: boolean;
+  parts: CoursePart[];
+  methods: {
+    accessCode: boolean;
+    wallet: boolean;
+    onlinePayment: boolean;
+  };
+  /**
+   * What this course accepts right now, from the same resolver the course
+   * screen reads. Rendered as given — the sheet never infers that a free
+   * course can be joined with a tap.
+   */
+  enrollmentMethods: EnrollmentMethod[];
 }
 
 export interface CoursePartsResponse {
@@ -665,6 +707,13 @@ export interface LibraryPart {
   owned: boolean;
   ownedSince: string | null;
   purchasable: boolean;
+  /**
+   * Resolved server-side: the part's own image, then the material's cover,
+   * then the library default. The app renders what it is given and does no
+   * fallback of its own — the precedence is a business rule, not a layout
+   * detail, and duplicating it here would let the two drift.
+   */
+  thumbnailUrl?: string | null;
 }
 
 export interface LibraryPackage {

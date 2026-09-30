@@ -23,6 +23,24 @@ export function useCourseParts(courseId: string | undefined) {
   });
 }
 
+/**
+ * The JOIN sheet's options.
+ *
+ * `enabled` is driven by the sheet being open rather than the screen being
+ * mounted: this is a per-tap question, and fetching it for every course page
+ * view would be a request nobody reads. Not cached long either — a redemption
+ * in another tab changes the answer, and a stale "purchasable" invites a
+ * student to buy what they already hold.
+ */
+export function useCourseJoinOptions(courseId: string | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: qk.courses.joinOptions(courseId ?? 'none'),
+    queryFn: ({ signal }) => coursePartsApi.joinOptions(courseId!, signal),
+    enabled: !!courseId && enabled,
+    staleTime: 0,
+  });
+}
+
 /** The parts the student holds, across every course. */
 export function useMyCourseParts() {
   return useInfiniteQuery({

@@ -43,6 +43,22 @@ export const videoApi = {
       { retries: 0, signal, timeoutMs: 15_000 }
     ),
 
+  /**
+   * Plays remaining on this video.
+   *
+   * Display only, and the server says so. The limit is enforced when a ticket
+   * is issued, from the same count — a student who never calls this is
+   * limited identically, and an app that lied about the figure would change
+   * nothing. It exists so the player can warn before the last play rather
+   * than refusing without explanation.
+   */
+  allowance: (videoId: string, signal?: AbortSignal) =>
+    api.get<{ used: number; limit: number; remaining: number }>(
+      Endpoints.playback.allowance(videoId),
+      undefined,
+      { signal },
+    ),
+
   heartbeat: (ticketId: string, payload: HeartbeatPayload) =>
     api.post<HeartbeatResponse>(Endpoints.playback.heartbeat(ticketId), payload, {
       retries: 0,

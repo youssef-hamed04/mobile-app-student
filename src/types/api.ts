@@ -85,6 +85,13 @@ export type ApiErrorCode =
   | 'PLAYBACK_DENIED'
   | 'PLAYBACK_TICKET_EXPIRED'
   | 'CONCURRENT_STREAM_LIMIT'
+  /**
+   * The allowed number of plays for this video is spent. 403, not 429: no
+   * amount of waiting grants another, so nothing should retry on it.
+   */
+  | 'VIDEO_WATCH_LIMIT_REACHED'
+  /** Transcoding failed. Distinct from VIDEO_NOT_READY, which resolves itself. */
+  | 'VIDEO_PROCESSING_FAILED'
   | 'VIDEO_NOT_READY'
   | 'VIDEO_UNAVAILABLE'
   | 'CAPTURE_DETECTED';

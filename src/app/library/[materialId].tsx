@@ -213,6 +213,20 @@ function PartCard({
     <Card>
       <CardBody className="gap-2">
         <View className="flex-row items-start justify-between gap-3">
+          {/* Resolved server-side: this part's own cover, then the material's,
+              then the library default. The app does no fallback of its own —
+              that precedence is a business rule the backend owns, and a second
+              copy here would drift from it the first time the default
+              changes. */}
+          {part.thumbnailUrl ? (
+            <Image
+              source={{ uri: part.thumbnailUrl }}
+              style={{ width: 48, height: 64, borderRadius: 6 }}
+              contentFit="cover"
+              accessible={false}
+            />
+          ) : null}
+
           <View className="flex-1 gap-1">
             <Text variant="label" numberOfLines={2}>
               {title}

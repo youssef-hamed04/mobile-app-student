@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Text } from '@/components/ui/Text';
+import { AttachmentRow } from '@/features/lessons/AttachmentRow';
+import { useSectionAttachments } from '@/features/lessons/hooks';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/hooks/use-translation';
 import { MIN_TOUCH_TARGET } from '@/theme/tokens';
@@ -168,11 +170,59 @@ export function SectionAccordion({
                     />
                   ))
                 )}
+
+                {/* The section's OWN documents, below its lectures.
+                
+                    Kept visually distinct from a lecture's attachments
+                    because they are a different thing with a different
+                    access rule — a handout for the whole section rather than
+                    for one lecture. Fetched only for the expanded section, so
+                    a twelve-section course does not make twelve requests to
+                    render a page nobody has opened yet. */}
+                <SectionAttachments sectionId={section.id} expanded />
               </View>
             ) : null}
           </View>
         );
       })}
+    </View>
+  );
+}
+
+/**
+ * A section's own documents.
+ *
+ * Renders nothing at all when the section has none, which is the common case —
+ * an empty heading on every section would be noise. The rows reuse
+ * `AttachmentRow`, so a protected section handout opens through the same
+ * secure viewer, with the same watermark, as a protected lecture handout: the
+ * scope differs, the handling does not.
+ */
+function SectionAttachments({
+  sectionId,
+  expanded,
+}: {
+  sectionId: string;
+  expanded: boolean;
+}) {
+  const { t } = useTranslation();
+  const query = useSectionAttachments(sectionId, expanded);
+
+  const rows = query.data ?? [];
+  if (rows.length === 0) return null;
+
+  return (
+    <View className="mt-2 gap-1.5 border-t border-border px-4 pt-3">
+      <Text variant="label" tone="muted">
+        {t('lesson.sectionAttachments')}
+      </Text>
+      {rows.map((attachment) => (
+        <AttachmentRow
+          key={attachment.id}
+          attachment={attachment}
+          locked={attachment.locked}
+        />
+      ))}
     </View>
   );
 }

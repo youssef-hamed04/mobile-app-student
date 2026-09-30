@@ -49,6 +49,12 @@ export const Endpoints = {
      * not a failure.
      */
     parts: (id: string) => `/courses/${id}/parts`,
+    /**
+     * Everything the JOIN sheet needs in one request: the whole-course option
+     * and every part, each with its price and owned state, plus the access
+     * mechanisms the server currently permits.
+     */
+    joinOptions: (id: string) => `/courses/${id}/join-options`,
   },
 
   courseParts: {
@@ -120,6 +126,8 @@ export const Endpoints = {
   },
 
   playback: {
+    /** How many plays of this video the student has left. Display only. */
+    allowance: (videoId: string) => `/playback/videos/${videoId}/allowance`,
     /** POST — runs the full authorization chain, returns a short-lived ticket. */
     ticket: (videoId: string) => `/playback/videos/${videoId}/ticket`,
     /** POST — keeps the concurrency slot alive and reports position. */
@@ -134,6 +142,16 @@ export const Endpoints = {
     upsert: '/progress',
     batch: '/progress/batch',
     continueWatching: '/progress/continue-watching',
+  },
+
+  sections: {
+    /**
+     * A section's own documents — files that belong to the section as a whole
+     * rather than to one of its lectures. Separate from the lecture list
+     * because the API keeps the two scopes apart and gates them by different
+     * entitlements.
+     */
+    attachments: (id: string) => `/sections/${id}/attachments`,
   },
 
   attachments: {

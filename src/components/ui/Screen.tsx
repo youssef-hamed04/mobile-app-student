@@ -59,7 +59,7 @@ export function Screen({
   contentClassName,
   padded = true,
   hideNetworkBanner = false,
-  keyboardAvoiding = false,
+  keyboardAvoiding = true,
   scrollProps,
   footer,
   background,
@@ -75,6 +75,10 @@ export function Screen({
         contentClassName
       )}
       keyboardShouldPersistTaps="handled"
+      // iOS insets the scroll view for the keyboard itself, which keeps the
+      // focused field visible without the parent having to guess a height.
+      // Harmless on Android, where adjustResize already resized the window.
+      automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
       showsVerticalScrollIndicator={false}
       refreshControl={
         onRefresh ? (
@@ -95,11 +99,14 @@ export function Screen({
     <View className={cn('flex-1', padded && 'px-4', contentClassName)}>{children}</View>
   );
 
+  // Android resizes the window itself (softwareKeyboardLayoutMode: 'resize'
+  // in app.config.ts), so 'height' lets this view shrink with it instead of
+  // fighting it. The previous `undefined` behaviour meant the view did nothing
+  // on Android, and the 24px offset it passed alongside was inert.
   const wrapped = keyboardAvoiding ? (
     <KeyboardAvoidingView
       className="flex-1"
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       {body}
     </KeyboardAvoidingView>

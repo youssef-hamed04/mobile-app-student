@@ -19,7 +19,7 @@ import { PartsPanel } from '@/features/course-parts/PartsPanel';
 import { AccessPanel } from '@/features/courses/components/AccessPanel';
 import { SectionAccordion } from '@/features/courses/components/SectionAccordion';
 import { courseAccessFlags, useCourse } from '@/features/courses/hooks';
-import { EnrollSheet } from '@/features/enrollment/EnrollSheet';
+import { JoinSheet } from '@/features/enrollment/JoinSheet';
 import { AttachmentRow } from '@/features/lessons/AttachmentRow';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/hooks/use-translation';
@@ -301,8 +301,12 @@ export default function CourseDetailScreen() {
         </View>
       </ScrollView>
 
-      <EnrollSheet
-        course={course}
+      {/* JOIN. The sheet asks the server what the options and mechanisms
+          are rather than deriving them from the course object, so the whole-
+          course price, each part's price, and which methods are live all come
+          from one answer. */}
+      <JoinSheet
+        courseId={course.id}
         visible={enrollOpen}
         onClose={() => setEnrollOpen(false)}
       />

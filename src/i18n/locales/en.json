@@ -192,7 +192,8 @@
       "sectionsBody": "The instructor hasn't published any sections for this course yet.",
       "lessonsTitle": "No lessons in this section",
       "lessonsBody": "Check back soon — new lessons are added regularly."
-    }
+    },
+    "freeLesson": "Free"
   },
   "access": {
     "notEnrolled": "Not enrolled",
@@ -237,7 +238,20 @@
     "expiredTitle": "This content has expired",
     "expiredBody": "Please contact the administration if you need assistance.",
     "archivedTitle": "This course has been archived",
-    "archivedBody": "The content is no longer available. Your records are preserved."
+    "archivedBody": "The content is no longer available. Your records are preserved.",
+    "joinTitle": "Join this course",
+    "joinIntro": "You can take the whole course, or one part at a time. Buying the whole course is usually cheaper than buying every part separately.",
+    "fullCourse": "The whole course",
+    "fullCourseBody": "Everything in the course, including every part.",
+    "orOnePart": "Or just one part",
+    "free": "Free",
+    "chooseThis": "Choose this",
+    "selected": "Selected",
+    "cardHintFullCourse": "Ask the administration for a whole-course card, then enter its code here.",
+    "cardHintPart": "Ask the administration for a card for this part, then enter its code here.",
+    "cardHintGeneric": "Choose an option above, then enter the code from the card you were given.",
+    "codeRequired": "Enter the code from your card.",
+    "noMethods": "There is no way to join this course at the moment. Please contact the administration."
   },
   "lesson": {
     "lesson": "Lesson",
@@ -264,7 +278,8 @@
       "WATCH_PERCENT": "Watch {{threshold}}% of the video to complete this lesson.",
       "WATCH_FULL": "Watch the full video to complete this lesson.",
       "MANUAL": "Mark this lesson complete when you're done."
-    }
+    },
+    "sectionAttachments": "Section documents"
   },
   "player": {
     "play": "Play",
@@ -304,7 +319,11 @@
     "notReadyTitle": "Video is still processing",
     "notReadyBody": "This lesson will be available shortly. Please check back soon.",
     "concurrentTitle": "Already playing somewhere else",
-    "concurrentBody": "This account is watching on another session. Stop it and try again."
+    "concurrentBody": "This account is watching on another session. Stop it and try again.",
+    "playbackFailed": "This video stopped playing",
+    "playbackFailedBody": "The video could not keep playing. This is usually the connection. Reload to start it again — if it keeps happening, your access may have changed, and reloading will say so.",
+    "lastPlayWarning": "This is your last time watching this video.",
+    "playsExhausted": "You have used all your views of this video."
   },
   "progress": {
     "courseProgress": "Course progress",
@@ -534,7 +553,9 @@
     "STORAGE_UNAVAILABLE": "File storage is unavailable. Try again shortly.",
     "UPLOAD_FAILED": "The upload failed. Try again.",
     "INSUFFICIENT_ROLE": "Your account does not allow this.",
-    "SERVER_UNREACHABLE": "We can't reach the platform right now. Your internet looks fine — please try again in a moment."
+    "SERVER_UNREACHABLE": "We can't reach the platform right now. Your internet looks fine — please try again in a moment.",
+    "VIDEO_WATCH_LIMIT_REACHED": "You've watched this video the maximum number of times. Contact the administration if you need access again.",
+    "VIDEO_PROCESSING_FAILED": "This video could not be prepared for playback. The administration has been notified — please try another lesson for now."
   },
   "a11y": {
     "courseCard": "Course: {{title}} by {{teacher}}",

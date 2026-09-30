@@ -119,8 +119,17 @@ export function LessonRow({ lesson, index, locked, active, onPress }: LessonRowP
         ) : null}
       </View>
 
-      {lesson.isPreview && locked ? (
-        <Badge label={t('courses.preview')} tone="primary" />
+      {/* A free lesson is always marked, not only when it sits in a locked
+          section.
+          
+          The condition used to be `isPreview && locked`, which can never be
+          true: the caller computes `locked = sectionLocked && !isPreview`, so
+          a preview lesson always arrives with `locked` false. The badge was
+          unreachable, and a free video was playable with nothing to say so —
+          which is the one thing a student needs to see to know they can watch
+          it without joining. */}
+      {lesson.isPreview ? (
+        <Badge label={t('courses.freeLesson')} tone="success" icon="checkCircle" />
       ) : null}
     </Pressable>
   );

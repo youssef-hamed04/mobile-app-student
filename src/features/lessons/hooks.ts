@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { api } from '@/api/client';
+import { Endpoints } from '@/api/endpoints';
 import { qk } from '@/api/query-keys';
 import { useTranslation } from '@/hooks/use-translation';
 import { toast } from '@/store/ui-store';
-import type { CompletionRule, WatchProgress } from '@/types/domain';
+import type { Attachment, CompletionRule, WatchProgress } from '@/types/domain';
 
 import { lessonsApi } from './api';
 
@@ -90,4 +92,24 @@ export function evaluateCompletion(
         reachedPercent,
       };
   }
+}
+
+/**
+ * A section's own documents.
+ *
+ * A separate query from a lecture's attachments rather than a filtered view
+ * of one: the API keeps the two scopes apart because they are gated by
+ * different entitlements, and a student needs to see "this section has two
+ * handouts" independently of what its lectures carry.
+ */
+export function useSectionAttachments(sectionId: string | null, enabled = true) {
+  return useQuery({
+    queryKey: qk.courses.sectionAttachments(sectionId ?? 'none'),
+    queryFn: ({ signal }) =>
+      api.get<Attachment[]>(Endpoints.sections.attachments(sectionId!), undefined, {
+        signal,
+      }),
+    enabled: !!sectionId && enabled,
+    staleTime: 60_000,
+  });
 }

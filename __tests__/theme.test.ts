@@ -109,3 +109,52 @@ describe('contrast (WCAG AA)', () => {
     expect(contrast(fg, bg)).toBeGreaterThanOrEqual(min);
   });
 });
+
+/**
+ * Dark mode has to stay complete, not just start complete.
+ *
+ * The test above already pins palette.ts against global.css. This one pins the
+ * other failure mode: a token added to `:root` and forgotten under `.dark`.
+ * That does not break the build and does not break light mode — it produces
+ * one element that is unreadable in dark mode and nowhere else, which is
+ * exactly the kind of report that is hard to chase down after the fact.
+ */
+describe('every colour token is defined for both themes', () => {
+  const css = fs.readFileSync(
+    path.join(__dirname, '..', 'src', 'theme', 'global.css'),
+    'utf8'
+  );
+
+  function varsIn(pattern: RegExp): Set<string> {
+    const block = pattern.exec(css);
+    // Thrown rather than `expect`ed and then non-null asserted: under
+    // `noUncheckedIndexedAccess` the capture group is `string | undefined`
+    // whatever the assertion said, and a throw narrows it honestly.
+    if (!block) throw new Error(`no CSS block matched ${String(pattern)}`);
+    const body = block[1];
+    if (body === undefined) throw new Error('the CSS block captured no body');
+    const names = body.match(/--color-[a-z-]+(?=\s*:)/g) ?? [];
+    return new Set(names);
+  }
+
+  const light = varsIn(/:root\s*\{([\s\S]*?)\}/);
+  const dark = varsIn(/\.dark:root,\s*\.dark\s*\{([\s\S]*?)\}/);
+
+  it('defines at least the full semantic set in light mode', () => {
+    // A floor rather than an exact number, so adding a token is not a test
+    // failure — only forgetting its dark counterpart is.
+    expect(light.size).toBeGreaterThanOrEqual(20);
+  });
+
+  it('rebinds every light token under .dark', () => {
+    const missing = [...light].filter((name) => !dark.has(name));
+    expect(missing).toEqual([]);
+  });
+
+  it('introduces no dark-only token', () => {
+    // A token that exists only under `.dark` resolves to nothing in light
+    // mode, which is the same bug pointing the other way.
+    const extra = [...dark].filter((name) => !light.has(name));
+    expect(extra).toEqual([]);
+  });
+});

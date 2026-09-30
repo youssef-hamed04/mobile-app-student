@@ -108,6 +108,11 @@ const KNOWN_CODES = new Set<string>([
   'CONCURRENT_STREAM_LIMIT','VIDEO_NOT_READY','VIDEO_UNAVAILABLE','CAPTURE_DETECTED',
   'INSUFFICIENT_CREDIT','WALLET_LOCKED','AMOUNT_BELOW_MINIMUM','CODE_NOT_RECHARGEABLE',
   'CONFLICT','INVALID_STATE','STORAGE_UNAVAILABLE','UPLOAD_FAILED','INSUFFICIENT_ROLE',
+  // Both would otherwise fall through the status table and lose their meaning:
+  // VIDEO_WATCH_LIMIT_REACHED is 403 and would read as a flat FORBIDDEN,
+  // VIDEO_PROCESSING_FAILED is 409 and would read as VALIDATION_ERROR — as
+  // though the student had sent something malformed.
+  'VIDEO_WATCH_LIMIT_REACHED','VIDEO_PROCESSING_FAILED',
 ]);
 
 export function toApiError(status: number, body: unknown): ApiError {

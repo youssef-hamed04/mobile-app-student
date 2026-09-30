@@ -3,6 +3,7 @@ import { Endpoints } from '@/api/endpoints';
 import type { Paginated } from '@/types/api';
 import type {
   CodeValidation,
+  CourseJoinOptions,
   CoursePartPurchase,
   CoursePartsResponse,
 } from '@/types/domain';
@@ -28,6 +29,19 @@ export const coursePartsApi = {
    */
   forCourse: (courseId: string, signal?: AbortSignal) =>
     api.get<CoursePartsResponse>(Endpoints.courses.parts(courseId), undefined, {
+      signal,
+    }),
+
+  /**
+   * The JOIN sheet's whole payload.
+   *
+   * Separate from `forCourse` because it answers a different question: not
+   * "what are the parts" but "what can I buy, and how". It carries the
+   * whole-course option alongside the parts so the student can compare the two
+   * without the app computing a course price of its own.
+   */
+  joinOptions: (courseId: string, signal?: AbortSignal) =>
+    api.get<CourseJoinOptions>(Endpoints.courses.joinOptions(courseId), undefined, {
       signal,
     }),
 

@@ -70,7 +70,7 @@ export const Input = React.forwardRef<TextInput, InputProps>(function Input(
   },
   ref
 ) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { t } = useTranslation();
   const isRTL = useLanguageStore((s) => s.isRTL);
   const [focused, setFocused] = React.useState(false);
@@ -129,6 +129,11 @@ export const Input = React.forwardRef<TextInput, InputProps>(function Input(
           placeholderTextColor={colors.subtle}
           selectionColor={colors.primary}
           cursorColor={colors.primary}
+          // The keyboard is a native surface and follows the platform
+          // appearance, which now tracks the app's resolved theme. Stating it
+          // explicitly means a light keyboard never appears under a dark
+          // field while the OS and the in-app preference disagree.
+          keyboardAppearance={isDark ? 'dark' : 'light'}
           accessibilityLabel={label}
           accessibilityHint={describedBy}
           accessibilityState={{ disabled: !editable }}

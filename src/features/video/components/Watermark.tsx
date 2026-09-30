@@ -146,34 +146,65 @@ export function Watermark({ payload, width, height, active = true }: WatermarkPr
       {/* Layer 1 — faint static tiling. Survives cropping of the moving mark. */}
       <TiledLayer payload={payload} width={width} height={height} />
 
-      {/* Layer 2 — prominent moving mark. */}
-      <Animated.View style={[{ position: 'absolute', maxWidth: 220 }, style]}>
-        <Text
-          variant="caption"
-          className="text-white"
+      {/* Layer 2 — prominent moving mark.
+       *
+       * Now on a translucent plate rather than floating text with a shadow.
+       * A drop shadow is a compromise that only half works: over a bright
+       * frame the white text washes out, and the student cannot read their
+       * own code — which is the one thing this layer has to be legible for,
+       * since it is what they are asked to quote when reporting a problem.
+       *
+       * The plate is deliberately restrained rather than opaque: dark enough
+       * to hold white text against any frame, light enough not to become a
+       * box the eye keeps returning to. The shadows stay, because the plate
+       * is semi-transparent and a bright frame can still show through it.
+       *
+       * Opacity is NOT raised here — `payload.opacity` from the server still
+       * governs the whole layer, so this changes readability, not how
+       * prominent the anti-sharing mark is. Nothing about the forensic
+       * behaviour changes: same payload, same movement, same interval, still
+       * inside the secure surface and still above every control. */}
+      <Animated.View style={[{ position: 'absolute', maxWidth: 240 }, style]}>
+        <View
+          className="rounded-md px-2 py-1"
           style={{
-            textShadowColor: 'rgba(0,0,0,0.85)',
-            textShadowOffset: { width: 0, height: 1 },
-            textShadowRadius: 3,
+            backgroundColor: 'rgba(0,0,0,0.42)',
+            borderWidth: 1,
+            borderColor: 'rgba(255,255,255,0.18)',
           }}
-          numberOfLines={1}
         >
-          {payload.primary}
-        </Text>
-        <Text
-          variant="caption"
-          className="text-white"
-          forceLatin
-          style={{
-            fontSize: 10,
-            textShadowColor: 'rgba(0,0,0,0.85)',
-            textShadowOffset: { width: 0, height: 1 },
-            textShadowRadius: 3,
-          }}
-          numberOfLines={1}
-        >
-          {payload.secondary} · {timeLabel}
-        </Text>
+          <Text
+            variant="caption"
+            className="text-white"
+            style={{
+              textShadowColor: 'rgba(0,0,0,0.85)',
+              textShadowOffset: { width: 0, height: 1 },
+              textShadowRadius: 3,
+            }}
+            numberOfLines={1}
+          >
+            {payload.primary}
+          </Text>
+          <Text
+            variant="caption"
+            className="text-white"
+            forceLatin
+            style={{
+              // Was 10. The student code is the part they are asked to read
+              // aloud or type into a support ticket, and 10pt on a moving
+              // translucent layer is not a size anyone reads reliably.
+              fontSize: 11,
+              fontVariant: ['tabular-nums'],
+              letterSpacing: 0.4,
+              textShadowColor: 'rgba(0,0,0,0.85)',
+              textShadowOffset: { width: 0, height: 1 },
+              textShadowRadius: 3,
+            }}
+            numberOfLines={1}
+          >
+            {payload.secondary} · {timeLabel}
+          </Text>
+        </View>
       </Animated.View>
     </View>
   );

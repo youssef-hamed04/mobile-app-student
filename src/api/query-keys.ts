@@ -46,6 +46,14 @@ export const qk = {
     progress: (id: string) => [...qk.courses.all, 'progress', id] as const,
     /** Nested under the course so redeeming a card invalidates both at once. */
     parts: (id: string) => [...qk.courses.all, 'parts', id] as const,
+    /** Also nested, so a redemption refreshes the JOIN sheet's prices too. */
+    joinOptions: (id: string) => [...qk.courses.all, 'join-options', id] as const,
+    /** A section's own documents, separate from any lecture's. */
+    sectionAttachments: (id: string) =>
+      [...qk.courses.all, 'section-attachments', id] as const,
+    /** Plays remaining on one video. Invalidated when a ticket is issued. */
+    playAllowance: (videoId: string) =>
+      [...qk.courses.all, 'play-allowance', videoId] as const,
     myParts: (filters: object) => [...qk.courses.all, 'my-parts', filters] as const,
   },
 

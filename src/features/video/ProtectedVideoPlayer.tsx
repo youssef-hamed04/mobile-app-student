@@ -1,4 +1,3 @@
-import { SecureContentView, capabilities } from '@modules/content-protection';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { VideoView, useVideoPlayer, type VideoSource } from 'expo-video';
 import * as React from 'react';
@@ -9,7 +8,11 @@ import { ErrorState } from '@/components/ui/ErrorState';
 import { Icon } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
-import { CONTROLS_HIDE_DELAY_MS, RESUME_IGNORE_TAIL_SECONDS, RESUME_PROMPT_MIN_SECONDS } from '@/constants';
+import {
+  CONTROLS_HIDE_DELAY_MS,
+  RESUME_IGNORE_TAIL_SECONDS,
+  RESUME_PROMPT_MIN_SECONDS,
+} from '@/constants';
 import { useProtectedScreen } from '@/hooks/use-content-protection';
 import { useNetwork } from '@/hooks/use-network';
 import { useTranslation } from '@/hooks/use-translation';
@@ -17,10 +20,12 @@ import { createLogger } from '@/services/logger';
 import { usePlayerStore, type QualityLevel } from '@/store/player-store';
 import type { CompletionRule } from '@/types/domain';
 import { formatTimecode } from '@/utils/format';
+import { SecureContentView, capabilities } from '@modules/content-protection';
 
 import { PlayerControls } from './components/PlayerControls';
 import { PlayerSettingsSheet } from './components/PlayerSettingsSheet';
 import { Watermark } from './components/Watermark';
+import { usePlayAllowance } from './usePlayAllowance';
 import { usePlaybackTicket } from './usePlaybackTicket';
 import { useWatchProgress } from './useWatchProgress';
 
@@ -110,7 +115,17 @@ export function ProtectedVideoPlayer({
   const ticketState = usePlaybackTicket(videoId, { enabled: !surfaceUnavailable });
   const { ticket, phase, error, reload, reportPosition } = ticketState;
 
-  const progress = useWatchProgress(lessonId, courseId, completionRule, reportPosition);
+  // Plays remaining, for the warning below. Read once the grant is live, so a
+  // student who cannot play the video at all is not told how many plays they
+  // have left of something they cannot watch.
+  const allowance = usePlayAllowance(videoId, phase === 'ready');
+
+  const progress = useWatchProgress(
+    lessonId,
+    courseId,
+    completionRule,
+    reportPosition
+  );
 
   // ---- protection -------------------------------------------------------
 
@@ -169,7 +184,14 @@ export function ProtectedVideoPlayer({
           : undefined,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ticket, preferredQuality, dataSaver, network.metered, activeCaption, reloadKey]);
+  }, [
+    ticket,
+    preferredQuality,
+    dataSaver,
+    network.metered,
+    activeCaption,
+    reloadKey,
+  ]);
 
   const player = useVideoPlayer(source, (p) => {
     p.timeUpdateEventInterval = 1;
@@ -195,7 +217,10 @@ export function ProtectedVideoPlayer({
   const lastPositionRef = React.useRef(0);
   const wasPlayingRef = React.useRef(false);
   const mutedRef = React.useRef(false);
-  const pendingRestoreRef = React.useRef<{ position: number; play: boolean } | null>(null);
+  const pendingRestoreRef = React.useRef<{
+    position: number;
+    play: boolean;
+  } | null>(null);
   const firstPlayerRef = React.useRef(player);
 
   React.useEffect(() => {
@@ -337,7 +362,10 @@ export function ProtectedVideoPlayer({
   const bumpControls = React.useCallback(() => {
     setControlsVisible(true);
     if (hideTimer.current) clearTimeout(hideTimer.current);
-    hideTimer.current = setTimeout(() => setControlsVisible(false), CONTROLS_HIDE_DELAY_MS);
+    hideTimer.current = setTimeout(
+      () => setControlsVisible(false),
+      CONTROLS_HIDE_DELAY_MS
+    );
   }, []);
 
   React.useEffect(() => {
@@ -425,6 +453,28 @@ export function ProtectedVideoPlayer({
   }
 
   if (phase === 'expired') {
+    // The hook reaches `expired` for four different reasons and stores the
+    // one that applies — a lapsed ticket, a revoked session, an unbound
+    // device, a stream still open elsewhere. Showing "your session expired"
+    // for all four told a student to reload when the real answer was "this
+    // video is open on another device". So the specific message wins, and the
+    // lapsed-ticket copy is the fallback rather than the default.
+    if (error && error.code !== 'PLAYBACK_TICKET_EXPIRED') {
+      return (
+        <View className="flex-1 justify-center bg-black">
+          <ErrorState
+            error={error}
+            onRetry={() => {
+              setReloadKey((k) => k + 1);
+              reload();
+            }}
+            onSecondary={onClose}
+            secondaryLabel={t('common.close')}
+          />
+        </View>
+      );
+    }
+
     return (
       <Blocked
         title={t('player.ticketExpired')}
@@ -440,15 +490,28 @@ export function ProtectedVideoPlayer({
   }
 
   if (playerFailed) {
+    // The one screen that really was generic, and the reason a refusal from
+    // the media edge reads as "something went wrong".
+    //
+    // A decoder fault and a segment the gate refused arrive here identically:
+    // the player reports a failure and nothing about it says whether the
+    // student's session was revoked, their device unbound, or the file simply
+    // will not decode. The player cannot know — but the SERVER can be asked,
+    // and `reload()` does exactly that by re-issuing a ticket. So the failure
+    // now re-authorizes first: if the reason is an authorization one the hook
+    // moves to `denied` with the real code and the branch above renders it,
+    // and only a failure that survives re-authorization is reported as a
+    // playback fault.
     return (
       <Blocked
-        title={t('errors.title')}
-        body={t('errors.genericBody')}
+        title={t('player.playbackFailed')}
+        body={t('player.playbackFailedBody')}
         actionLabel={t('player.reload')}
         onAction={() => {
           setPlayerFailed(false);
           // A fresh ticket re-signs the manifest; the position is restored by
-          // the continuity logic above.
+          // the continuity logic above. It is also the only way to learn
+          // whether the gate is refusing us.
           reload();
         }}
         onClose={onClose}
@@ -470,113 +533,160 @@ export function ProtectedVideoPlayer({
   const surfaceWidth = width;
   const surfaceHeight = isFullscreen ? height : Math.round(width * (9 / 16));
 
+  const toggleControls = () =>
+    controlsVisible ? setControlsVisible(false) : bumpControls();
+
   return (
-    <View className="flex-1 bg-black">
-      {/* Everything visual lives inside the secure surface, including the
-          watermark and the controls, so a capture cannot catch the frame
-          with the watermark stripped. */}
-      <SecureContentView
-        enabled
-        style={{ width: surfaceWidth, height: surfaceHeight, backgroundColor: '#000' }}
+    // `justify-center` is the fix for the video sitting flush against the top
+    // of the screen with a black gap beneath it. At 16:9 on a 19.5:9 handset
+    // the surface is a band, and where that band sits is a choice — centring
+    // it puts the picture where the eye already is and makes the letterboxing
+    // symmetrical instead of looking like a layout bug. Fullscreen is
+    // unaffected: the surface fills the screen, so there is nothing to centre.
+    <View className="flex-1 justify-center bg-black">
+      {/* The tap target is the WHOLE screen, not just the video band.
+          
+          This is why the controls seemed to need a press "very close to the
+          bottom". The Pressable used to live inside the secure surface, so it
+          covered the 16:9 band and nothing else — on a tall phone that is
+          barely half the screen, and every tap in the black space around it
+          fell on nothing at all. Moving it out makes the entire area
+          toggle, which is what "tap anywhere" has to mean.
+
+          The visual chrome stays inside SecureContentView below: the
+          watermark and the controls must be captured with the frame, and
+          moving them out here would let a screenshot catch the picture with
+          the watermark stripped off. Only the touch handling moved. */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={t('a11y.videoPlayer')}
+        onPress={toggleControls}
+        style={{ flex: 1, justifyContent: 'center' }}
       >
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={t('a11y.videoPlayer')}
-          onPress={() => (controlsVisible ? setControlsVisible(false) : bumpControls())}
-          style={{ width: '100%', height: '100%' }}
+        <SecureContentView
+          enabled
+          style={{
+            width: surfaceWidth,
+            height: surfaceHeight,
+            backgroundColor: '#000',
+          }}
         >
-          <VideoView
-            player={player}
-            style={{ width: '100%', height: '100%' }}
-            contentFit="contain"
-            nativeControls={false}
-            // Both are hard-disabled: either would move protected frames
-            // outside the secure surface.
-            allowsPictureInPicture={false}
-            fullscreenOptions={{ enable: false }}
-            allowsVideoFrameAnalysis={false}
-            accessible={false}
-          />
+          <View style={{ width: '100%', height: '100%' }}>
+            <VideoView
+              player={player}
+              style={{ width: '100%', height: '100%' }}
+              contentFit="contain"
+              nativeControls={false}
+              // Both are hard-disabled: either would move protected frames
+              // outside the secure surface.
+              allowsPictureInPicture={false}
+              fullscreenOptions={{ enable: false }}
+              allowsVideoFrameAnalysis={false}
+              accessible={false}
+            />
 
-          <PlayerControls
-            playing={playing}
-            buffering={buffering || phase === 'refreshing'}
-            position={position}
-            duration={duration || ticket.resumePositionSeconds}
-            muted={muted}
-            fullscreen={isFullscreen}
-            visible={controlsVisible && resumePrompt === null}
-            hasCaptions={ticket.captions.length > 0}
-            title={title}
-            subtitle={subtitle}
-            onPlayPause={() => {
-              bumpControls();
-              if (playing) {
-                player.pause();
+            <PlayerControls
+              playing={playing}
+              buffering={buffering || phase === 'refreshing'}
+              position={position}
+              duration={duration || ticket.resumePositionSeconds}
+              muted={muted}
+              fullscreen={isFullscreen}
+              visible={controlsVisible && resumePrompt === null}
+              hasCaptions={ticket.captions.length > 0}
+              title={title}
+              subtitle={subtitle}
+              onPlayPause={() => {
+                bumpControls();
+                if (playing) {
+                  player.pause();
+                  void progress.flush(position);
+                } else {
+                  player.play();
+                }
+              }}
+              onSeek={(v) => {
+                bumpControls();
+                player.currentTime = v;
+              }}
+              onSeekBy={(delta) => {
+                bumpControls();
+                player.seekBy(delta);
+              }}
+              onToggleMute={() => {
+                bumpControls();
+                const next = !muted;
+                setMuted(next);
+                mutedRef.current = next;
+                player.muted = next;
+              }}
+              onToggleFullscreen={() => void toggleFullscreen()}
+              onOpenSettings={() => {
+                bumpControls();
+                setSettingsOpen(true);
+              }}
+              onClose={() => {
                 void progress.flush(position);
-              } else {
-                player.play();
-              }
-            }}
-            onSeek={(v) => {
-              bumpControls();
-              player.currentTime = v;
-            }}
-            onSeekBy={(delta) => {
-              bumpControls();
-              player.seekBy(delta);
-            }}
-            onToggleMute={() => {
-              bumpControls();
-              const next = !muted;
-              setMuted(next);
-              mutedRef.current = next;
-              player.muted = next;
-            }}
-            onToggleFullscreen={() => void toggleFullscreen()}
-            onOpenSettings={() => {
-              bumpControls();
-              setSettingsOpen(true);
-            }}
-            onClose={() => {
-              void progress.flush(position);
-              onClose();
-            }}
-          />
+                onClose();
+              }}
+            />
 
-          {/* Rendered last → paints above the controls. */}
-          <Watermark
-            payload={ticket.watermark}
-            width={surfaceWidth}
-            height={surfaceHeight}
-            active
-          />
+            {/* Rendered last → paints above the controls. */}
+            <Watermark
+              payload={ticket.watermark}
+              width={surfaceWidth}
+              height={surfaceHeight}
+              active
+            />
 
-          {resumePrompt !== null ? (
-            <View className="absolute inset-0 items-center justify-center bg-black/80 px-8">
-              <Text variant="title" className="text-center text-white">
-                {t('player.resumePrompt', { time: formatTimecode(resumePrompt) })}
-              </Text>
-              <View className="mt-5 flex-row gap-3">
-                <Button label={t('player.resume')} onPress={acceptResume} />
-                <Button
-                  label={t('player.startOver')}
-                  variant="secondary"
-                  onPress={declineResume}
-                />
+            {resumePrompt !== null ? (
+              <View className="absolute inset-0 items-center justify-center bg-black/80 px-8">
+                <Text variant="title" className="text-center text-white">
+                  {t('player.resumePrompt', { time: formatTimecode(resumePrompt) })}
+                </Text>
+                <View className="mt-5 flex-row gap-3">
+                  <Button label={t('player.resume')} onPress={acceptResume} />
+                  <Button
+                    label={t('player.startOver')}
+                    variant="secondary"
+                    onPress={declineResume}
+                  />
+                </View>
               </View>
-            </View>
-          ) : null}
+            ) : null}
 
-          {network.connected === false ? (
-            <View className="absolute inset-x-0 top-0 items-center bg-accent py-1">
-              <Text variant="caption" className="text-accent-fg">
-                {t('network.offlineBanner')}
-              </Text>
-            </View>
-          ) : null}
-        </Pressable>
-      </SecureContentView>
+            {network.connected === false ? (
+              <View className="absolute inset-x-0 top-0 items-center bg-accent py-1">
+                <Text variant="caption" className="text-accent-fg">
+                  {t('network.offlineBanner')}
+                </Text>
+              </View>
+            ) : allowance.data && allowance.data.remaining <= 1 ? (
+              /* The last-play warning.
+               *
+               * Shown only on the final play, and only while the video is
+               * actually playing — a count on every video every time would be
+               * noise, and the number a student needs is "this is the last
+               * one", not "3 of 3".
+               *
+               * Suppressed while offline, because the banner above is the
+               * more urgent message and two stacked banners read as neither.
+               *
+               * This is advisory. The limit is enforced server-side when the
+               * ticket is issued, so a student who never sees this banner is
+               * limited identically — the warning exists so the refusal is
+               * not a surprise, not to do the enforcing. */
+              <View className="absolute inset-x-0 top-0 items-center bg-warning py-1">
+                <Text variant="caption" className="text-black">
+                  {allowance.data.remaining <= 0
+                    ? t('player.playsExhausted')
+                    : t('player.lastPlayWarning')}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+        </SecureContentView>
+      </Pressable>
 
       <PlayerSettingsSheet
         visible={settingsOpen}
@@ -616,7 +726,10 @@ function Blocked({
       <Text variant="h3" className="text-center text-white">
         {title}
       </Text>
-      <Text variant="caption" className="mt-2 max-w-[320px] text-center text-white/70">
+      <Text
+        variant="caption"
+        className="mt-2 max-w-[320px] text-center text-white/70"
+      >
         {body}
       </Text>
 

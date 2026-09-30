@@ -220,6 +220,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'android.permission.WRITE_EXTERNAL_STORAGE',
     ],
     allowBackup: false,
+    // The window shrinks when the keyboard opens, so a focused field is never
+    // left underneath it. Expo's default is already 'resize', but it was
+    // unstated here and Screen.tsx's KeyboardAvoidingView now depends on it:
+    // with 'pan' the view would be translated AND resized, double-compensating.
+    softwareKeyboardLayoutMode: 'resize',
   },
 
   plugins: [

@@ -27,6 +27,8 @@ const ICON_FOR: Partial<Record<ApiError['code'], IconName>> = {
   FORBIDDEN: 'lock',
   CAPTURE_DETECTED: 'shieldAlert',
   PLAYBACK_DENIED: 'lock',
+  VIDEO_WATCH_LIMIT_REACHED: 'clock',
+  VIDEO_PROCESSING_FAILED: 'error',
 };
 
 export interface ErrorStateProps {

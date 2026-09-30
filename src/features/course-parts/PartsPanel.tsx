@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View } from 'react-native';
+import { Image, View } from 'react-native';
 
 import { SectionHeader } from '@/components/layout/SectionHeader';
 import { Badge } from '@/components/ui/Badge';
@@ -122,6 +122,19 @@ function PartRow({ part }: { part: CoursePart }) {
     <Card>
       <CardBody className="gap-2">
         <View className="flex-row items-start justify-between gap-3">
+          {/* The part's thumbnail, or the course's when it has none of its
+              own — the server resolves which, so there is no fallback logic
+              here to drift from the backend's. Rendered at a fixed size so a
+              part with no image and one with a tall image line up. */}
+          {part.thumbnailUrl ? (
+            <Image
+              source={{ uri: part.thumbnailUrl }}
+              className="h-12 w-16 rounded-md"
+              resizeMode="cover"
+              accessible={false}
+            />
+          ) : null}
+
           <View className="flex-1 gap-1">
             <Text variant="label" numberOfLines={2}>
               {title}
