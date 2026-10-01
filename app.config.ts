@@ -33,7 +33,14 @@ const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID || 'f5f88e33-01f3-4049-ae16-6c
  */
 function assertProductionEnv() {
   if (process.env.EXPO_PUBLIC_ENV !== 'production') return;
-  if (process.env.EAS_BUILD !== 'true' && process.env.EXPO_PUBLIC_API_URL === undefined) return;
+  // Only on the EAS build worker, where every variable of the EAS environment
+  // is present — including ones with "secret" visibility. When `eas build`
+  // reads this config on your own machine first, secret variables are not
+  // downloaded and .env files are not loaded, so checking there refuses a
+  // correctly configured build (`expo config --json exited with non-zero
+  // code: 1`). A misconfigured build still fails, on the worker, with this
+  // message in the build log.
+  if (process.env.EAS_BUILD !== 'true') return;
 
   const problems: string[] = [];
   const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? '';

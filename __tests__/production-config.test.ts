@@ -111,6 +111,18 @@ describe('production build guard', () => {
     ).toThrow(/EXPO_PUBLIC_PRIVACY_POLICY_URL must use https/);
   });
 
+  it('does not block the local config read that `eas build` does before uploading', () => {
+    // Secret EAS variables are not available locally, and dotenv is off.
+    expect(() =>
+      loadConfig({
+        EAS_BUILD: undefined,
+        EXPO_PUBLIC_SUPPORT_PHONE: undefined,
+        EXPO_PUBLIC_SUPPORT_WHATSAPP: undefined,
+        EXPO_PUBLIC_SUPPORT_EMAIL: undefined,
+      })
+    ).not.toThrow();
+  });
+
   it('does not apply to non-production variants', () => {
     expect(() =>
       loadConfig({ EXPO_PUBLIC_ENV: 'staging', APP_VARIANT: 'staging', EXPO_PUBLIC_TERMS_URL: undefined })
