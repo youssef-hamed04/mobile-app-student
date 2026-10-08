@@ -182,7 +182,7 @@ export default function CoursesScreen() {
             loading={universities.isLoading}
           />
           <Select
-            label={t('courses.filterYear')}
+            label={user?.department?.studyType === 'PROGRAMS' ? t('auth.level') : t('courses.filterYear')}
             value={academicYearId}
             options={years.data ?? []}
             onChange={setAcademicYearId}

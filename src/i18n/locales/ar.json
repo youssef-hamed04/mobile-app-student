@@ -59,6 +59,11 @@
     "showLess": "عرض أقل"
   },
   "auth": {
+    "studyType": "نوع الدراسة",
+    "general": "عام",
+    "programs": "برامج",
+    "program": "البرنامج",
+    "level": "المستوى",
     "welcomeBack": "أهلًا بعودتك",
     "loginSubtitle": "سجّل الدخول لمتابعة التعلّم",
     "login": "تسجيل الدخول",

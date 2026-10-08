@@ -25,6 +25,7 @@ export interface LoginPayload {
 }
 
 export interface RegisterPayload {
+  studyType: 'GENERAL' | 'PROGRAMS';
   fullName: string;
   phone: string;
   password: string;
@@ -58,7 +59,7 @@ export const catalogApi = {
     api.get<Faculty[]>(Endpoints.catalog.faculties(universityId), undefined, {
       anonymous: true,
     }),
-  departments: (facultyId: string, studyType?: string) =>
+  departments: (facultyId: string, studyType?: 'GENERAL' | 'PROGRAMS') =>
     api.get<Department[]>(
       `${Endpoints.catalog.departments(facultyId)}${studyType ? `?studyType=${studyType}` : ''}`,
       undefined,

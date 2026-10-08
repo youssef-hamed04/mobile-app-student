@@ -247,8 +247,8 @@ route('GET', '/catalog/universities', () => universities);
 route('GET', '/catalog/universities/:id/faculties', ({ params }) =>
   faculties.filter((f) => f.universityId === params.id)
 );
-route('GET', '/catalog/faculties/:id/departments', ({ params }) =>
-  departments.filter((d) => d.facultyId === params.id)
+route('GET', '/catalog/faculties/:id/departments', ({ params, query }) =>
+  departments.filter((d) => d.facultyId === params.id && (!query.studyType || (d.studyType ?? 'GENERAL') === query.studyType))
 );
 route('GET', '/catalog/academic-years', () => academicYears);
 

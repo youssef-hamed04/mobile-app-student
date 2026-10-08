@@ -91,6 +91,7 @@ export const registerAcademicSchema = z.object({
 });
 
 export const registerSchema = z.object({
+  studyType: z.enum(['GENERAL', 'PROGRAMS']),
   fullName: fullNameSchema,
   phone: phoneSchema,
   password: passwordSchema,

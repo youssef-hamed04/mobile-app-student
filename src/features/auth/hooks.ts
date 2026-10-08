@@ -40,7 +40,7 @@ export function useFaculties(universityId: string | null) {
   });
 }
 
-export function useDepartments(facultyId: string | null, studyType?: string) {
+export function useDepartments(facultyId: string | null, studyType?: 'GENERAL' | 'PROGRAMS') {
   const { language } = useTranslation();
 
   return useQuery({

@@ -96,13 +96,12 @@ export default function RegisterScreen() {
 
   const universityId = academicForm.watch('universityId');
   const facultyId = academicForm.watch('facultyId');
-  const [studyType, setStudyType] = React.useState<'GENERAL' | 'PROGRAMS' | ''>('');
+  const studyType = academicForm.watch('studyType');
   const departmentId = academicForm.watch('departmentId');
   React.useEffect(() => {
-    academicForm.setValue('studyType', studyType as 'GENERAL' | 'PROGRAMS');
     academicForm.setValue('departmentId', '');
     academicForm.setValue('academicYearId', '');
-  }, [studyType, facultyId, academicForm]);
+  }, [studyType, academicForm]);
   React.useEffect(() => {
     academicForm.setValue('academicYearId', '');
   }, [departmentId, academicForm]);
@@ -125,6 +124,8 @@ export default function RegisterScreen() {
 
   React.useEffect(() => {
     academicForm.setValue('departmentId', '');
+    academicForm.setValue('studyType', undefined as unknown as 'GENERAL' | 'PROGRAMS');
+    academicForm.setValue('academicYearId', '');
   }, [facultyId, academicForm]);
 
   const goNext = async () => {
@@ -377,13 +378,14 @@ export default function RegisterScreen() {
             />
 
             <Select
-              label="Study type / نوع الدراسة"
+              label={t('auth.studyType')}
+              error={academicErrors.translate(academicForm.formState.errors.studyType?.message)}
               value={studyType || null}
-              onChange={(value) => setStudyType(value as 'GENERAL' | 'PROGRAMS')}
+              onChange={(value) => academicForm.setValue('studyType', value as 'GENERAL' | 'PROGRAMS', { shouldValidate: true })}
               disabled={!facultyId}
               options={[
-                { value: 'GENERAL', label: 'General / عام' },
-                { value: 'PROGRAMS', label: 'Programs / برامج' },
+                { value: 'GENERAL', label: t('auth.general') },
+                { value: 'PROGRAMS', label: t('auth.programs') },
               ]}
               required
               onPlate
@@ -395,14 +397,14 @@ export default function RegisterScreen() {
                 <Select
                   label={
                     studyType === 'PROGRAMS'
-                      ? 'Program / البرنامج'
+                      ? t('auth.program')
                       : t('auth.department')
                   }
                   value={field.value || null}
                   options={departments.data ?? []}
                   onChange={field.onChange}
                   loading={departments.isFetching}
-                  disabled={!facultyId}
+                  disabled={!facultyId || !studyType}
                   emptyMessage={t('courses.empty.listBody')}
                   error={academicErrors.translate(
                     academicForm.formState.errors.departmentId?.message
@@ -420,7 +422,7 @@ export default function RegisterScreen() {
                 <Select
                   label={
                     studyType === 'PROGRAMS'
-                      ? 'Level / المستوى'
+                      ? t('auth.level')
                       : t('auth.academicYear')
                   }
                   value={field.value || null}
@@ -493,9 +495,9 @@ export default function RegisterScreen() {
                 value={labelFor(faculties.data, values.facultyId)}
               />
               <ListItem
-                title="Study type / نوع الدراسة"
+                title={t('auth.studyType')}
                 value={
-                  studyType === 'PROGRAMS' ? 'Programs / برامج' : 'General / عام'
+                  studyType === 'PROGRAMS' ? t('auth.programs') : t('auth.general')
                 }
               />
               <ListItem

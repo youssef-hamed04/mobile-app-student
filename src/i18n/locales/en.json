@@ -51,6 +51,11 @@
     "showLess": "Show less"
   },
   "auth": {
+    "studyType": "Study type",
+    "general": "General",
+    "programs": "Programs",
+    "program": "Program",
+    "level": "Level",
     "welcomeBack": "Welcome back",
     "loginSubtitle": "Sign in to continue learning",
     "login": "Sign in",

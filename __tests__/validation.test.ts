@@ -7,6 +7,7 @@ import {
   passwordStrength,
   phoneSchema,
   registerAccountSchema,
+  registerAcademicSchema,
 } from '@/features/auth/schemas';
 
 describe('phone', () => {
@@ -108,5 +109,16 @@ describe('access code', () => {
     expect(accessCodeSchema.parse({ code: '  dsa1-2026-abcd ' }).code).toBe(
       'DSA1-2026-ABCD'
     );
+  });
+});
+
+
+describe('academic study type', () => {
+  const input = { universityId: 'mansoura', facultyId: 'engineering', departmentId: 'civil', academicYearId: 'second', gender: 'MALE' };
+  it.each(['GENERAL', 'PROGRAMS'])('sends the selected %s study type', (studyType) => {
+    expect(registerAcademicSchema.parse({ ...input, studyType }).studyType).toBe(studyType);
+  });
+  it.each([undefined, '', 'OTHER', ['GENERAL', 'PROGRAMS']])('rejects missing, unknown or multiple types: %s', (studyType) => {
+    expect(registerAcademicSchema.safeParse({ ...input, studyType }).success).toBe(false);
   });
 });

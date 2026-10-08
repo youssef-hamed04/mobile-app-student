@@ -56,6 +56,7 @@ export default function ProfileScreen() {
       </View>
 
       <ListSection title={t('profile.academicInfo')}>
+        <ListItem title={t('auth.studyType')} value={user.department?.studyType === 'PROGRAMS' ? t('auth.programs') : user.department ? t('auth.general') : '—'} />
         <ListItem
           icon="school"
           title={t('auth.university')}
@@ -68,12 +69,12 @@ export default function ProfileScreen() {
         />
         <ListItem
           icon="document"
-          title={t('auth.department')}
+          title={user.department?.studyType === 'PROGRAMS' ? t('auth.program') : t('auth.department')}
           value={localizedName(user.department, language)}
         />
         <ListItem
           icon="calendar"
-          title={t('auth.academicYear')}
+          title={user.department?.studyType === 'PROGRAMS' ? t('auth.level') : t('auth.academicYear')}
           value={localizedName(user.academicYear, language)}
         />
       </ListSection>
