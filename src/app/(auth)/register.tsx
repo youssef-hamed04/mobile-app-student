@@ -47,6 +47,7 @@ interface AccountForm {
 interface AcademicForm {
   universityId: string;
   facultyId: string;
+  studyType: 'GENERAL' | 'PROGRAMS';
   departmentId: string;
   academicYearId: string;
   gender: 'MALE' | 'FEMALE' | '';
@@ -85,6 +86,7 @@ export default function RegisterScreen() {
     defaultValues: {
       universityId: '',
       facultyId: '',
+      studyType: undefined as unknown as 'GENERAL',
       departmentId: '',
       academicYearId: '',
       gender: '',
@@ -94,12 +96,25 @@ export default function RegisterScreen() {
 
   const universityId = academicForm.watch('universityId');
   const facultyId = academicForm.watch('facultyId');
+  const [studyType, setStudyType] = React.useState<'GENERAL' | 'PROGRAMS' | ''>('');
+  const departmentId = academicForm.watch('departmentId');
+  React.useEffect(() => {
+    academicForm.setValue('studyType', studyType as 'GENERAL' | 'PROGRAMS');
+    academicForm.setValue('departmentId', '');
+    academicForm.setValue('academicYearId', '');
+  }, [studyType, facultyId, academicForm]);
+  React.useEffect(() => {
+    academicForm.setValue('academicYearId', '');
+  }, [departmentId, academicForm]);
   const password = accountForm.watch('password');
 
   const universities = useUniversities();
   const faculties = useFaculties(universityId || null);
-  const departments = useDepartments(facultyId || null);
-  const years = useAcademicYears();
+  const departments = useDepartments(
+    studyType ? facultyId || null : null,
+    studyType || undefined
+  );
+  const years = useAcademicYears(departmentId || undefined);
 
   // Clear dependent selections when a parent changes, so the student can
   // never submit a department that doesn't belong to the chosen faculty.
@@ -216,7 +231,9 @@ export default function RegisterScreen() {
 
         {step === 0 ? (
           <View className="gap-4">
-            <Text variant="h3" tone="onHighlight">{t('auth.accountInfo')}</Text>
+            <Text variant="h3" tone="onHighlight">
+              {t('auth.accountInfo')}
+            </Text>
 
             <Controller
               control={accountForm.control}
@@ -231,7 +248,9 @@ export default function RegisterScreen() {
                   onBlur={field.onBlur}
                   error={accountErrors.translate(
                     accountForm.formState.errors.fullName?.message,
-                    messageParams(accountForm.formState.errors.fullName?.message ?? '')
+                    messageParams(
+                      accountForm.formState.errors.fullName?.message ?? ''
+                    )
                   )}
                   autoComplete="name"
                   textContentType="name"
@@ -313,7 +332,9 @@ export default function RegisterScreen() {
 
         {step === 1 ? (
           <View className="gap-4">
-            <Text variant="h3" tone="onHighlight">{t('auth.academicInfo')}</Text>
+            <Text variant="h3" tone="onHighlight">
+              {t('auth.academicInfo')}
+            </Text>
 
             <Controller
               control={academicForm.control}
@@ -355,12 +376,28 @@ export default function RegisterScreen() {
               )}
             />
 
+            <Select
+              label="Study type / نوع الدراسة"
+              value={studyType || null}
+              onChange={(value) => setStudyType(value as 'GENERAL' | 'PROGRAMS')}
+              disabled={!facultyId}
+              options={[
+                { value: 'GENERAL', label: 'General / عام' },
+                { value: 'PROGRAMS', label: 'Programs / برامج' },
+              ]}
+              required
+              onPlate
+            />
             <Controller
               control={academicForm.control}
               name="departmentId"
               render={({ field }) => (
                 <Select
-                  label={t('auth.department')}
+                  label={
+                    studyType === 'PROGRAMS'
+                      ? 'Program / البرنامج'
+                      : t('auth.department')
+                  }
                   value={field.value || null}
                   options={departments.data ?? []}
                   onChange={field.onChange}
@@ -381,9 +418,14 @@ export default function RegisterScreen() {
               name="academicYearId"
               render={({ field }) => (
                 <Select
-                  label={t('auth.academicYear')}
+                  label={
+                    studyType === 'PROGRAMS'
+                      ? 'Level / المستوى'
+                      : t('auth.academicYear')
+                  }
                   value={field.value || null}
-                  options={years.data ?? []}
+                  options={departmentId ? (years.data ?? []) : []}
+                  disabled={!departmentId}
                   onChange={field.onChange}
                   loading={years.isLoading}
                   error={academicErrors.translate(
@@ -400,7 +442,9 @@ export default function RegisterScreen() {
               name="gender"
               render={({ field }) => (
                 <View className="gap-2">
-                  <Text variant="label" tone="onHighlight">{t('auth.gender')}</Text>
+                  <Text variant="label" tone="onHighlight">
+                    {t('auth.gender')}
+                  </Text>
                   <View className="flex-row gap-2">
                     <Chip
                       label={t('auth.male')}
@@ -430,7 +474,9 @@ export default function RegisterScreen() {
 
         {step === 2 ? (
           <View className="gap-4">
-            <Text variant="h3" tone="onHighlight">{t('auth.reviewInfo')}</Text>
+            <Text variant="h3" tone="onHighlight">
+              {t('auth.reviewInfo')}
+            </Text>
             <Text variant="caption" className="text-brand-900">
               {t('auth.reviewNote')}
             </Text>
@@ -447,6 +493,12 @@ export default function RegisterScreen() {
                 value={labelFor(faculties.data, values.facultyId)}
               />
               <ListItem
+                title="Study type / نوع الدراسة"
+                value={
+                  studyType === 'PROGRAMS' ? 'Programs / برامج' : 'General / عام'
+                }
+              />
+              <ListItem
                 title={t('auth.department')}
                 value={labelFor(departments.data, values.departmentId)}
               />
@@ -456,7 +508,9 @@ export default function RegisterScreen() {
               />
               <ListItem
                 title={t('auth.gender')}
-                value={values.gender === 'FEMALE' ? t('auth.female') : t('auth.male')}
+                value={
+                  values.gender === 'FEMALE' ? t('auth.female') : t('auth.male')
+                }
               />
             </View>
 

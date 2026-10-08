@@ -13,10 +13,8 @@ import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
 import { IconButton } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
-import {
-  useAcademicYears,
-  useUniversities,
-} from '@/features/auth/hooks';
+import { useAcademicYears, useUniversities } from '@/features/auth/hooks';
+import { useAuth } from '@/features/auth/AuthProvider';
 import type { CourseFilters } from '@/features/courses/api';
 import { CourseCard } from '@/features/courses/components/CourseCard';
 import { useCourseList } from '@/features/courses/hooks';
@@ -54,7 +52,8 @@ export default function CoursesScreen() {
 
   const query = useCourseList(filters);
   const universities = useUniversities();
-  const years = useAcademicYears();
+  const { user } = useAuth();
+  const years = useAcademicYears(user?.department?.id);
 
   const items = query.data?.items ?? [];
   const activeFilterCount =
@@ -107,7 +106,11 @@ export default function CoursesScreen() {
             onPress={() => setFreeOnly((v) => !v)}
           />
           {activeFilterCount > 0 ? (
-            <Chip label={t('courses.clearFilters')} icon="close" onPress={clearFilters} />
+            <Chip
+              label={t('courses.clearFilters')}
+              icon="close"
+              onPress={clearFilters}
+            />
           ) : null}
         </ChipRow>
       </View>
@@ -138,7 +141,9 @@ export default function CoursesScreen() {
           ListHeaderComponent={
             items.length > 0 ? (
               <Text variant="caption" tone="muted" className="pb-3">
-                {t('courses.resultsCount', { count: query.data?.total ?? items.length })}
+                {t('courses.resultsCount', {
+                  count: query.data?.total ?? items.length,
+                })}
               </Text>
             ) : null
           }
@@ -147,7 +152,9 @@ export default function CoursesScreen() {
               icon="search"
               title={t('courses.empty.listTitle')}
               body={t('courses.empty.listBody')}
-              actionLabel={activeFilterCount > 0 ? t('courses.clearFilters') : undefined}
+              actionLabel={
+                activeFilterCount > 0 ? t('courses.clearFilters') : undefined
+              }
               onAction={activeFilterCount > 0 ? clearFilters : undefined}
             />
           }

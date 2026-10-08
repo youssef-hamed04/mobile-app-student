@@ -40,12 +40,12 @@ export function useFaculties(universityId: string | null) {
   });
 }
 
-export function useDepartments(facultyId: string | null) {
+export function useDepartments(facultyId: string | null, studyType?: string) {
   const { language } = useTranslation();
 
   return useQuery({
-    queryKey: qk.catalog.departments(facultyId ?? 'none'),
-    queryFn: () => catalogApi.departments(facultyId!),
+    queryKey: [...qk.catalog.departments(facultyId ?? 'none'), studyType],
+    queryFn: () => catalogApi.departments(facultyId!, studyType),
     enabled: !!facultyId,
     staleTime: 30 * 60_000,
     select: (list) =>
@@ -53,12 +53,12 @@ export function useDepartments(facultyId: string | null) {
   });
 }
 
-export function useAcademicYears() {
+export function useAcademicYears(departmentId?: string) {
   const { language } = useTranslation();
 
   return useQuery({
-    queryKey: qk.catalog.academicYears(),
-    queryFn: catalogApi.academicYears,
+    queryKey: [...qk.catalog.academicYears(), departmentId],
+    queryFn: () => catalogApi.academicYears(departmentId),
     staleTime: 60 * 60_000,
     select: (list) =>
       [...list]

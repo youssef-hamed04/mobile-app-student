@@ -43,27 +43,37 @@ export const authApi = {
     api.post<AuthResponse>(Endpoints.auth.register, payload, { anonymous: true }),
 
   /** Best-effort: a failed logout must never trap the student in the app. */
-  logout: () => api.post<{ ok: boolean }>(Endpoints.auth.logout, {}, { retries: 0 }),
+  logout: () =>
+    api.post<{ ok: boolean }>(Endpoints.auth.logout, {}, { retries: 0 }),
 
   me: () => api.get<User>(Endpoints.auth.me),
 };
 
 export const catalogApi = {
-  universities: () => api.get<University[]>(Endpoints.catalog.universities, undefined, {
-    anonymous: true,
-  }),
+  universities: () =>
+    api.get<University[]>(Endpoints.catalog.universities, undefined, {
+      anonymous: true,
+    }),
   faculties: (universityId: string) =>
     api.get<Faculty[]>(Endpoints.catalog.faculties(universityId), undefined, {
       anonymous: true,
     }),
-  departments: (facultyId: string) =>
-    api.get<Department[]>(Endpoints.catalog.departments(facultyId), undefined, {
-      anonymous: true,
-    }),
-  academicYears: () =>
-    api.get<AcademicYear[]>(Endpoints.catalog.academicYears, undefined, {
-      anonymous: true,
-    }),
+  departments: (facultyId: string, studyType?: string) =>
+    api.get<Department[]>(
+      `${Endpoints.catalog.departments(facultyId)}${studyType ? `?studyType=${studyType}` : ''}`,
+      undefined,
+      {
+        anonymous: true,
+      }
+    ),
+  academicYears: (departmentId?: string) =>
+    api.get<AcademicYear[]>(
+      `${Endpoints.catalog.academicYears}${departmentId ? `?departmentId=${departmentId}` : ''}`,
+      undefined,
+      {
+        anonymous: true,
+      }
+    ),
 };
 
 export const devicesApi = {

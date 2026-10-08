@@ -10,7 +10,8 @@ import { MIN_NAME_PARTS, MIN_PASSWORD_LENGTH } from '@/constants';
  * server's own field errors can be merged into the same display path.
  */
 
-const nameParts = (value: string) => value.trim().split(/\s+/).filter(Boolean).length;
+const nameParts = (value: string) =>
+  value.trim().split(/\s+/).filter(Boolean).length;
 
 /** Arabic + Latin letters, spaces, and the Arabic tatweel. Nothing else. */
 const NAME_CHARS = /^[\p{Script=Arabic}\p{Script=Latin}\s'’.ـ-]+$/u;
@@ -81,6 +82,7 @@ export const registerAccountSchema = z
   });
 
 export const registerAcademicSchema = z.object({
+  studyType: z.enum(['GENERAL', 'PROGRAMS']),
   universityId: z.string().min(1, 'validation.selectOption'),
   facultyId: z.string().min(1, 'validation.selectOption'),
   departmentId: z.string().min(1, 'validation.selectOption'),

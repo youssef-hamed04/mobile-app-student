@@ -22,6 +22,7 @@ export interface Faculty {
 }
 
 export interface Department {
+  studyType?: 'GENERAL' | 'PROGRAMS';
   id: string;
   facultyId: string;
   name: string;
@@ -432,12 +433,7 @@ export interface HomeFeed {
  * should be inert rather than pretending to be tappable.
  */
 export type AdTargetType =
-  | 'NONE'
-  | 'COURSE'
-  | 'SECTION'
-  | 'LESSON'
-  | 'EXTERNAL_URL'
-  | 'APP_SCREEN';
+  'NONE' | 'COURSE' | 'SECTION' | 'LESSON' | 'EXTERNAL_URL' | 'APP_SCREEN';
 
 export interface AdTarget {
   type: AdTargetType;
@@ -825,12 +821,7 @@ export interface LibraryDocumentTicket {
 export type SupportTicketStatus = 'OPEN' | 'PENDING' | 'RESOLVED' | 'CLOSED';
 export type SupportTicketPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
 export type SupportTicketCategory =
-  | 'GENERAL'
-  | 'TECHNICAL'
-  | 'PAYMENT'
-  | 'ACCESS'
-  | 'CONTENT'
-  | 'OTHER';
+  'GENERAL' | 'TECHNICAL' | 'PAYMENT' | 'ACCESS' | 'CONTENT' | 'OTHER';
 
 export interface SupportTicketSummary {
   id: string;
