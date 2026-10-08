@@ -50,10 +50,40 @@ export const persister = createAsyncStoragePersister({
   throttleTime: 2000,
 });
 
-// 'wallet' (balances, transactions) and 'support' (ticket threads) are also
-// kept in memory only: they are personal records, AsyncStorage is not
-// encrypted, and neither screen is useful offline.
-const NEVER_PERSIST = new Set(['playback', 'attachments', 'auth', 'wallet', 'support']);
+// Kept in memory only. AsyncStorage is not encrypted, so anything listed here
+// must be a record the student would not want readable off a lost or shared
+// device: credentials, signed URLs, entitlements and personal history.
+//
+// Matched as key PREFIXES, not just the root. Several personal records are
+// nested under a public root -- `courses` also serves the catalog -- so a
+// root-only check silently persisted them. Each entry is compared segment by
+// segment against the front of the query key.
+const NEVER_PERSIST_PREFIXES: readonly (readonly string[])[] = [
+  // Credentials and signed URLs.
+  ['auth'],
+  ['playback'],
+  ['attachments'],
+  ['library', 'document'],
+  // Balances, entitlements, purchases and play allowance.
+  ['wallet'],
+  ['courses', 'play-allowance'],
+  ['library', 'mine'],
+  ['library', 'purchases'],
+  ['courses', 'my-parts'],
+  // Personal records: correspondence, history and device inventory.
+  ['support'],
+  ['notifications'],
+  ['progress'],
+  ['devices'],
+  ['courses', 'mine'],
+  ['courses', 'progress'],
+];
+
+function isNeverPersisted(queryKey: readonly unknown[]): boolean {
+  return NEVER_PERSIST_PREFIXES.some((prefix) =>
+    prefix.every((segment, index) => queryKey[index] === segment),
+  );
+}
 
 export const persistOptions = {
   persister,
@@ -62,7 +92,8 @@ export const persistOptions = {
   dehydrateOptions: {
     shouldDehydrateQuery: (query: { queryKey: readonly unknown[] }) => {
       const root = query.queryKey[0];
-      return typeof root === 'string' ? !NEVER_PERSIST.has(root) : false;
+      if (typeof root !== 'string') return false;
+      return !isNeverPersisted(query.queryKey);
     },
   },
 };
