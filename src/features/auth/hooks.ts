@@ -44,16 +44,18 @@ export function useFaculties(universityId: string | null) {
   });
 }
 
-export function useDepartments(facultyId: string | null) {
+export function useDepartments(facultyId: string | null, studyType?: 'GENERAL' | 'PROGRAMS') {
   const { language } = useTranslation();
 
   return useQuery({
-    queryKey: qk.catalog.departments(facultyId ?? 'none'),
-    queryFn: () => catalogApi.departments(facultyId!),
+    queryKey: [...qk.catalog.departments(facultyId ?? 'none'), studyType ?? 'all'],
+    queryFn: () => catalogApi.departments(facultyId!, studyType),
     enabled: !!facultyId,
     staleTime: 30 * 60_000,
+    // `studyType` rides along so a screen can DESCRIBE the chosen department
+    // (General / Programs) without a second request; nothing selects by it.
     select: (list) =>
-      list.map((d) => ({ value: d.id, label: localizedName(d, language) })),
+      list.map((d) => ({ value: d.id, label: localizedName(d, language), studyType: d.studyType })),
   });
 }
 
@@ -68,17 +70,17 @@ export function useDepartments(facultyId: string | null) {
  * The filter label stays generic for the same reason: a mixed list has no single
  * vocabulary.
  */
-export function useAcademicYears() {
+export function useAcademicYears(departmentId?: string) {
   const { language } = useTranslation();
 
   return useQuery({
-    queryKey: qk.catalog.academicYears(),
-    queryFn: catalogApi.academicYears,
+    queryKey: [...qk.catalog.academicYears(), departmentId ?? 'all'],
+    queryFn: () => catalogApi.academicYears(departmentId),
     staleTime: 60 * 60_000,
     select: (list) =>
       [...list]
         .sort((a, b) => a.order - b.order)
-        .map((y) => ({ value: y.id, label: localizedName(y, language) })),
+        .map((y) => ({ value: y.id, label: localizedName(y, language), kind: y.kind })),
   });
 }
 

@@ -5,20 +5,22 @@ import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { NetworkBanner } from '@/components/feedback/NetworkBanner';
+import { IconButton } from '@/components/ui/Button';
 import { Chip, ChipRow } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { Select } from '@/components/ui/Select';
 import { Sheet } from '@/components/ui/Sheet';
 import { CardSkeleton } from '@/components/ui/Skeleton';
 import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
-import { IconButton } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Select';
 import { releaseFeatures } from '@/config/release-features';
+import { useAuth } from '@/features/auth/AuthProvider';
 import {
   useAcademicYears,
   useUniversities,
 } from '@/features/auth/hooks';
+import { progressionLabelKey } from '@/features/auth/study-type';
 import type { CourseFilters } from '@/features/courses/api';
 import { CourseCard } from '@/features/courses/components/CourseCard';
 import { useCourseList } from '@/features/courses/hooks';
@@ -62,7 +64,13 @@ export default function CoursesScreen() {
 
   const query = useCourseList(filters);
   const universities = useUniversities();
-  const years = useAcademicYears();
+  // The year filter lists the signed-in student's own ladder (their
+  // department's years or levels), not the platform-wide list.
+  const { user } = useAuth();
+  const years = useAcademicYears(user?.department?.id);
+  const yearFilterLabel = years.data?.[0]?.kind
+    ? t(progressionLabelKey(years.data[0], user?.department))
+    : t('courses.filterYear');
 
   const items = query.data?.items ?? [];
   const activeFilterCount =
@@ -186,7 +194,7 @@ export default function CoursesScreen() {
             loading={universities.isLoading}
           />
           <Select
-            label={t('courses.filterYear')}
+            label={yearFilterLabel}
             value={academicYearId}
             options={years.data ?? []}
             onChange={setAcademicYearId}

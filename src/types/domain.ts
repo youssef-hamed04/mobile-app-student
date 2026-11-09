@@ -26,6 +26,12 @@ export interface Department {
   facultyId: string;
   name: string;
   nameAr: string;
+  /**
+   * Which track the department belongs to. Descriptive metadata from the
+   * server; it is shown (review step, profile, course filter label) and never
+   * chosen by the student - the department choice implies it.
+   */
+  studyType?: 'GENERAL' | 'PROGRAMS';
 }
 
 export interface AcademicYear {
@@ -34,6 +40,8 @@ export interface AcademicYear {
   order: number;
   name: string;
   nameAr: string;
+  /** The ladder's vocabulary, supplied for scoped lists so the control can be labelled. */
+  kind?: 'YEAR' | 'LEVEL';
 }
 
 export interface User {

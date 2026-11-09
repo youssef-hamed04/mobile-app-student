@@ -30,6 +30,7 @@ import {
   registerAcademicSchema,
   registerAccountSchema,
 } from '@/features/auth/schemas';
+import { departmentLabelKey, studyTypeLabelKey } from '@/features/auth/study-type';
 import { messageParams, useFormErrors } from '@/hooks/use-form-errors';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/hooks/use-translation';
@@ -126,6 +127,15 @@ export default function RegisterScreen() {
    */
   const progressLabel =
     selection.labelKind === 'LEVEL' ? t('auth.level') : t('auth.academicYear');
+
+  /*
+   * The chosen department DESCRIBES the student's track (General / Programs):
+   * it is shown back to them on the review step, never asked as a question.
+   * Mansoura Engineering keeps its two tracks as two colleges, so the college
+   * name already says it; the row below makes it explicit for every college.
+   */
+  const chosenDepartment = departments.data?.find((d) => d.value === departmentId) ?? null;
+  const studyTypeKey = studyTypeLabelKey(chosenDepartment);
 
   // Clear dependent selections when a parent changes, so the student can never
   // submit a department that doesn't belong to the chosen faculty, or a rung
@@ -523,8 +533,11 @@ export default function RegisterScreen() {
                 value={labelFor(faculties.data, values.facultyId)}
               valueLines={2}
               />
+              {studyTypeKey ? (
+                <ListItem title={t('auth.studyType')} value={t(studyTypeKey)} />
+              ) : null}
               <ListItem
-                title={t('auth.department')}
+                title={t(departmentLabelKey(chosenDepartment))}
                 value={labelFor(departments.data, values.departmentId)}
               valueLines={2}
               />

@@ -9,6 +9,7 @@ import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
 import { env } from '@/config/env';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { departmentLabelKey, progressionLabelKey, studyTypeLabelKey } from '@/features/auth/study-type';
 import { useTranslation } from '@/hooks/use-translation';
 import { support } from '@/services/support';
 import { formatDate, localizedName, maskPhone } from '@/utils/format';
@@ -73,14 +74,21 @@ export default function ProfileScreen() {
           title={t('auth.faculty')}
           value={localizedName(user.faculty, language)}
         />
+        {studyTypeLabelKey(user.department) ? (
+          <ListItem
+            icon="courses"
+            title={t('auth.studyType')}
+            value={t(studyTypeLabelKey(user.department)!)}
+          />
+        ) : null}
         <ListItem
           icon="document"
-          title={t('auth.department')}
+          title={t(departmentLabelKey(user.department))}
           value={localizedName(user.department, language)}
         />
         <ListItem
           icon="calendar"
-          title={t('auth.academicYear')}
+          title={t(progressionLabelKey(user.academicYear, user.department))}
           value={localizedName(user.academicYear, language)}
         />
       </ListSection>

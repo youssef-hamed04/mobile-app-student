@@ -123,14 +123,24 @@ export const catalogApi = {
     api.get<Faculty[]>(Endpoints.catalog.faculties(universityId), undefined, {
       anonymous: true,
     }),
-  departments: (facultyId: string) =>
-    api.get<Department[]>(Endpoints.catalog.departments(facultyId), undefined, {
-      anonymous: true,
-    }),
-  academicYears: () =>
-    api.get<AcademicYear[]>(Endpoints.catalog.academicYears, undefined, {
-      anonymous: true,
-    }),
+  /** A college's departments; `studyType` narrows to one track (catalogue filters only). */
+  departments: (facultyId: string, studyType?: 'GENERAL' | 'PROGRAMS') =>
+    api.get<Department[]>(
+      `${Endpoints.catalog.departments(facultyId)}${studyType ? `?studyType=${studyType}` : ''}`,
+      undefined,
+      { anonymous: true }
+    ),
+  /**
+   * The platform-wide ladder, or a department's own when `departmentId` is
+   * given (the course filter scopes it to the signed-in student's department).
+   * Registration never calls this: it uses `academicSelection`.
+   */
+  academicYears: (departmentId?: string) =>
+    api.get<AcademicYear[]>(
+      `${Endpoints.catalog.academicYears}${departmentId ? `?departmentId=${departmentId}` : ''}`,
+      undefined,
+      { anonymous: true }
+    ),
   /**
    * The college's resolved academic system AND its entries, in one call.
    *
