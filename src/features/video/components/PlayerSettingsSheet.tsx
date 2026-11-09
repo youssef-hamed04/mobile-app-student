@@ -27,9 +27,15 @@ export interface PlayerSettingsSheetProps {
   /** Reloads the stream at the chosen ceiling. */
   onSelectQuality: (quality: QualityLevel) => void;
   autoQualityLabel: string | null;
+  /**
+   * Which panel opens first. The portrait dock's speed / quality / captions
+   * chips open straight into their panel; the overlay's gear opens the root.
+   */
+  initialPanel?: SettingsPanel;
 }
 
-type Panel = 'root' | 'quality' | 'speed' | 'captions';
+export type SettingsPanel = 'root' | 'quality' | 'speed' | 'captions';
+type Panel = SettingsPanel;
 
 /**
  * Quality / speed / captions.
@@ -50,10 +56,11 @@ export function PlayerSettingsSheet({
   onSelectCaption,
   onSelectQuality,
   autoQualityLabel,
+  initialPanel = 'root',
 }: PlayerSettingsSheetProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const [panel, setPanel] = React.useState<Panel>('root');
+  const [panel, setPanel] = React.useState<Panel>(initialPanel);
 
   const rate = usePlayerStore((s) => s.rate);
   const setRate = usePlayerStore((s) => s.setRate);
@@ -61,8 +68,8 @@ export function PlayerSettingsSheet({
   const setPreferredQuality = usePlayerStore((s) => s.setPreferredQuality);
 
   React.useEffect(() => {
-    if (!visible) setPanel('root');
-  }, [visible]);
+    setPanel(visible ? initialPanel : 'root');
+  }, [visible, initialPanel]);
 
   const qualityOptions: QualityLevel[] = React.useMemo(() => {
     const ordered: QualityLevel[] = ['1080p', '720p', '480p', '360p'];

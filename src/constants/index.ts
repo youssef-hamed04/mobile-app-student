@@ -18,6 +18,13 @@ export const CONTROLS_HIDE_DELAY_MS = 3500;
 
 export const SEEK_STEP_SECONDS = 10;
 
+/**
+ * Absorb a ticket rotation in a second, pre-buffered native player instead of
+ * reloading the rotated manifest in place. Kill switch: set to false to go
+ * back to the in-place reload (position is preserved either way).
+ */
+export const PLAYER_ROTATION_HOT_SWAP = true;
+
 /** Resume prompt only appears past this offset (avoids nagging at 0:03). */
 export const RESUME_PROMPT_MIN_SECONDS = 20;
 /** …and not within this many seconds of the end. */

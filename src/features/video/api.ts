@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 import { api } from '@/api/client';
 import { Endpoints } from '@/api/endpoints';
 import type { PlaybackTicket, WatchProgress } from '@/types/domain';
@@ -35,11 +37,23 @@ export const videoApi = {
    *
    * `retries: 0` on purpose — a denial is a decision, not a transient fault,
    * and retrying a concurrency rejection makes the problem worse.
+   *
+   * `platform` only selects the DRM key system server-side (Widevine on
+   * Android, FairPlay on iOS). It grants nothing: every entitlement check in
+   * the chain above is identical whatever it is set to.
    */
   requestTicket: (videoId: string, signal?: AbortSignal) =>
     api.post<PlaybackTicket>(
       Endpoints.playback.ticket(videoId),
-      {},
+      // iOS has no Widevine CDM at all, so it must be asked for FairPlay
+      // explicitly or playback fails inside the CDM.
+      {
+        platform: Platform.OS === 'ios' ? 'ios' : 'android',
+        // What this build can play. A server that sees no `hls-aes128` keeps
+        // handing out Gumlet DRM grants, so an older installed app is never
+        // given a manifest it cannot open; this build plays both.
+        capabilities: ['hls-aes128'],
+      },
       { retries: 0, signal, timeoutMs: 15_000 }
     ),
 
