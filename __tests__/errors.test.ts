@@ -1,4 +1,4 @@
-import { ApiError, isApiError, toApiError } from '@/api/errors';
+import { isApiError, toApiError } from '@/api/errors';
 import en from '@/i18n/locales/en.json';
 import ar from '@/i18n/locales/ar.json';
 

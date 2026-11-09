@@ -59,6 +59,7 @@ export type ApiErrorCode =
   | 'NOT_FOUND'
   | 'COURSE_NOT_AVAILABLE'
   | 'COURSE_ARCHIVED'
+  | 'COURSE_NOT_TARGETED'
   | 'ACCESS_EXPIRED'
   | 'NOT_ENROLLED'
   /** The course is not offered to the student's department/year. */

@@ -63,6 +63,11 @@
     "showLess": "Show less"
   },
   "auth": {
+    "studyType": "Study type",
+    "general": "General",
+    "programs": "Programs",
+    "program": "Program",
+    "level": "Level",
     "welcomeBack": "Welcome back",
     "loginSubtitle": "Sign in to continue learning",
     "login": "Sign in",
@@ -549,6 +554,7 @@
     "NOT_FOUND": "We couldn't find what you were looking for.",
     "COURSE_NOT_AVAILABLE": "This course isn't available right now.",
     "COURSE_ARCHIVED": "This course has been archived.",
+    "COURSE_NOT_TARGETED": "This course isn't offered to your department or year. Check your profile details, or ask your admin about access.",
     "ACCESS_EXPIRED": "Your access to this content has expired.",
     "NOT_ENROLLED": "Join the course to access this content.",
     "COURSE_NOT_TARGETED": "This course isn't offered to your department or year.",
