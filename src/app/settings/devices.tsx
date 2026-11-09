@@ -49,7 +49,7 @@ export default function DevicesScreen() {
   };
 
   return (
-    <Screen padded={false} edges={['top']}>
+    <Screen scroll={false} padded={false} edges={['top']}>
       <AppBar title={t('devices.title')} />
 
       <Screen hideNetworkBanner edges={[]} contentClassName="pt-4">

@@ -10,7 +10,8 @@ import { MIN_NAME_PARTS, MIN_PASSWORD_LENGTH } from '@/constants';
  * server's own field errors can be merged into the same display path.
  */
 
-const nameParts = (value: string) => value.trim().split(/\s+/).filter(Boolean).length;
+const nameParts = (value: string) =>
+  value.trim().split(/\s+/).filter(Boolean).length;
 
 /** Arabic + Latin letters, spaces, and the Arabic tatweel. Nothing else. */
 const NAME_CHARS = /^[\p{Script=Arabic}\p{Script=Latin}\s'’.ـ-]+$/u;
@@ -35,12 +36,42 @@ export const phoneSchema = z
   .refine((v) => PHONE.test(v), 'validation.phoneInvalid')
   .transform(normalizePhone);
 
+/**
+ * The new-password policy, mirrored from the backend
+ * (`edu-backend/src/modules/auth/password-policy.ts`), which is the authority.
+ * Used at registration only. An Arabic *letter* counts as both cases — Arabic
+ * digits and punctuation do not; Arabic-Indic digits count as digits.
+ */
+const LATIN_LOWER = /[a-z]/;
+const LATIN_UPPER = /[A-Z]/;
+const ARABIC_LETTER = /(?=\p{L})\p{Script=Arabic}/u;
+const DIGIT = /[0-9٠-٩۰-۹]/;
+const LETTER = /\p{L}/u;
+
+const COMMON_PASSWORDS = new Set([
+  'password1', 'password12', 'password123', 'password1234', 'passw0rd', 'p@ssw0rd',
+  'p@ssword1', 'qwerty123', 'qwerty1234', 'qwertyuiop1', 'welcome1', 'welcome123',
+  'admin123', 'admin1234', 'admin@123', 'abc12345', 'abc123456', 'abcd1234', 'abcde123',
+  'iloveyou1', 'letmein1', 'student1', 'student123', 'teacher1', 'teacher123',
+]);
+
+/** Not a well-known password, ≥5 different characters, not "Aa123456". */
+function isGuessable(value: string): boolean {
+  if (COMMON_PASSWORDS.has(value.toLowerCase())) return true;
+  const chars = Array.from(value);
+  if (new Set(chars).size < 5) return true;
+  const letters = chars.filter((c) => LETTER.test(c)).length;
+  const digits = chars.filter((c) => DIGIT.test(c)).length;
+  return letters <= 2 && digits >= 6;
+}
+
 export const passwordSchema = z
   .string()
   .min(MIN_PASSWORD_LENGTH, 'validation.passwordMin')
-  .refine((v) => /[a-z؀-ۿ]/.test(v), 'validation.passwordLower')
-  .refine((v) => /[A-Z]/.test(v) || /[؀-ۿ]/.test(v), 'validation.passwordUpper')
-  .refine((v) => /\d/.test(v), 'validation.passwordDigit');
+  .refine((v) => LATIN_LOWER.test(v) || ARABIC_LETTER.test(v), 'validation.passwordLower')
+  .refine((v) => LATIN_UPPER.test(v) || ARABIC_LETTER.test(v), 'validation.passwordUpper')
+  .refine((v) => DIGIT.test(v), 'validation.passwordDigit')
+  .refine((v) => !isGuessable(v), 'validation.passwordCommon');
 
 export const fullNameSchema = z
   .string()
@@ -80,6 +111,15 @@ export const registerAccountSchema = z
     path: ['confirmPassword'],
   });
 
+/**
+ * The academic half of registration.
+ *
+ * No study type and no academic system: the student names a university, a
+ * college, a department and the rung they are on, and whether that rung is
+ * "First Year" or "Level 100" is the college's configuration resolved by the
+ * server. The web app used to require a study type that this app never sent, so
+ * against the same backend one client registered and the other was rejected.
+ */
 export const registerAcademicSchema = z.object({
   universityId: z.string().min(1, 'validation.selectOption'),
   facultyId: z.string().min(1, 'validation.selectOption'),
@@ -108,16 +148,8 @@ export type RegisterValues = z.output<typeof registerSchema>;
 // Profile
 // ---------------------------------------------------------------------------
 
-export const changePasswordSchema = z
-  .object({
-    currentPassword: z.string().min(1, 'validation.required'),
-    newPassword: passwordSchema,
-    confirmPassword: z.string().min(1, 'validation.required'),
-  })
-  .refine((d) => d.newPassword === d.confirmPassword, {
-    message: 'validation.passwordMatch',
-    path: ['confirmPassword'],
-  });
+// No change-password schema: students cannot change their own password (the
+// administration resets it), so there is no form for one to validate.
 
 export const updateProfileSchema = z.object({
   fullName: fullNameSchema,

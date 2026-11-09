@@ -9,6 +9,7 @@ import { InlineError } from '@/components/ui/ErrorState';
 import { Icon } from '@/components/ui/Icon';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
+import { releaseFeatures } from '@/config/release-features';
 import { useTranslation } from '@/hooks/use-translation';
 import type { CoursePart } from '@/types/domain';
 import { formatMoney, localizedName } from '@/utils/format';
@@ -74,7 +75,11 @@ export function PartsPanel({
       <SectionHeader
         title={t('parts.title')}
         subtitle={
-          data.ownsAllParts ? t('parts.ownsAllSubtitle') : t('parts.subtitle')
+          data.ownsAllParts
+            ? t('parts.ownsAllSubtitle')
+            : releaseFeatures.digitalPurchases
+              ? t('parts.subtitle')
+              : t('release.partsSubtitle')
         }
       />
 
@@ -84,7 +89,7 @@ export function PartsPanel({
         ))}
       </View>
 
-      {!data.ownsAllParts ? (
+      {releaseFeatures.courseActivation && !data.ownsAllParts ? (
         <Card className="mt-3 border-primary/30 bg-primary-soft">
           <CardBody className="gap-2">
             <Text variant="label" tone="primary">
@@ -94,7 +99,7 @@ export function PartsPanel({
               {t('parts.howToUnlockBody')}
             </Text>
             <Button
-              label={t('access.redeemCode')}
+              label={t('access.redeem')}
               variant="secondary"
               size="sm"
               iconStart="code"
@@ -114,7 +119,7 @@ function PartRow({ part }: { part: CoursePart }) {
 
   const title = localizedName({ name: part.title, nameAr: part.titleAr }, language);
   const price =
-    part.price === null
+    !releaseFeatures.coursePrices || part.price === null
       ? null
       : formatMoney({ amount: part.price, currency: part.currency }, language);
 

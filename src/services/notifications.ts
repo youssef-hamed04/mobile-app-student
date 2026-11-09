@@ -5,6 +5,7 @@ import { Platform } from 'react-native';
 
 import { api } from '@/api/client';
 import { Endpoints } from '@/api/endpoints';
+import { releaseFeatures } from '@/config/release-features';
 import { brand } from '@/theme/palette';
 import { isSafeInternalRoute } from '@/utils/guards';
 
@@ -87,7 +88,7 @@ export async function configureAndroidChannels() {
   });
 
   await Notifications.setNotificationChannelAsync('account', {
-    name: 'Account, payments and security',
+    name: releaseFeatures.digitalPurchases ? 'Account, payments and security' : 'Account and security',
     importance: Notifications.AndroidImportance.HIGH,
     lightColor: brand.red,
   });

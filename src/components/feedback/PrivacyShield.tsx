@@ -1,14 +1,30 @@
 import { BlurView } from 'expo-blur';
 import * as React from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 
+import { useProtectionState } from '@/hooks/use-content-protection';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/hooks/use-translation';
+import type { ProtectionState } from '@/services/content-protection';
 import { useUIStore } from '@/store/ui-store';
 import { zIndex } from '@/theme/tokens';
 
 import { Icon } from '../ui/Icon';
 import { Text } from '../ui/Text';
+
+/**
+ * iOS has no window-level secure flag: only SecureContentView regions come out
+ * blank in a recording or AirPlay mirror, so every other screen is covered for
+ * as long as the capture lasts. Android needs no app-wide cover: FLAG_SECURE
+ * already blanks the whole window in recordings and refuses non-secure
+ * displays.
+ */
+export function coversForCapture(
+  os: string,
+  state: Pick<ProtectionState, 'recording' | 'externalDisplay'>
+): boolean {
+  return os === 'ios' && (state.recording || state.externalDisplay);
+}
 
 /**
  * Opaque overlay raised over the whole app when protected content must not be
@@ -21,10 +37,16 @@ import { Text } from '../ui/Text';
  * and colour information into a recording.
  */
 export function PrivacyShield() {
-  const visible = useUIStore((s) => s.privacyShield);
-  const reason = useUIStore((s) => s.shieldReason);
+  const requested = useUIStore((s) => s.privacyShield);
+  const requestedReason = useUIStore((s) => s.shieldReason);
+  const protection = useProtectionState();
   const { t } = useTranslation();
   const { colors } = useTheme();
+
+  const capturing = coversForCapture(Platform.OS, protection);
+
+  const visible = requested || capturing;
+  const reason = capturing ? 'recording' : requestedReason;
 
   if (!visible) return null;
 

@@ -1,5 +1,7 @@
 import { api } from '@/api/client';
 import { Endpoints } from '@/api/endpoints';
+import { assertFeatureEnabled } from '@/api/feature-guard';
+import { releaseFeatures } from '@/config/release-features';
 import type { Paginated } from '@/types/api';
 import type {
   RechargeResult,
@@ -52,6 +54,8 @@ export const walletApi = {
    * `retries: 0` — the endpoint shares the code rate-limit bucket, and
    * repeating a refusal only burns the student's allowance.
    */
-  redeem: (code: string) =>
-    api.post<RechargeResult>(Endpoints.wallet.redeem, { code }, { retries: 0 }),
+  redeem: async (code: string) => {
+    assertFeatureEnabled(releaseFeatures.wallet, 'wallet');
+    return api.post<RechargeResult>(Endpoints.wallet.redeem, { code }, { retries: 0 });
+  },
 };

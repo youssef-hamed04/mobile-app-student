@@ -12,7 +12,9 @@ import { Icon } from '@/components/ui/Icon';
 import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
 import { lessonsApi } from '@/features/lessons/api';
-import { buildPdfHtml } from '@/features/library/pdf-html';
+import { buildPdfHtml, isPdfUrl } from '@/features/library/pdf-html';
+import { identityFromPayload } from '@/features/library/pdf-watermark';
+import { usePdfWatermarkImage } from '@/features/library/use-pdf-watermark-image';
 import { Watermark } from '@/features/video/components/Watermark';
 import { useProtectedScreen } from '@/hooks/use-content-protection';
 import { useTranslation } from '@/hooks/use-translation';
@@ -41,6 +43,21 @@ export default function AttachmentViewer() {
     gcTime: 0,
     staleTime: 0,
   });
+
+  // The Student Web watermark, burned into every rendered page. Built once per
+  // grant: the page is large (it carries the artwork) and a new string on
+  // every render would hand the WebView the whole document again.
+  const watermarkImage = usePdfWatermarkImage();
+  const ticketData = query.data;
+  const pdfHtml = React.useMemo(() => {
+    if (!ticketData || !isPdfUrl(ticketData.url) || watermarkImage === undefined) return null;
+    return buildPdfHtml(
+      ticketData.url,
+      { loading: t('library.opening'), failed: t('library.readerFailed') },
+      ticketData.headers,
+      { imageDataUri: watermarkImage, identity: identityFromPayload(ticketData.watermark) }
+    );
+  }, [ticketData, watermarkImage, t]);
 
   const close = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)'));
 
@@ -87,8 +104,18 @@ export default function AttachmentViewer() {
 
   // Only PDFs need pdf.js; Android's WebView draws images perfectly well and
   // routing them through a canvas renderer would cost quality for nothing.
-  const isPdf = (ticket.url.split('?')[0] ?? '').toLowerCase().endsWith('.pdf');
+  const isPdf = isPdfUrl(ticket.url);
   const origin = new URL(ticket.url).origin;
+
+  if (isPdf && !pdfHtml) {
+    // Waiting for the watermark artwork; bounded by its load timeout.
+    return (
+      <SafeAreaView className="flex-1 bg-background">
+        <AppBar onBack={close} />
+        <Spinner fullscreen label={t('library.opening')} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-background">
@@ -98,15 +125,8 @@ export default function AttachmentViewer() {
         <View className="flex-1">
           <WebView
             source={
-              isPdf
-                ? {
-                    html: buildPdfHtml(
-                      ticket.url,
-                      { loading: t('library.opening'), failed: t('library.readerFailed') },
-                      ticket.headers
-                    ),
-                    baseUrl: origin,
-                  }
+              isPdf && pdfHtml
+                ? { html: pdfHtml, baseUrl: origin }
                 : { uri: ticket.url, headers: ticket.headers }
             }
             style={{ flex: 1, backgroundColor: 'transparent' }}

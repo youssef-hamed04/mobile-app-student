@@ -51,7 +51,8 @@ export function LanguageToggle() {
       hitSlop={10}
       // Only ever rendered on the auth plate, where a white pill is 1.8:1
       // against the orange — hence the hard rule rather than a hairline.
-      className="h-10 flex-row items-center gap-1.5 rounded-full border-2 border-outline bg-surface px-3 active:bg-surface-alt"
+      // Its ink is near-black in both themes, so the pill stays white in both.
+      className="h-10 flex-row items-center gap-1.5 rounded-full border-2 border-outline bg-ink-0 px-3 active:bg-ink-100"
     >
       <Icon name="language" size={16} color={colors.outline} />
       <Text variant="label" tone="onHighlight">

@@ -7,7 +7,16 @@
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
     "jsx": "react-jsx",
-    "ignoreDeprecations": "6.0",
+    // TypeScript 5.7 (the pinned version, `~5.7.3`) accepts only "5.0" here.
+    // "6.0" is rejected outright with TS5103, and because that error is reported
+    // while the file is parsed, it ABORTED the whole typecheck — every other
+    // error in the project was hidden behind it. That is why `tsc --noEmit` had
+    // been unusable here and why genuine defects went unnoticed.
+    //
+    // No deprecated options are in use (expo/tsconfig.base sets none), so this
+    // is present only to satisfy the parser. Downgrading the compiler or upgrading
+    // it is not needed and would be a far larger change.
+    "ignoreDeprecations": "5.0",
     "baseUrl": ".",
     "paths": {
       "@/*": [

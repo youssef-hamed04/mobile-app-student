@@ -31,6 +31,13 @@ export default function ProfileScreen() {
 
   if (!user) return null;
 
+  const askForPasswordHelp = async () => {
+    const context = { reason: 'password' as const, fullName: user.fullName, phone: user.phone };
+    if (await support.whatsapp(context)) return;
+    if (await support.email(context)) return;
+    Alert.alert(t('profile.passwordHelp'), t('auth.supportOpenFailed'));
+  };
+
   const statusTone =
     user.status === 'ACTIVE'
       ? 'success'
@@ -51,7 +58,7 @@ export default function ProfileScreen() {
         <Badge
           label={t(`profile.status.${user.status}`)}
           tone={statusTone}
-          className="mt-2"
+          className="mt-2 self-start"
         />
       </View>
 
@@ -88,17 +95,17 @@ export default function ProfileScreen() {
           showChevron
           onPress={() => router.push('/profile/edit')}
         />
+        {/*
+          Students cannot change their own password (product decision): the
+          administration resets it. So this is a support link, not a form —
+          WhatsApp with the name and phone filled in, falling back to e-mail.
+        */}
         <ListItem
           icon="lock"
-          title={t('profile.changePassword')}
+          title={t('profile.passwordHelp')}
+          subtitle={t('profile.passwordHelpSubtitle')}
           showChevron
-          onPress={() =>
-            void support.whatsapp({
-              reason: 'password',
-              fullName: user.fullName,
-              phone: user.phone,
-            })
-          }
+          onPress={() => void askForPasswordHelp()}
         />
         <ListItem
           icon="device"
@@ -139,6 +146,7 @@ export default function ProfileScreen() {
       <ListSection footer={t('settings.version', { version: env.appVersion })}>
         <ListItem
           icon="logout"
+          mirrorIcon
           title={t('auth.logout')}
           destructive
           onPress={confirmLogout}

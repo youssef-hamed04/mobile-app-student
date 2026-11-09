@@ -10,8 +10,9 @@ const log = createLogger('support');
 /**
  * Support channels.
  *
- * The platform has no automated password reset by design (spec §18), so these
- * links are the actual recovery path for a locked-out student — they need to
+ * Students cannot change or recover their own password (product decision; the
+ * administration resets it), so these links are the actual recovery path for
+ * a locked-out student — they need to
  * work even when the app cannot authenticate. Everything here is therefore
  * driven by build-time config rather than an API response.
  */

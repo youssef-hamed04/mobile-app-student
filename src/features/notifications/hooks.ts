@@ -7,6 +7,7 @@ import {
 import { api } from '@/api/client';
 import { Endpoints } from '@/api/endpoints';
 import { qk } from '@/api/query-keys';
+import { isAnnouncementVisible } from '@/config/release-features';
 import { PAGE_SIZE } from '@/constants';
 import type { Paginated } from '@/types/api';
 import type { AppNotification } from '@/types/domain';
@@ -25,7 +26,7 @@ export function useNotifications(unreadOnly: boolean) {
     select: (data) => ({
       pages: data.pages,
       pageParams: data.pageParams,
-      items: data.pages.flatMap((p) => p.items),
+      items: data.pages.flatMap((p) => p.items).filter((n) => isAnnouncementVisible(n)),
       total: data.pages[0]?.meta.total ?? 0,
     }),
   });

@@ -737,12 +737,6 @@ route('PATCH', '/profile', ({ body }) => {
   return mockUser;
 });
 
-route('PUT', '/profile/password', ({ body }) => {
-  const current = String(body.currentPassword ?? '');
-  if (current.length < 8) fail('INVALID_CREDENTIALS', 401, 'Wrong password');
-  return { ok: true };
-});
-
 route('PUT', '/profile/avatar', ({ body }) => {
   requireAuth();
   // The server takes a storage key, never image bytes — and it is the server

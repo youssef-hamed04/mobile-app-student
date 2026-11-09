@@ -1,3 +1,4 @@
+import { releaseFeatures } from '@/config/release-features';
 import type { ApiErrorBody, ApiErrorCode } from '@/types/api';
 
 /**
@@ -30,6 +31,14 @@ export class ApiError extends Error {
 
   /** i18n key for a student-facing message. */
   get i18nKey(): string {
+    // These two read as an instruction to join or pay. Without activation or
+    // purchases in this release, the honest message is that it isn't active.
+    if (
+      !releaseFeatures.courseActivation &&
+      (this.code === 'NOT_ENROLLED' || this.code === 'PAYMENT_REQUIRED')
+    ) {
+      return 'release.notActiveBody';
+    }
     return `errors.${this.code}`;
   }
 }
@@ -99,10 +108,10 @@ const STATUS_FALLBACK: Record<number, ApiErrorCode> = {
 const KNOWN_CODES = new Set<string>([
   'NETWORK_OFFLINE','NETWORK_TIMEOUT','SERVER_ERROR','UNKNOWN','VALIDATION_ERROR',
   'RATE_LIMITED','MAINTENANCE','APP_UPDATE_REQUIRED','INVALID_CREDENTIALS',
-  'UNAUTHORIZED','SESSION_EXPIRED','ACCOUNT_DISABLED','ACCOUNT_PENDING',
+  'UNAUTHORIZED','SESSION_EXPIRED','ACCOUNT_DISABLED','ACCOUNT_PENDING','ACCOUNT_DELETION_PENDING',
   'PHONE_ALREADY_REGISTERED','DEVICE_NOT_AUTHORIZED','DEVICE_LIMIT_REACHED',
   'DEVICE_CHANGE_PENDING','DEVICE_INTEGRITY_FAILED','FORBIDDEN','NOT_FOUND',
-  'COURSE_NOT_AVAILABLE','COURSE_ARCHIVED','ACCESS_EXPIRED','NOT_ENROLLED',
+  'COURSE_NOT_AVAILABLE','COURSE_ARCHIVED','ACCESS_EXPIRED','NOT_ENROLLED','COURSE_NOT_TARGETED',
   'ENROLLMENT_PENDING','PAYMENT_REQUIRED','PAYMENT_FAILED','INVALID_CODE',
   'CODE_ALREADY_USED','ALREADY_ENROLLED','PLAYBACK_DENIED','PLAYBACK_TICKET_EXPIRED',
   'CONCURRENT_STREAM_LIMIT','VIDEO_NOT_READY','VIDEO_UNAVAILABLE','CAPTURE_DETECTED',

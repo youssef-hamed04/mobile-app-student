@@ -1,4 +1,16 @@
 {
+  "release": {
+    "notActiveTitle": "Not active on your account",
+    "notActiveBody": "This course isn't active on your account.",
+    "lockedBody": "This content isn't available on your account.",
+    "accessPending": "Access pending",
+    "accessPendingBody": "Your access to this course is being processed.",
+    "partsSubtitle": "This course is organized in parts.",
+    "preview": "Preview",
+    "notifyEnrollment": "Course access and account",
+    "deleteWhatHappensBody": "When your account is deleted you lose access to your courses and progress, and this cannot be undone.",
+    "deleteKeptBody": "Your name, phone number, email, photo, devices, notifications and support messages are erased. Account and enrolment records are kept without your personal details, because the law and our accounting require them."
+  },
   "ads": {
     "label": "Featured",
     "carouselLabel": "Promotions",
@@ -75,6 +87,8 @@
     "faculty": "Faculty",
     "department": "Department",
     "academicYear": "Academic year",
+    "level": "Level",
+    "academicSystemNotConfigured": "Your college has not finished setting up its academic structure yet. Please try again later or contact the administration.",
     "gender": "Gender",
     "male": "Male",
     "female": "Female",
@@ -82,8 +96,9 @@
     "hidePassword": "Hide password",
     "forgotPassword": "Forgot your password?",
     "passwordHelpTitle": "Password help",
-    "passwordHelpBody": "For security reasons this platform does not reset passwords automatically. Please contact the administration and they will verify your identity and restore your access.",
+    "passwordHelpBody": "Passwords on this platform are reset only by the administration — there is no automatic reset. Contact them and they will verify your identity and set a new password for you.",
     "passwordHelpNote": "Have your full name and registered phone number ready.",
+    "supportOpenFailed": "That could not be opened on this device. Please use one of the other contact options.",
     "contactAdmin": "Contact administration",
     "callSupport": "Call support",
     "whatsappSupport": "Message on WhatsApp",
@@ -114,6 +129,7 @@
     "passwordUpper": "Include at least one uppercase letter",
     "passwordLower": "Include at least one lowercase letter",
     "passwordDigit": "Include at least one number",
+    "passwordCommon": "This password is too easy to guess. Choose a less common one",
     "passwordMatch": "Passwords do not match",
     "selectOption": "Please choose an option",
     "codeFormat": "Enter a valid access code"
@@ -176,8 +192,6 @@
     "instructor": "Instructor",
     "courseContent": "Course content",
     "lastUpdated": "Updated {{date}}",
-    "enrolledStudents_one": "{{count}} student",
-    "enrolledStudents_other": "{{count}} students",
     "yourProgress": "Your progress",
     "startCourse": "Start course",
     "continueCourse": "Continue",
@@ -279,7 +293,15 @@
       "WATCH_FULL": "Watch the full video to complete this lesson.",
       "MANUAL": "Mark this lesson complete when you're done."
     },
-    "sectionAttachments": "Section documents"
+    "sectionAttachments": "Section documents",
+    "attachmentKind": {
+      "PDF": "PDF",
+      "IMAGE": "Image",
+      "DOC": "Document",
+      "SHEET": "Spreadsheet",
+      "LINK": "Link",
+      "OTHER": "File"
+    }
   },
   "player": {
     "play": "Play",
@@ -394,10 +416,8 @@
     "memberSince": "Member since {{date}}",
     "changePhoto": "Change photo",
     "removePhoto": "Remove photo",
-    "changePassword": "Change password",
-    "currentPassword": "Current password",
-    "newPassword": "New password",
-    "passwordChanged": "Password updated",
+    "passwordHelp": "Password help",
+    "passwordHelpSubtitle": "Passwords are reset by the administration. Message them on WhatsApp.",
     "contactToChange": "Contact the administration to change this field.",
     "profileUpdated": "Profile updated",
     "status": {
@@ -475,7 +495,16 @@
     "shieldTitle": "Content hidden",
     "shieldBody": "Protected content is hidden while the app is in the background or a capture is in progress.",
     "integrityTitle": "Unsupported device",
-    "integrityBody": "Protected lessons can't be played on rooted, jailbroken or emulated devices."
+    "integrityBody": "Protected lessons can't be played on rooted, jailbroken or emulated devices.",
+    "signals": {
+      "screenshot": "Screenshot protection",
+      "capture": "Capture detection",
+      "recording": "Recording detection",
+      "externalDisplay": "No external display",
+      "integrity": "Device integrity",
+      "surfaceOn": "secure surface",
+      "surfaceOff": "secure surface unavailable"
+    }
   },
   "devices": {
     "title": "Devices",
@@ -510,6 +539,7 @@
     "SESSION_EXPIRED": "Your session expired. Please sign in again.",
     "ACCOUNT_DISABLED": "This account has been disabled. Please contact the administration.",
     "ACCOUNT_PENDING": "Your account is awaiting activation by the administration.",
+    "ACCOUNT_DELETION_PENDING": "This account is scheduled for deletion. You can cancel the deletion below to keep it.",
     "PHONE_ALREADY_REGISTERED": "An account already exists with this phone number.",
     "DEVICE_NOT_AUTHORIZED": "This device isn't authorized for your account. Contact the administration.",
     "DEVICE_LIMIT_REACHED": "You've reached the device limit for this account.",
@@ -521,6 +551,7 @@
     "COURSE_ARCHIVED": "This course has been archived.",
     "ACCESS_EXPIRED": "Your access to this content has expired.",
     "NOT_ENROLLED": "Join the course to access this content.",
+    "COURSE_NOT_TARGETED": "This course isn't offered to your department or year.",
     "ENROLLMENT_PENDING": "Your enrollment is still being processed.",
     "PAYMENT_REQUIRED": "Payment is required to access this course.",
     "PAYMENT_FAILED": "The payment couldn't be completed. Please try again.",
@@ -697,16 +728,33 @@
   },
   "deleteAccount": {
     "title": "Delete account",
-    "settingsSubtitle": "Ask for your account and its data to be deleted",
+    "settingsSubtitle": "Delete your account and its personal data",
     "whatHappensTitle": "What happens when your account is deleted",
-    "whatHappensBody": "When your account is deleted you lose access to your courses, progress, wallet credit and library purchases, and this cannot be undone. Access cards you already redeemed cannot be reused. Some records may be kept where the law requires it.",
-    "processNote": "Your request is sent to the platform administration as a support ticket. You can follow it under Support, and the team will contact you on your registered phone number to confirm before the deletion is completed.",
-    "submit": "Request account deletion",
+    "whatHappensBody": "When your account is deleted you lose access to your courses, progress, wallet credit and library purchases, and this cannot be undone. Access cards you already redeemed cannot be reused.",
+    "keptTitle": "What we keep",
+    "keptBody": "Your name, phone number, email, photo, devices, notifications and support messages are erased. Payment, wallet and enrolment records are kept without your personal details, because the law and our accounting require them.",
+    "processNote": "Deletion is scheduled 30 days after you ask. You are signed out on every device straight away. To keep your account, sign in with your phone number and password at any time in those 30 days and choose \"Cancel deletion\".",
+    "passwordLabel": "Your current password",
+    "passwordRequired": "Enter your password to confirm.",
+    "submit": "Delete my account",
     "confirmTitle": "Delete your account?",
-    "confirmBody": "This sends a deletion request for your account. Once it is completed it cannot be undone.",
-    "confirm": "Send request",
-    "webLink": "Request deletion on the web instead",
-    "ticketSubject": "Account deletion request",
-    "ticketBody": "I am asking for my account and its associated data to be deleted.\nName: {{name}}\nPhone: {{phone}}\n(Sent from the mobile app.)"
+    "confirmBody": "Your account will be deleted in 30 days and you will be signed out now. You can cancel during those 30 days by signing in.",
+    "confirm": "Delete account",
+    "scheduledTitle": "Deletion scheduled",
+    "scheduledBody": "Your account will be deleted on {{date}}. Sign in before then to cancel.",
+    "webLink": "Account deletion help on the web",
+    "cancelAction": "Cancel deletion and sign in",
+    "cancelled": "The deletion was cancelled. Welcome back.",
+    "walletTitle": "Your wallet",
+    "walletLoading": "Checking your wallet balance…",
+    "walletLoadFailed": "We couldn't load your wallet balance. You can continue once it has loaded.",
+    "walletBalance": "Current balance: {{amount}}",
+    "walletNote": "You can't use this balance while the deletion is pending or after your account is deleted. Any remaining amount will be settled with the administration outside the application.",
+    "walletZero": "You have no wallet balance.",
+    "confirmBalance": "Your wallet balance of {{amount}} can't be used while the deletion is pending or after your account is deleted.",
+    "cancelTooLate": "This deletion can no longer be cancelled in the app. Please contact support."
+  },
+  "staging": {
+    "productionApiBadge": "STAGING build · PRODUCTION data"
   }
 }

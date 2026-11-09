@@ -1,3 +1,4 @@
+import { isAnnouncementVisible } from '@/config/release-features';
 import type { Advertisement, AppNotification } from '@/types/domain';
 
 /**
@@ -41,6 +42,8 @@ export function announcementToBanner(
   index: number
 ): Advertisement | null {
   if (!announcement.imageUrl) return null;
+  // A sales message, or a banner into a screen this release has turned off.
+  if (!isAnnouncementVisible(announcement)) return null;
 
   return {
     id: announcement.id,

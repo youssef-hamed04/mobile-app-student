@@ -38,6 +38,12 @@ export interface ErrorStateProps {
   secondaryLabel?: string;
   compact?: boolean;
   className?: string;
+  /**
+   * Drawn on a black surface (the player). The default tones are the page
+   * inks, which in light theme are near-black and vanished on the player's
+   * black background: "Something went wrong" was invisible.
+   */
+  onDark?: boolean;
 }
 
 /**
@@ -54,6 +60,7 @@ export function ErrorState({
   secondaryLabel,
   compact = false,
   className,
+  onDark = false,
 }: ErrorStateProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -76,28 +83,44 @@ export function ErrorState({
         <Icon name={icon} size={compact ? 24 : 30} color={colors.accent} />
       </View>
 
-      <Text variant={compact ? 'title' : 'h3'} className="text-center">
+      <Text
+        variant={compact ? 'title' : 'h3'}
+        className={cn('text-center', onDark && 'text-white')}
+      >
         {t('errors.title')}
       </Text>
 
-      <Text variant="caption" tone="muted" className="mt-2 max-w-[320px] text-center">
+      <Text
+        variant="caption"
+        tone="muted"
+        className={cn('mt-2 max-w-[320px] text-center', onDark && 'text-white/70')}
+      >
         {message}
       </Text>
 
       {isDev ? (
-        <Text variant="caption" tone="subtle" className="mt-3 text-center" forceLatin>
+        <Text
+          variant="caption"
+          tone="subtle"
+          className={cn('mt-3 text-center', onDark && 'text-white/50')}
+          forceLatin
+        >
           {apiError.code}
           {apiError.requestId ? ` · ${apiError.requestId}` : ''}
           {`\n${apiError.message}`}
         </Text>
       ) : null}
 
-      <View className="mt-5 flex-row gap-2">
-        {showRetry ? <Button label={t('common.retry')} onPress={onRetry} /> : null}
-        {onSecondary && secondaryLabel ? (
-          <Button label={secondaryLabel} variant="secondary" onPress={onSecondary} />
-        ) : null}
-      </View>
+      {showRetry || (onSecondary && secondaryLabel) ? (
+        // Rendered only with something in it, so a non-retryable error does
+        // not end in an empty gap; wraps so two long Arabic labels stack.
+        <View className="mt-5 flex-row flex-wrap justify-center gap-2">
+          {showRetry ? <Button label={t('common.retry')} onPress={onRetry} /> : null}
+          {onSecondary && secondaryLabel ? (
+            <Button label={secondaryLabel} variant="secondary" onPress={onSecondary} />
+          ) : null}
+        </View>
+      ) : null}
     </View>
   );
 }

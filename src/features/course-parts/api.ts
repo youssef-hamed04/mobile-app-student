@@ -1,5 +1,7 @@
 import { api } from '@/api/client';
 import { Endpoints } from '@/api/endpoints';
+import { assertFeatureEnabled } from '@/api/feature-guard';
+import { releaseFeatures } from '@/config/release-features';
 import type { Paginated } from '@/types/api';
 import type {
   CodeValidation,
@@ -60,10 +62,12 @@ export const coursePartsApi = {
    * retried check burns the student's allowance for no gain. A refusal here is
    * an answer, not a fault.
    */
-  validateCode: (code: string, courseId?: string) =>
-    api.post<CodeValidation>(
+  validateCode: async (code: string, courseId?: string) => {
+    assertFeatureEnabled(releaseFeatures.courseActivation, 'course activation');
+    return api.post<CodeValidation>(
       Endpoints.codes.validate,
       { code, courseId },
       { retries: 0 }
-    ),
+    );
+  },
 };

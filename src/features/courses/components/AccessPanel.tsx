@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardBody } from '@/components/ui/Card';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
+import { releaseFeatures } from '@/config/release-features';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/hooks/use-translation';
 import type { CourseDetail } from '@/types/domain';
@@ -38,7 +39,10 @@ export function AccessPanel({
   const { colors } = useTheme();
 
   const flags = courseAccessFlags(course);
-  const price = formatMoney(course.price, language);
+  const price = releaseFeatures.coursePrices ? formatMoney(course.price, language) : null;
+  // Free enrolment needs no code and no payment, so it survives this release.
+  const canJoinHere =
+    releaseFeatures.courseActivation || course.access.availableMethods.includes('FREE');
 
   // ---- terminal states: explain, then offer the human escape hatch ------
   if (flags.isArchived) {
@@ -62,11 +66,13 @@ export function AccessPanel({
         title={t('access.expiredTitle')}
         body={t('access.expiredBody')}
         actionLabel={
-          course.access.availableMethods.length > 0
+          canJoinHere && course.access.availableMethods.length > 0
             ? t('access.joinNow')
             : t('settings.contactSupport')
         }
-        onAction={course.access.availableMethods.length > 0 ? onJoin : onContactAdmin}
+        onAction={
+          canJoinHere && course.access.availableMethods.length > 0 ? onJoin : onContactAdmin
+        }
       />
     );
   }
@@ -91,6 +97,17 @@ export function AccessPanel({
         tone="warning"
         title={t('access.pendingTitle')}
         body={t('access.pendingBody')}
+      />
+    );
+  }
+
+  if (course.access.state === 'PENDING_PAYMENT' && !releaseFeatures.digitalPurchases) {
+    return (
+      <Notice
+        icon="clock"
+        tone="warning"
+        title={t('release.accessPending')}
+        body={t('release.accessPendingBody')}
       />
     );
   }
@@ -132,11 +149,22 @@ export function AccessPanel({
   }
 
   // ---- not enrolled ----------------------------------------------------
+  if (!canJoinHere) {
+    return (
+      <Notice
+        icon="lock"
+        tone="neutral"
+        title={t('release.notActiveTitle')}
+        body={t('release.notActiveBody')}
+      />
+    );
+  }
+
   return (
     <View className="gap-2">
       <Button
         label={
-          course.isFree
+          course.isFree && releaseFeatures.coursePrices
             ? t('access.joinFree')
             : price
               ? t('access.buyFor', { price })

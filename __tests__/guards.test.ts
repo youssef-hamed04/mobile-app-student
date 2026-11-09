@@ -13,6 +13,8 @@ describe('isSafeInternalRoute', () => {
     '/player/v-l12',
     '/settings/security',
     '/notifications',
+    // Teacher search results open the catalogue filtered by that teacher.
+    '/courses?teacherId=cmf3x9k2a0001',
   ])('accepts %s', (route) => {
     expect(isSafeInternalRoute(route)).toBe(true);
   });
@@ -24,6 +26,10 @@ describe('isSafeInternalRoute', () => {
     '/course/../../etc/passwd',
     '/admin/users',
     '//evil.example.com',
+    // Only the exact teacher-filter shape is allowed on /courses.
+    '/courses?teacherId=t1&next=https://evil.example.com',
+    '/courses?redirect=t1',
+    '/courses/../admin?teacherId=t1',
     '',
     null,
     undefined,

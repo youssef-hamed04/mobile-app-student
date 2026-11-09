@@ -1,3 +1,4 @@
+import { isRouteEnabled, releaseFeatures } from '@/config/release-features';
 import type { AdTarget } from '@/types/domain';
 
 export type ResolvedAdTarget =
@@ -43,12 +44,13 @@ export function resolveAdTarget(target: AdTarget): ResolvedAdTarget | null {
      */
     case 'SECTION':
     case 'APP_SCREEN':
-      return isSafeInternalPath(target.url)
+      return isSafeInternalPath(target.url) && isRouteEnabled(target.url!)
         ? { kind: 'internal', href: target.url! }
         : null;
 
     case 'EXTERNAL_URL':
-      return isSafeExternalUrl(target.url)
+      // An outside page can lead to a payment method, which this release may not do.
+      return releaseFeatures.digitalPurchases && isSafeExternalUrl(target.url)
         ? { kind: 'external', url: target.url! }
         : null;
 

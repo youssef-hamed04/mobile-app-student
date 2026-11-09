@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Redirect, Tabs } from 'expo-router';
 import * as React from 'react';
 import { Platform, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { api } from '@/api/client';
 import { Endpoints } from '@/api/endpoints';
@@ -12,6 +13,7 @@ import { useAuth } from '@/features/auth/AuthProvider';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/hooks/use-translation';
 import { registerPushToken, setBadgeCount } from '@/services/notifications';
+import { useLanguageStore } from '@/store/language-store';
 import { strokeWidth } from '@/theme/tokens';
 
 type TabName = 'index' | 'courses' | 'my-courses' | 'search' | 'notifications' | 'profile';
@@ -29,6 +31,8 @@ export default function TabsLayout() {
   const { status } = useAuth();
   const { t } = useTranslation();
   const { colors } = useTheme();
+  const insets = useSafeAreaInsets();
+  const isRTL = useLanguageStore((s) => s.isRTL);
 
   const unread = useQuery({
     queryKey: qk.notifications.unread(),
@@ -109,11 +113,20 @@ export default function TabsLayout() {
           // separate plate sitting on the page, matching the card treatment.
           borderTopColor: colors.border,
           borderTopWidth: strokeWidth.rule,
-          height: Platform.OS === 'ios' ? 88 : 68,
+          // Android draws edge to edge, so the bar has to clear the system
+          // navigation itself. Without the inset, three-button navigation covers
+          // the labels and takes taps meant for the tabs, sending the student
+          // Back or Home instead.
+          height: Platform.OS === 'ios' ? 88 : 68 + insets.bottom,
           paddingTop: 8,
-          paddingBottom: Platform.OS === 'ios' ? 28 : 10,
+          paddingBottom: Platform.OS === 'ios' ? 28 : 10 + insets.bottom,
         },
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '700', letterSpacing: 0.2 },
+        // The app's own faces (the bar is native, outside the Text primitive),
+        // no synthetic bold, and no letter-spacing, which breaks Arabic joins.
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontFamily: isRTL ? 'Cairo-SemiBold' : 'Inter-SemiBold',
+        },
         // The tab bar itself does not need manual RTL handling: the native
         // view tree is mirrored, so the order flips with the layout.
         tabBarHideOnKeyboard: true,

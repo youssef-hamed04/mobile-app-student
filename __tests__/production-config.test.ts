@@ -44,8 +44,10 @@ function loadConfig(overrides: Record<string, string | undefined> = {}) {
   }
   type LoadedConfig = {
     name: string;
-    android: { package: string; googleServicesFile: string };
-    ios: { bundleIdentifier: string };
+    version: string;
+    runtimeVersion: unknown;
+    android: { package: string; googleServicesFile: string; runtimeVersion?: unknown };
+    ios: { bundleIdentifier: string; runtimeVersion?: unknown };
   };
   let mod: { default: (ctx: { config: object }) => LoadedConfig } | undefined;
   jest.isolateModules(() => {
@@ -56,11 +58,19 @@ function loadConfig(overrides: Record<string, string | undefined> = {}) {
 }
 
 describe('production identity', () => {
-  it('is Student Center / com.eduplatform.app on both platforms', () => {
+  it('is Student Center / com.studentcenter.app on both platforms', () => {
     const config = loadConfig();
     expect(config.name).toBe('Student Center');
-    expect(config.android.package).toBe('com.eduplatform.app');
-    expect(config.ios.bundleIdentifier).toBe('com.eduplatform.app');
+    expect(config.android.package).toBe('com.studentcenter.app');
+    expect(config.ios.bundleIdentifier).toBe('com.studentcenter.app');
+  });
+
+  it('gives Android its own runtime and leaves iOS on the shared policy', () => {
+    const config = loadConfig();
+    expect(config.android.runtimeVersion).toBe('1.0.0-play');
+    expect(config.ios.runtimeVersion).toBeUndefined();
+    expect(config.runtimeVersion).toEqual({ policy: 'appVersion' });
+    expect(config.version).toBe('1.0.0');
   });
 
   it('reads the Firebase file from the GOOGLE_SERVICES_JSON file variable when present', () => {
@@ -124,8 +134,18 @@ describe('production build guard', () => {
   });
 
   it('does not apply to non-production variants', () => {
-    expect(() =>
-      loadConfig({ EXPO_PUBLIC_ENV: 'staging', APP_VARIANT: 'staging', EXPO_PUBLIC_TERMS_URL: undefined })
-    ).not.toThrow();
+    // Staging has its own guard (owner decision D7, __tests__/staging-guard.test.ts):
+    // against the production API it needs the acknowledgement its eas.json
+    // profile carries. The production-only requirements below still never apply.
+    const prev = process.env.STAGING_USES_PRODUCTION_API;
+    process.env.STAGING_USES_PRODUCTION_API = 'acknowledged';
+    try {
+      expect(() =>
+        loadConfig({ EXPO_PUBLIC_ENV: 'staging', APP_VARIANT: 'staging', EXPO_PUBLIC_TERMS_URL: undefined })
+      ).not.toThrow();
+    } finally {
+      if (prev === undefined) delete process.env.STAGING_USES_PRODUCTION_API;
+      else process.env.STAGING_USES_PRODUCTION_API = prev;
+    }
   });
 });

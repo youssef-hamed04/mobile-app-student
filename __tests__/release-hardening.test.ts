@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 import { Endpoints } from '@/api/endpoints';
 import { networkError } from '@/api/errors';
 import { isSafeInternalRoute } from '@/utils/guards';
@@ -24,9 +26,15 @@ describe('transport failures are classified, not all reported as offline', () =>
 });
 
 describe('notification deep links', () => {
-  it.each(['/library', '/library/abc123', '/wallet', '/support/t_1'])(
-    'allows in-app route %s',
-    (route) => expect(isSafeInternalRoute(route)).toBe(true)
+  it('allows in-app route /support/t_1', () => {
+    expect(isSafeInternalRoute('/support/t_1')).toBe(true);
+  });
+
+  // The Google Play Android release disables these two features. Every other
+  // platform still allows them.
+  it.each(['/library', '/library/abc123', '/wallet'])(
+    'allows %s, except on the Android release',
+    (route) => expect(isSafeInternalRoute(route)).toBe(Platform.OS !== 'android')
   );
 
   it.each(['https://evil.example/x', '//evil', '/library/../../x', 'eduplatform://course/1'])(

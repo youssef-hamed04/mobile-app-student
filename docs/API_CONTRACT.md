@@ -427,7 +427,7 @@ The client debounces 350ms and requires ≥2 characters.
 |---|---|
 | `GET /profile` → `User` | |
 | `PATCH /profile` | Only `fullName` is editable from the app. Phone and academic fields are administrative. |
-| `PUT /profile/password` | `{ currentPassword, newPassword }` |
+| *(no password route)* | Students cannot change or recover their own password. The administration resets it (`PUT /admin/users/:id/password`, MASTER/ADMIN only); `POST /auth/password` answers a student 403. The app's "Password help" links to support. |
 | `GET /devices` → `AuthorizedDevice[]` | Include `current: true` for the calling device |
 | `POST /devices/change-request` | `{ reason }` → creates an admin approval task |
 

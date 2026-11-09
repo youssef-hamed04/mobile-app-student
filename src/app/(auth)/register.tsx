@@ -21,7 +21,7 @@ import { Text } from '@/components/ui/Text';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { PasswordStrengthMeter } from '@/features/auth/components/PasswordStrengthMeter';
 import {
-  useAcademicYears,
+  useAcademicSelectionOptions,
   useDepartments,
   useFaculties,
   useUniversities,
@@ -94,23 +94,68 @@ export default function RegisterScreen() {
 
   const universityId = academicForm.watch('universityId');
   const facultyId = academicForm.watch('facultyId');
+  const departmentId = academicForm.watch('departmentId');
   const password = accountForm.watch('password');
 
   const universities = useUniversities();
   const faculties = useFaculties(universityId || null);
   const departments = useDepartments(facultyId || null);
-  const years = useAcademicYears();
 
-  // Clear dependent selections when a parent changes, so the student can
-  // never submit a department that doesn't belong to the chosen faculty.
+  /*
+   * The college's resolved system and its entries.
+   *
+   * Scoped to the department once one is chosen, otherwise the college. This is
+   * what makes the override visible: a computer-science college inside a
+   * year-based university resolves to LEVEL here, and the field below becomes
+   * "المستوى" populated with levels — with the student choosing nothing.
+   *
+   * Previously this screen fetched the platform-wide year list unscoped, so it
+   * offered "First year … Fifth year" to a student registering at a level-based
+   * college.
+   */
+  const selection = useAcademicSelectionOptions(
+    departmentId ? { departmentId } : facultyId ? { facultyId } : null
+  );
+
+  /*
+   * The label follows the vocabulary the entries are actually written in, so it
+   * can never contradict them. Normally that equals the resolved system; the two
+   * diverge only when an administrator has changed a university default without
+   * renaming its ladder, which is deliberate and never automatic. Exactly one of
+   * these two labels is ever shown.
+   */
+  const progressLabel =
+    selection.labelKind === 'LEVEL' ? t('auth.level') : t('auth.academicYear');
+
+  // Clear dependent selections when a parent changes, so the student can never
+  // submit a department that doesn't belong to the chosen faculty, or a rung
+  // that belongs to a college they have already navigated away from.
   React.useEffect(() => {
     academicForm.setValue('facultyId', '');
     academicForm.setValue('departmentId', '');
+    academicForm.setValue('academicYearId', '');
   }, [universityId, academicForm]);
 
   React.useEffect(() => {
     academicForm.setValue('departmentId', '');
+    academicForm.setValue('academicYearId', '');
   }, [facultyId, academicForm]);
+
+  React.useEffect(() => {
+    academicForm.setValue('academicYearId', '');
+  }, [departmentId, academicForm]);
+
+  /*
+   * The system is configuration and can change while the student is on this
+   * screen. A chosen rung that is no longer offered is cleared rather than left
+   * to fail server-side with a message about a college they never touched.
+   */
+  React.useEffect(() => {
+    const selected = academicForm.getValues('academicYearId');
+    if (!selected || selection.options.length === 0) return;
+    if (selection.options.some((option) => option.value === selected)) return;
+    academicForm.setValue('academicYearId', '');
+  }, [selection.options, academicForm]);
 
   const goNext = async () => {
     setFormError(null);
@@ -216,7 +261,9 @@ export default function RegisterScreen() {
 
         {step === 0 ? (
           <View className="gap-4">
-            <Text variant="h3" tone="onHighlight">{t('auth.accountInfo')}</Text>
+            <Text variant="h3" tone="onHighlight">
+              {t('auth.accountInfo')}
+            </Text>
 
             <Controller
               control={accountForm.control}
@@ -231,7 +278,9 @@ export default function RegisterScreen() {
                   onBlur={field.onBlur}
                   error={accountErrors.translate(
                     accountForm.formState.errors.fullName?.message,
-                    messageParams(accountForm.formState.errors.fullName?.message ?? '')
+                    messageParams(
+                      accountForm.formState.errors.fullName?.message ?? ''
+                    )
                   )}
                   autoComplete="name"
                   textContentType="name"
@@ -313,7 +362,9 @@ export default function RegisterScreen() {
 
         {step === 1 ? (
           <View className="gap-4">
-            <Text variant="h3" tone="onHighlight">{t('auth.academicInfo')}</Text>
+            <Text variant="h3" tone="onHighlight">
+              {t('auth.academicInfo')}
+            </Text>
 
             <Controller
               control={academicForm.control}
@@ -376,31 +427,53 @@ export default function RegisterScreen() {
               )}
             />
 
-            <Controller
-              control={academicForm.control}
-              name="academicYearId"
-              render={({ field }) => (
-                <Select
-                  label={t('auth.academicYear')}
-                  value={field.value || null}
-                  options={years.data ?? []}
-                  onChange={field.onChange}
-                  loading={years.isLoading}
-                  error={academicErrors.translate(
-                    academicForm.formState.errors.academicYearId?.message
-                  )}
-                  required
-                  onPlate
-                />
-              )}
-            />
+            {/*
+              The one system-dependent control on this screen.
+
+              Both the label and the options come from the server's resolution of
+              the selected college, so a levels college gets "المستوى" with
+              levels and a years college gets "الفرقة الدراسية" with years. The
+              student sees exactly one and chooses nothing about which.
+
+              A college with no configured system renders as a caption rather than
+              an empty dropdown: an empty picker with no explanation reads as a
+              bug and gives the student nothing to act on.
+            */}
+            {facultyId && !selection.isLoading && !selection.configured ? (
+              <Text variant="caption" tone="none" className="text-brand-900">
+                {t('auth.academicSystemNotConfigured')}
+              </Text>
+            ) : (
+              <Controller
+                control={academicForm.control}
+                name="academicYearId"
+                render={({ field }) => (
+                  <Select
+                    label={progressLabel}
+                    value={field.value || null}
+                    options={selection.options}
+                    onChange={field.onChange}
+                    loading={selection.isLoading}
+                    disabled={!facultyId || !selection.configured}
+                    emptyMessage={t('courses.empty.listBody')}
+                    error={academicErrors.translate(
+                      academicForm.formState.errors.academicYearId?.message
+                    )}
+                    required
+                    onPlate
+                  />
+                )}
+              />
+            )}
 
             <Controller
               control={academicForm.control}
               name="gender"
               render={({ field }) => (
                 <View className="gap-2">
-                  <Text variant="label" tone="onHighlight">{t('auth.gender')}</Text>
+                  <Text variant="label" tone="onHighlight">
+                    {t('auth.gender')}
+                  </Text>
                   <View className="flex-row gap-2">
                     <Chip
                       label={t('auth.male')}
@@ -416,7 +489,7 @@ export default function RegisterScreen() {
                     />
                   </View>
                   {academicForm.formState.errors.gender ? (
-                    <Text variant="caption" className="text-danger-800">
+                    <Text variant="caption" tone="none" className="text-danger-800">
                       {academicErrors.translate(
                         academicForm.formState.errors.gender.message
                       )}
@@ -430,33 +503,45 @@ export default function RegisterScreen() {
 
         {step === 2 ? (
           <View className="gap-4">
-            <Text variant="h3" tone="onHighlight">{t('auth.reviewInfo')}</Text>
-            <Text variant="caption" className="text-brand-900">
+            <Text variant="h3" tone="onHighlight">
+              {t('auth.reviewInfo')}
+            </Text>
+            <Text variant="caption" tone="none" className="text-brand-900">
               {t('auth.reviewNote')}
             </Text>
 
             <View className="overflow-hidden rounded-lg border-2 border-outline">
-              <ListItem title={t('auth.fullName')} value={values.fullName} />
+              <ListItem title={t('auth.fullName')} value={values.fullName} valueLines={2} />
               <ListItem title={t('auth.phone')} value={values.phone} />
               <ListItem
                 title={t('auth.university')}
                 value={labelFor(universities.data, values.universityId)}
+              valueLines={2}
               />
               <ListItem
                 title={t('auth.faculty')}
                 value={labelFor(faculties.data, values.facultyId)}
+              valueLines={2}
               />
               <ListItem
                 title={t('auth.department')}
                 value={labelFor(departments.data, values.departmentId)}
+              valueLines={2}
               />
+              {/* Labelled with the same resolved noun the dropdown used, so the
+                  review cannot disagree with the form the student just filled
+                  in — and so a levels college is never summarised as an
+                  "Academic year". */}
               <ListItem
-                title={t('auth.academicYear')}
-                value={labelFor(years.data, values.academicYearId)}
+                title={progressLabel}
+                value={labelFor(selection.options, values.academicYearId)}
+              valueLines={2}
               />
               <ListItem
                 title={t('auth.gender')}
-                value={values.gender === 'FEMALE' ? t('auth.female') : t('auth.male')}
+                value={
+                  values.gender === 'FEMALE' ? t('auth.female') : t('auth.male')
+                }
               />
             </View>
 
@@ -474,7 +559,7 @@ export default function RegisterScreen() {
               </CardBody>
             </Card>
 
-            <Text variant="caption" className="text-brand-900">
+            <Text variant="caption" tone="none" className="text-brand-900">
               {t('auth.termsNotice')}
             </Text>
           </View>
@@ -506,11 +591,11 @@ export default function RegisterScreen() {
 
         {step === 0 ? (
           <View className="flex-row items-center justify-center gap-1">
-            <Text variant="caption" className="text-brand-900">
+            <Text variant="caption" tone="none" className="text-brand-900">
               {t('auth.haveAccount')}
             </Text>
             <Link href="/(auth)/login" asChild>
-              <Text variant="label" className="text-danger-800 underline">
+              <Text variant="label" tone="none" className="text-danger-800 underline">
                 {t('auth.login')}
               </Text>
             </Link>

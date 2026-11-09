@@ -153,8 +153,10 @@ project id, not the zero UUID placeholder.
 **Where:** https://console.firebase.google.com → your project → Project
 settings.
 
-1. Add an Android app with package name `com.eduplatform.app` (and
-   `com.eduplatform.app.dev` / `.stg` if you want push in those variants).
+1. Add an Android app with package name `com.studentcenter.app` (and
+   `com.studentcenter.app.dev` / `.stg` if you want push in those variants).
+   (`com.eduplatform.app` was the name until 2026-11-05; it stays registered
+   to the personal Play account and is no longer used.)
 2. Download `google-services.json`.
 3. Project settings → Service accounts → **Generate new private key** → JSON.
 
@@ -454,10 +456,11 @@ eas submit -p ios --latest
 
 These are product decisions, not missing code:
 
-1. **Payment provider.** `EnrollSheet` opens `payment.checkoutUrl` in the
-   external browser (so card data never touches the app and the student sees
-   the provider's TLS indicator). Wire Paymob / Fawry / Stripe on the backend
-   and return the URL.
+1. **Payment provider.** The app has no in-app checkout. The unused
+   `EnrollSheet` (which opened `payment.checkoutUrl` in the external browser)
+   was removed under owner decision D4: selling digital content inside a store
+   build needs the store's billing (Google Play Billing / StoreKit), which is a
+   separate product decision. Courses are unlocked with access cards.
 2. **Terms / privacy / content-policy URLs.** Currently the About screen routes
    these to email. Replace with real URLs once they exist.
 3. **Course thumbnails.** The domain model has `thumbnailUrl`; the mock data

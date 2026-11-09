@@ -111,14 +111,27 @@ export function validateAvatar(image: PickedImage): string | null {
  * `TypeError` that no error boundary in the app knows how to render.
  */
 export async function uploadAvatar(image: PickedImage): Promise<User> {
-  const signed = await api.post<SignedUpload>(Endpoints.storage.avatarUpload, {
-    contentType: image.mimeType,
-    sizeBytes: image.sizeBytes,
-  });
-
   // `fetch` on a file:// URI yields the real bytes; this is the one supported
   // way to get a body for a raw PUT in React Native.
+  //
+  // Read BEFORE presigning: the picker does not always report `fileSize`
+  // (it is optional in expo-image-picker), and a missing size used to be sent
+  // as `sizeBytes: 0`, which the API refuses (minimum 1) - so the upload
+  // failed for exactly those devices. The blob's own size is the truth.
   const body = await fetch(image.uri).then((r) => r.blob());
+  const sizeBytes = image.sizeBytes > 0 ? image.sizeBytes : body.size;
+  if (sizeBytes > AVATAR_MAX_BYTES) {
+    throw new ApiError({
+      code: 'VALIDATION_ERROR',
+      status: 422,
+      message: 'The picture is larger than the allowed size',
+    });
+  }
+
+  const signed = await api.post<SignedUpload>(Endpoints.storage.avatarUpload, {
+    contentType: image.mimeType,
+    sizeBytes,
+  });
 
   const response = await fetch(signed.uploadUrl, {
     method: 'PUT',

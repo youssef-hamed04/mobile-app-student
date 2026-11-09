@@ -1,4 +1,5 @@
 import { FlashList } from '@shopify/flash-list';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -13,6 +14,7 @@ import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
 import { IconButton } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Select';
+import { releaseFeatures } from '@/config/release-features';
 import {
   useAcademicYears,
   useUniversities,
@@ -42,14 +44,20 @@ export default function CoursesScreen() {
   const [academicYearId, setAcademicYearId] = React.useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = React.useState(false);
 
+  // A teacher search result opens this tab as /courses?teacherId=…
+  const router = useRouter();
+  const { teacherId: teacherParam } = useLocalSearchParams<{ teacherId?: string }>();
+  const teacherId = typeof teacherParam === 'string' && teacherParam ? teacherParam : null;
+
   const filters = React.useMemo<CourseFilters>(
     () => ({
       sort,
       free: freeOnly || undefined,
       universityId: universityId ?? undefined,
       academicYearId: academicYearId ?? undefined,
+      teacherId: teacherId ?? undefined,
     }),
-    [sort, freeOnly, universityId, academicYearId]
+    [sort, freeOnly, universityId, academicYearId, teacherId]
   );
 
   const query = useCourseList(filters);
@@ -58,12 +66,13 @@ export default function CoursesScreen() {
 
   const items = query.data?.items ?? [];
   const activeFilterCount =
-    (freeOnly ? 1 : 0) + (universityId ? 1 : 0) + (academicYearId ? 1 : 0);
+    (freeOnly ? 1 : 0) + (universityId ? 1 : 0) + (academicYearId ? 1 : 0) + (teacherId ? 1 : 0);
 
   const clearFilters = () => {
     setFreeOnly(false);
     setUniversityId(null);
     setAcademicYearId(null);
+    if (teacherId) router.setParams({ teacherId: undefined });
   };
 
   const renderItem = React.useCallback(
@@ -100,12 +109,14 @@ export default function CoursesScreen() {
             selected={sort === 'popular'}
             onPress={() => setSort('popular')}
           />
-          <Chip
-            label={t('courses.filterFree')}
-            selected={freeOnly}
-            icon="price"
-            onPress={() => setFreeOnly((v) => !v)}
-          />
+          {releaseFeatures.coursePrices ? (
+            <Chip
+              label={t('courses.filterFree')}
+              selected={freeOnly}
+              icon="price"
+              onPress={() => setFreeOnly((v) => !v)}
+            />
+          ) : null}
           {activeFilterCount > 0 ? (
             <Chip label={t('courses.clearFilters')} icon="close" onPress={clearFilters} />
           ) : null}
@@ -187,8 +198,12 @@ export default function CoursesScreen() {
             options={[
               { value: 'newest', label: t('courses.sortNewest') },
               { value: 'popular', label: t('courses.sortPopular') },
-              { value: 'priceLow', label: t('courses.sortPriceLow') },
-              { value: 'priceHigh', label: t('courses.sortPriceHigh') },
+              ...(releaseFeatures.coursePrices
+                ? [
+                    { value: 'priceLow', label: t('courses.sortPriceLow') },
+                    { value: 'priceHigh', label: t('courses.sortPriceHigh') },
+                  ]
+                : []),
             ]}
             onChange={(v) => setSort(v as Sort)}
           />

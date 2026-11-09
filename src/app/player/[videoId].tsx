@@ -52,6 +52,7 @@ export default function PlayerRoute() {
           onRetry={() => void lessonQuery.refetch()}
           onSecondary={close}
           secondaryLabel={t('common.close')}
+          onDark
         />
       </View>
     );

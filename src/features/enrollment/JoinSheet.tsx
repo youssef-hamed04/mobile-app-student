@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input';
 import { Sheet } from '@/components/ui/Sheet';
 import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
+import { releaseFeatures } from '@/config/release-features';
 import { useCourseJoinOptions } from '@/features/course-parts/hooks';
 import { useEnroll, useRedeemCode } from '@/features/courses/hooks';
 import { useTranslation } from '@/hooks/use-translation';
@@ -51,6 +52,8 @@ export function JoinSheet({
   visible: boolean;
   onClose: () => void;
 }) {
+  if (!releaseFeatures.courseActivation) return null;
+
   // The body is remounted whenever the sheet opens, which is how the typed
   // code, the chosen option and any error get cleared.
   //

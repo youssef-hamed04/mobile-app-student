@@ -110,6 +110,13 @@ class ContentProtectionController {
 
     await startDetection();
 
+    // App-wide, not per screen. On Android this re-asserts the FLAG_SECURE
+    // MainActivity set before the first frame. On iOS it arms the app-switcher
+    // privacy overlay from launch; before, it waited for the first protected
+    // screen's acquire(), so the course lists and profile opened before any
+    // lecture showed in the app switcher.
+    await setSecureFlag(true);
+
     this.subs = [
       addScreenCaptureListener(() => {
         this.patch(

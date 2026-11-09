@@ -78,7 +78,7 @@ export function PasswordStrengthMeter({
           />
         ))}
       </View>
-      <Text variant="caption" className={text[level]}>
+      <Text variant="caption" tone={onPlate ? 'none' : 'default'} className={text[level]}>
         {t(`auth.passwordStrength.${level}`)}
       </Text>
     </View>

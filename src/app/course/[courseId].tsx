@@ -15,10 +15,11 @@ import { Icon } from '@/components/ui/Icon';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { CardSkeleton, Skeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
+import { releaseFeatures } from '@/config/release-features';
 import { PartsPanel } from '@/features/course-parts/PartsPanel';
 import { AccessPanel } from '@/features/courses/components/AccessPanel';
 import { SectionAccordion } from '@/features/courses/components/SectionAccordion';
-import { courseAccessFlags, useCourse } from '@/features/courses/hooks';
+import { courseAccessFlags, useCourse, useEnroll } from '@/features/courses/hooks';
 import { JoinSheet } from '@/features/enrollment/JoinSheet';
 import { AttachmentRow } from '@/features/lessons/AttachmentRow';
 import { useTheme } from '@/hooks/use-theme';
@@ -49,6 +50,7 @@ export default function CourseDetailScreen() {
 
   const query = useCourse(courseId);
   const course = query.data;
+  const enrollFree = useEnroll(courseId ?? '');
 
   if (query.isLoading) return <DetailSkeleton />;
 
@@ -65,8 +67,12 @@ export default function CourseDetailScreen() {
 
   const openLesson = (lesson: LessonSummary) => {
     if (lesson.locked && !lesson.isPreview) {
-      toast.info(t('access.lockedBody'));
-      setEnrollOpen(flags.canJoin);
+      if (releaseFeatures.courseActivation) {
+        toast.info(t('access.lockedBody'));
+        setEnrollOpen(flags.canJoin);
+      } else {
+        toast.info(t('release.lockedBody'));
+      }
       return;
     }
     router.push(`/lesson/${lesson.id}`);
@@ -119,12 +125,6 @@ export default function CourseDetailScreen() {
             <Meta icon="document" label={t('common.lessonCount', { count: course.lessonCount })} />
             <Meta icon="courses" label={t('common.sectionCount', { count: course.sectionCount })} />
             <Meta icon="clock" label={formatDuration(course.totalDurationSeconds, language)} />
-            {course.studentCount ? (
-              <Meta
-                icon="people"
-                label={t('courses.enrolledStudents', { count: course.studentCount })}
-              />
-            ) : null}
           </View>
 
           {course.progress && flags.hasAccess ? (
@@ -143,7 +143,12 @@ export default function CourseDetailScreen() {
           <View className="mt-4">
             <AccessPanel
               course={course}
-              onJoin={() => setEnrollOpen(true)}
+              onJoin={() => {
+                // Without activation the only way in from here is free enrolment.
+                if (releaseFeatures.courseActivation) setEnrollOpen(true);
+                else enrollFree.mutate('FREE');
+              }}
+              joining={enrollFree.isPending}
               onContinue={continueCourse}
               onContactAdmin={contactAdmin}
             />
@@ -305,11 +310,13 @@ export default function CourseDetailScreen() {
           are rather than deriving them from the course object, so the whole-
           course price, each part's price, and which methods are live all come
           from one answer. */}
-      <JoinSheet
-        courseId={course.id}
-        visible={enrollOpen}
-        onClose={() => setEnrollOpen(false)}
-      />
+      {releaseFeatures.courseActivation ? (
+        <JoinSheet
+          courseId={course.id}
+          visible={enrollOpen}
+          onClose={() => setEnrollOpen(false)}
+        />
+      ) : null}
     </SafeAreaView>
   );
 }
@@ -318,7 +325,7 @@ function Meta({
   icon,
   label,
 }: {
-  icon: 'document' | 'clock' | 'people' | 'courses';
+  icon: 'document' | 'clock' | 'courses';
   label: string;
 }) {
   const { colors } = useTheme();

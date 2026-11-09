@@ -19,6 +19,14 @@ export const qk = {
     departments: (facultyId: string) =>
       [...qk.catalog.all, 'departments', facultyId] as const,
     academicYears: () => [...qk.catalog.all, 'academic-years'] as const,
+    /**
+     * Scoped, because the resolved system and the entries are different answers
+     * for different units: a level-based college inside a year-based university
+     * gets a different list from its own university. The argument is the scope so
+     * two units' answers cannot overwrite each other in the cache.
+     */
+    academicSelection: (scope: unknown) =>
+      [...qk.catalog.all, 'academic-selection', scope] as const,
   },
 
   home: {
@@ -109,7 +117,8 @@ export const qk = {
     browse: (filters: object) => [...qk.library.all, 'browse', filters] as const,
     material: (id: string) => [...qk.library.all, 'material', id] as const,
     mine: (filters: object) => [...qk.library.all, 'mine', filters] as const,
-    purchases: (filters: object) => [...qk.library.all, 'purchases', filters] as const,
+    purchases: (filters: object) =>
+      [...qk.library.all, 'purchases', filters] as const,
     /**
      * A reading ticket is never cached: it expires, and it is bound to one
      * device and session. The key exists so an in-flight request can be
