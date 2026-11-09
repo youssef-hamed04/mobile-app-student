@@ -2,11 +2,10 @@ import { create } from 'zustand';
 
 import { kv, KvKeys } from '@/services/kv';
 
-export type QualityLevel = 'auto' | '360p' | '480p' | '720p' | '1080p';
+export type QualityLevel = 'auto' | '480p' | '720p' | '1080p';
 
 export const QUALITY_LEVELS: readonly QualityLevel[] = [
   'auto',
-  '360p',
   '480p',
   '720p',
   '1080p',

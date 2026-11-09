@@ -72,7 +72,7 @@ export function PlayerSettingsSheet({
   }, [visible, initialPanel]);
 
   const qualityOptions: QualityLevel[] = React.useMemo(() => {
-    const ordered: QualityLevel[] = ['1080p', '720p', '480p', '360p'];
+    const ordered: QualityLevel[] = ['1080p', '720p', '480p'];
     return ['auto', ...ordered.filter((q) => availableQualities.includes(q))];
   }, [availableQualities]);
 

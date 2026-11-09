@@ -73,9 +73,9 @@ describe('independent mobile HLS tickets', () => {
   it('keep a relative manifest path relative', () => {
     const s = buildPlayerSource(
       { ...hlsTicket, manifestUrl: '/playback/manifest/t_1/master.m3u8?exp=1&sig=s' },
-      { quality: '360p' }
+      { quality: '480p' }
     );
-    expect(s.uri).toBe('/playback/manifest/t_1/master.m3u8?exp=1&sig=s&maxHeight=360');
+    expect(s.uri).toBe('/playback/manifest/t_1/master.m3u8?exp=1&sig=s&maxHeight=480');
   });
 
   it('carry the lesson metadata for the system media session', () => {
