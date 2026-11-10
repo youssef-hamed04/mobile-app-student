@@ -1,57 +1,62 @@
-import { Platform } from 'react-native';
-
 import { env } from './env';
 
 /**
- * What the Google Play first release of this app may do.
+ * What the Student Center mobile apps may do.
  *
- * The first Android release is consumption-only: a student signs in and uses
- * what is already on their account. Selling, spending credit and entering codes
- * stay implemented, and stay available on every other platform, but cannot be
- * reached from this build.
+ * Owner decision (2026-11-10): the mobile apps, on EVERY platform, are
+ * content-consumption only. A student signs in and uses what is already on
+ * their account; courses are activated through the website or by the
+ * administration, and the app recognises the entitlement on its next refresh.
+ * Nothing in the app sells, prices, spends credit, enters a code, or points at
+ * a place to pay. The commercial code paths stay in the tree for the web and
+ * admin clients' sake, but they are unreachable here: the four commercial
+ * flags are constants, not configuration, and no platform is exempt.
  *
- * The values come from `env.features` (EXPO_PUBLIC_* variables), and apply on
- * Android only. iOS always gets everything, whatever the variables say.
+ * `library` is the one feature that remains a release switch: it is content
+ * (reading authorized materials), so it is on in the store profiles and
+ * controlled by EXPO_PUBLIC_ENABLE_LIBRARY only to hold a release back if the
+ * reader needs work on a platform. Even with the library on, its purchase
+ * surfaces follow the commercial flags below and are therefore never shown.
  *
  * Do not turn any of these on with an EAS Update. That changes what a reviewed
- * Play release does without review. Enable them in a new reviewed release.
+ * store release does without review.
  */
 export interface ReleaseFeatures {
-  /** ENABLE_LIBRARY: browsing, previews, purchases, the reader, My Library. */
+  /** ENABLE_LIBRARY: browsing, previews and the reader for materials on the account. */
   library: boolean;
-  /** ENABLE_WALLET: balance, transactions, recharge cards. */
+  /** Balance, transactions, recharge cards. Always off in the mobile apps. */
   wallet: boolean;
-  /** ENABLE_COURSE_ACTIVATION: entering a code to unlock a course or part. */
+  /** Entering a code to unlock a course or part. Always off in the mobile apps. */
   courseActivation: boolean;
-  /** SHOW_COURSE_PRICES: course and part prices and the labels built on them. */
+  /** Course, part, package and material prices. Always off in the mobile apps. */
   coursePrices: boolean;
-  /** ENABLE_DIGITAL_PURCHASES: any purchase flow, label or outside payment link. */
+  /** Any purchase flow, label or outside payment link. Always off in the mobile apps. */
   digitalPurchases: boolean;
 }
 
-const ALL_ENABLED: ReleaseFeatures = {
-  library: true,
-  wallet: true,
-  courseActivation: true,
-  coursePrices: true,
-  digitalPurchases: true,
-};
+/** The commercial surfaces the mobile apps never expose, whatever the variables say. */
+export const CONSUMPTION_ONLY = Object.freeze({
+  wallet: false,
+  courseActivation: false,
+  coursePrices: false,
+  digitalPurchases: false,
+} as const);
 
+/**
+ * `platform` is accepted for call-site compatibility and deliberately ignored:
+ * iOS and Android (and web previews) resolve the same way.
+ */
 export function resolveReleaseFeatures(
-  platform: string,
-  flags: ReleaseFeatures
+  _platform: string,
+  flags: Pick<ReleaseFeatures, 'library'>
 ): ReleaseFeatures {
-  if (platform !== 'android') return ALL_ENABLED;
   return {
     library: flags.library,
-    wallet: flags.wallet,
-    courseActivation: flags.courseActivation,
-    coursePrices: flags.coursePrices,
-    digitalPurchases: flags.digitalPurchases,
+    ...CONSUMPTION_ONLY,
   };
 }
 
-export const releaseFeatures = resolveReleaseFeatures(Platform.OS, env.features);
+export const releaseFeatures = resolveReleaseFeatures('any', env.features);
 
 /**
  * The first path segment of a route, however it arrived: `/wallet/`,

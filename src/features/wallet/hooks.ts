@@ -20,11 +20,16 @@ import { type WalletTransactionFilters, walletApi } from './api';
  * confusing one. The server creates the wallet on first read, so a student who
  * registered before credit existed needs no special case here.
  */
-export function useWallet() {
+export function useWallet(options: { enabled?: boolean } = {}) {
   return useQuery({
     queryKey: qk.wallet.summary(),
     queryFn: ({ signal }) => walletApi.summary(signal),
     staleTime: 15_000,
+    // Screens that exist only to spend credit pass `releaseFeatures.wallet`, so
+    // a consumption-only build never asks for a balance it will not show.
+    // Account deletion keeps asking: a balance must be settled before the
+    // account goes, and that is a disclosure, not a sale.
+    enabled: options.enabled ?? true,
   });
 }
 

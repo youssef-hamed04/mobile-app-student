@@ -42,11 +42,10 @@ describe('Android release flags', () => {
     });
   });
 
-  it('sets every flag to false in the production EAS profile, inherited by the APK', () => {
+  it('keeps the commercial variables false and the library on in the production EAS profile, inherited by the APK', () => {
     const eas = JSON.parse(readFileSync(join(root, 'eas.json'), 'utf8'));
     const env = eas.build.production.env;
     for (const name of [
-      'EXPO_PUBLIC_ENABLE_LIBRARY',
       'EXPO_PUBLIC_ENABLE_WALLET',
       'EXPO_PUBLIC_ENABLE_COURSE_ACTIVATION',
       'EXPO_PUBLIC_SHOW_COURSE_PRICES',
@@ -54,6 +53,8 @@ describe('Android release flags', () => {
     ]) {
       expect(env[name]).toBe('false');
     }
+    // Reading materials on the account is content, so the library ships on.
+    expect(env.EXPO_PUBLIC_ENABLE_LIBRARY).toBe('true');
     expect(eas.build['production:apk'].extends).toBe('production');
     expect(eas.build['production:apk'].env).toBeUndefined();
   });
@@ -79,7 +80,7 @@ function loadOn(platform: 'ios' | 'android') {
   return loaded;
 }
 
-describe('iOS is unaffected', () => {
+describe('iOS is consumption-only too (owner decision 2026-11-10)', () => {
   const ON: ReleaseFeatures = {
     library: true,
     wallet: true,
@@ -88,16 +89,19 @@ describe('iOS is unaffected', () => {
     digitalPurchases: true,
   };
 
-  it('keeps every feature on, even if the variables say off', () => {
-    expect(resolveReleaseFeatures('ios', OFF)).toEqual(ON);
-    expect(loadOn('ios').features).toEqual(ON);
+  it('ignores the platform: the commercial flags are false even if the variables say on', () => {
+    for (const platform of ['ios', 'android', 'web', 'anything']) {
+      expect(resolveReleaseFeatures(platform, ON)).toEqual({ ...OFF, library: true });
+      expect(resolveReleaseFeatures(platform, OFF)).toEqual(OFF);
+    }
+    expect(loadOn('ios').features).toEqual(OFF);
   });
 
-  it('still opens Library and wallet routes', () => {
-    const { isSafeInternalRoute: guard } = loadOn('ios');
-    expect(guard('/library')).toBe(true);
-    expect(guard('/library/m1')).toBe(true);
-    expect(guard('/wallet')).toBe(true);
+  it('never opens the wallet route; the library follows its own switch', () => {
+    const { isSafeInternalRoute: guard, features } = loadOn('ios');
+    expect(guard('/wallet')).toBe(false);
+    expect(guard('/library')).toBe(features.library);
+    expect(guard('/library/m1')).toBe(features.library);
   });
 });
 
@@ -179,9 +183,9 @@ describe('announcements on Android', () => {
     }
   });
 
-  it('changes nothing on iOS', () => {
+  it('applies the same rule on iOS', () => {
     const item = { kind: 'PAYMENT', title: 'Buy now', route: '/wallet' };
-    expect(loadOn('ios').isAnnouncementVisible(item)).toBe(true);
+    expect(loadOn('ios').isAnnouncementVisible(item)).toBe(false);
   });
 });
 

@@ -17,6 +17,7 @@ import { Input } from '@/components/ui/Input';
 import { CardSkeleton } from '@/components/ui/Skeleton';
 import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
+import { releaseFeatures } from '@/config/release-features';
 import { SEARCH_DEBOUNCE_MS } from '@/constants';
 import { useLibraryBrowse, useMyLibrary } from '@/features/library/hooks';
 import { useWallet } from '@/features/wallet/hooks';
@@ -48,7 +49,9 @@ export default function LibraryScreen() {
   const [rawQuery, setRawQuery] = React.useState('');
   const q = useDebouncedValue(rawQuery.trim(), SEARCH_DEBOUNCE_MS);
 
-  const wallet = useWallet();
+  // Consumption-only: the balance pill and the wallet link exist only where the
+  // wallet feature is on, and the balance is not even requested otherwise.
+  const wallet = useWallet({ enabled: releaseFeatures.wallet });
   const browse = useLibraryBrowse(q.length > 0 ? { q } : {});
   const mine = useMyLibrary();
 
@@ -61,26 +64,28 @@ export default function LibraryScreen() {
         title={t('library.title')}
         showBack
         right={
-          <Card
-            onPress={() => router.push('/wallet')}
-            accessibilityLabel={t('wallet.openA11y')}
-            className="px-3 py-1.5"
-          >
-            <View className="flex-row items-center gap-1.5">
-              <Icon name="price" size={15} />
-              <Text variant="caption">
-                {wallet.isLoading
-                  ? '…'
-                  : formatMoney(
-                      {
-                        amount: wallet.data?.balance ?? 0,
-                        currency: wallet.data?.currency ?? 'EGP',
-                      },
-                      language
-                    )}
-              </Text>
-            </View>
-          </Card>
+          releaseFeatures.wallet ? (
+            <Card
+              onPress={() => router.push('/wallet')}
+              accessibilityLabel={t('wallet.openA11y')}
+              className="px-3 py-1.5"
+            >
+              <View className="flex-row items-center gap-1.5">
+                <Icon name="price" size={15} />
+                <Text variant="caption">
+                  {wallet.isLoading
+                    ? '…'
+                    : formatMoney(
+                        {
+                          amount: wallet.data?.balance ?? 0,
+                          currency: wallet.data?.currency ?? 'EGP',
+                        },
+                        language
+                      )}
+                </Text>
+              </View>
+            </Card>
+          ) : undefined
         }
       />
 
@@ -257,7 +262,7 @@ function MaterialCard({
             ) : null}
           </View>
 
-          {material.priceFrom !== null ? (
+          {releaseFeatures.coursePrices && material.priceFrom !== null ? (
             <Text variant="caption" tone="primary" className="mt-1">
               {t('library.priceFrom', {
                 price:

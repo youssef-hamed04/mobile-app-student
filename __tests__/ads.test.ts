@@ -1,5 +1,3 @@
-import { Platform } from 'react-native';
-
 import { resolveAdTarget } from '@/features/ads/target';
 import type { AdTarget } from '@/types/domain';
 
@@ -52,14 +50,12 @@ describe('resolveAdTarget', () => {
     ).toBeNull();
   });
 
-  it('opens external links only over http(s)', () => {
-    // The Google Play Android release opens no outside pages from a banner, as
-    // one could lead to a payment method. Every other platform still does.
+  it('opens no external link from a banner, on any platform', () => {
+    // Consumption-only: a banner never opens an outside page, as one could
+    // lead to a payment or activation site. Independent of the OS.
     expect(
       resolveAdTarget(target({ type: 'EXTERNAL_URL', url: 'https://example.com/x' }))
-    ).toEqual(
-      Platform.OS === 'android' ? null : { kind: 'external', url: 'https://example.com/x' }
-    );
+    ).toBeNull();
 
     for (const url of [
       'javascript:alert(1)',
