@@ -1,11 +1,10 @@
-import { Platform } from 'react-native';
-
 import { Endpoints } from '@/api/endpoints';
 import { networkError } from '@/api/errors';
+import { releaseFeatures } from '@/config/release-features';
 import { isSafeInternalRoute } from '@/utils/guards';
 
-import en from '../src/i18n/locales/en.json';
 import ar from '../src/i18n/locales/ar.json';
+import en from '../src/i18n/locales/en.json';
 
 describe('transport failures are classified, not all reported as offline', () => {
   it.each([
@@ -30,11 +29,15 @@ describe('notification deep links', () => {
     expect(isSafeInternalRoute('/support/t_1')).toBe(true);
   });
 
-  // The Google Play Android release disables these two features. Every other
-  // platform still allows them.
-  it.each(['/library', '/library/abc123', '/wallet'])(
-    'allows %s, except on the Android release',
-    (route) => expect(isSafeInternalRoute(route)).toBe(Platform.OS !== 'android')
+  // Consumption-only on every platform: the wallet never opens; the library
+  // (reading materials on the account) opens whenever the library switch is on.
+  it.each(['/wallet', '/wallet/', 'eduplatform://wallet'])(
+    'rejects %s on every platform',
+    (route) => expect(isSafeInternalRoute(route)).toBe(false)
+  );
+
+  it.each(['/library', '/library/abc123'])('allows %s only with the library switch', (route) =>
+    expect(isSafeInternalRoute(route)).toBe(releaseFeatures.library)
   );
 
   it.each(['https://evil.example/x', '//evil', '/library/../../x', 'eduplatform://course/1'])(

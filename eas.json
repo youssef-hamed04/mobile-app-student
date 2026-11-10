@@ -61,7 +61,7 @@
         "EXPO_PUBLIC_ENV": "production",
         "EXPO_PUBLIC_USE_MOCKS": "false",
         "EXPO_PUBLIC_API_URL": "https://student-backend-814y.onrender.com/api/v1",
-        "EXPO_PUBLIC_ENABLE_LIBRARY": "false",
+        "EXPO_PUBLIC_ENABLE_LIBRARY": "true",
         "EXPO_PUBLIC_ENABLE_WALLET": "false",
         "EXPO_PUBLIC_ENABLE_COURSE_ACTIVATION": "false",
         "EXPO_PUBLIC_SHOW_COURSE_PRICES": "false",

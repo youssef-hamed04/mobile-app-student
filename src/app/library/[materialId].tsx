@@ -15,6 +15,7 @@ import { Screen } from '@/components/ui/Screen';
 import { Sheet } from '@/components/ui/Sheet';
 import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
+import { releaseFeatures } from '@/config/release-features';
 import {
   useLibraryMaterial,
   useLibraryPurchase,
@@ -46,7 +47,8 @@ export default function LibraryMaterialScreen() {
   const router = useRouter();
 
   const query = useLibraryMaterial(materialId);
-  const wallet = useWallet();
+  // Consumption-only: the balance is only fetched where purchases exist.
+  const wallet = useWallet({ enabled: releaseFeatures.wallet });
   const quote = useLibraryQuote();
   const purchase = useLibraryPurchase(materialId);
 
@@ -133,7 +135,8 @@ export default function LibraryMaterialScreen() {
           </Text>
         ) : null}
 
-        {material.packages.length > 0 ? (
+        {/* Packages are bundles to buy; they have no meaning without purchases. */}
+        {releaseFeatures.digitalPurchases && material.packages.length > 0 ? (
           <View className="mt-6">
             <SectionHeader
               title={t('library.packages')}
@@ -242,10 +245,14 @@ function PartCard({
             <Badge tone="info" icon="eye" label={t('library.preview')} />
           ) : part.owned ? (
             <Badge tone="success" icon="check" label={t('library.owned')} />
-          ) : (
+          ) : releaseFeatures.coursePrices ? (
             <Text variant="label" tone="primary">
               {formatMoney({ amount: part.price, currency: part.currency }, language)}
             </Text>
+          ) : (
+            // Consumption-only: a part that is not on the account is simply
+            // marked as such — no price, no button, no place to go.
+            <Badge tone="neutral" icon="lock" label={t('release.libraryLocked')} />
           )}
         </View>
 
@@ -262,7 +269,7 @@ function PartCard({
             onPress={onRead}
             className="self-start"
           />
-        ) : part.purchasable ? (
+        ) : !releaseFeatures.digitalPurchases ? null : part.purchasable ? (
           <Button
             label={t('library.buy')}
             size="sm"
