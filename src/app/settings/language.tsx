@@ -50,7 +50,7 @@ export default function LanguageScreen() {
   };
 
   return (
-    <Screen padded={false} edges={['top']}>
+    <Screen scroll={false} padded={false} edges={['top']}>
       <AppBar title={t('settings.language')} />
 
       <Screen hideNetworkBanner edges={[]} contentClassName="pt-4">

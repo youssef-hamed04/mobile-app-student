@@ -8,6 +8,7 @@ import { AppBar } from '@/components/layout/AppBar';
 import { ListItem, ListSection } from '@/components/ui/ListItem';
 import { Screen } from '@/components/ui/Screen';
 import { Spinner } from '@/components/ui/Spinner';
+import { releaseFeatures } from '@/config/release-features';
 import { useTranslation } from '@/hooks/use-translation';
 import {
   getPermissionStatus,
@@ -75,7 +76,7 @@ export default function NotificationSettingsScreen() {
   };
 
   return (
-    <Screen padded={false} edges={['top']}>
+    <Screen scroll={false} padded={false} edges={['top']}>
       <AppBar title={t('settings.notifications')} />
 
       <Screen hideNetworkBanner edges={[]} contentClassName="pt-4">
@@ -121,8 +122,8 @@ export default function NotificationSettingsScreen() {
               }}
             />
             <ListItem
-              icon="price"
-              title={t('settings.notifyPayments')}
+              icon={releaseFeatures.digitalPurchases ? 'price' : 'checkCircle'}
+              title={t(releaseFeatures.digitalPurchases ? 'settings.notifyPayments' : 'release.notifyEnrollment')}
               toggle={{
                 value: value.payments,
                 onChange: set('payments'),

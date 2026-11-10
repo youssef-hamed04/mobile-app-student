@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { View } from 'react-native';
+import { Alert, View } from 'react-native';
 
 import { AppBar } from '@/components/layout/AppBar';
 import { Card, CardBody } from '@/components/ui/Card';
@@ -15,14 +15,25 @@ import { support } from '@/services/support';
 /**
  * Password help.
  *
- * The platform intentionally has no self-service reset (spec §18), so this
+ * Students cannot change or recover their own password — a product decision:
+ * the administration verifies the student and sets a new one. So this
  * screen's whole job is to route the student to a human as directly as
  * possible, with the information the administrator will ask for already
  * visible. No OTP flow is offered or implied.
+ *
+ * The contacts are build-time config. A release build cannot ship without
+ * real values (app.config.ts refuses the placeholders), and a channel this
+ * device cannot open says so instead of failing silently.
  */
 export default function PasswordHelpScreen() {
   const { t } = useTranslation();
   const { colors } = useTheme();
+
+  const reach = async (attempt: Promise<boolean>) => {
+    if (!(await attempt)) {
+      Alert.alert(t('auth.passwordHelpTitle'), t('auth.supportOpenFailed'));
+    }
+  };
 
   return (
     <Screen edges={['top', 'bottom']} padded={false}>
@@ -51,21 +62,21 @@ export default function PasswordHelpScreen() {
               title={t('auth.whatsappSupport')}
               subtitle={env.support.whatsapp}
               showChevron
-              onPress={() => void support.whatsapp({ reason: 'password' })}
+              onPress={() => void reach(support.whatsapp({ reason: 'password' }))}
             />
             <ListItem
               icon="phone"
               title={t('auth.callSupport')}
               subtitle={env.support.phone}
               showChevron
-              onPress={() => void support.call()}
+              onPress={() => void reach(support.call())}
             />
             <ListItem
               icon="mail"
               title={t('auth.emailSupport')}
               subtitle={env.support.email}
               showChevron
-              onPress={() => void support.email({ reason: 'password' })}
+              onPress={() => void reach(support.email({ reason: 'password' }))}
             />
           </ListSection>
         </View>

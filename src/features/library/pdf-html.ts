@@ -21,12 +21,35 @@
  * to a canvas. Nothing is written to storage and there is no download path.
  */
 
+import { PDF_WATERMARK_LOAD_TIMEOUT_MS, PDF_WATERMARK_SCRIPT } from './pdf-watermark';
+
 const PDFJS_VERSION = '3.11.174';
 const PDFJS_BASE = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${PDFJS_VERSION}`;
 
 // sha384, computed from the exact files this version serves.
 const PDFJS_SRI =
   'sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e';
+
+/** The Student Web watermark, burned into every rendered page (see pdf-watermark.ts). */
+export interface PdfWatermark {
+  /** `data:` URI of the brand artwork; null/absent draws the identity text only. */
+  imageDataUri?: string | null;
+  /** "Name · ID: …" from the grant. */
+  identity: string;
+}
+
+/**
+ * A JSON literal that is also safe inside an inline <script>: JSON.stringify
+ * escapes quotes but not "<", and "</script>" would end the element early.
+ */
+function scriptJson(value: unknown): string {
+  return JSON.stringify(value).replace(/</g, '\\u003c');
+}
+
+/** A signed URL whose path ends in .pdf (the query string is the signature). */
+export function isPdfUrl(url: string): boolean {
+  return (url.split('?')[0] ?? '').toLowerCase().endsWith('.pdf');
+}
 
 export interface PdfPageStrings {
   /** Shown while the document is being fetched and drawn. */
@@ -43,12 +66,17 @@ export function buildPdfHtml(
   documentUrl: string,
   strings: PdfPageStrings,
   /** Extra request headers the grant requires; course attachments send them. */
-  headers: Record<string, string> = {}
+  headers: Record<string, string> = {},
+  watermark?: PdfWatermark
 ): string {
-  const url = JSON.stringify(documentUrl);
+  const url = scriptJson(documentUrl);
   const loading = JSON.stringify(strings.loading);
-  const failed = JSON.stringify(strings.failed);
-  const httpHeaders = JSON.stringify(headers);
+  const failed = scriptJson(strings.failed);
+  const httpHeaders = scriptJson(headers);
+  // The identity is the student's own (editable) name, so it gets the same
+  // treatment: neither a quote nor a "</script>" can leave the string.
+  const watermarkImage = scriptJson(watermark?.imageDataUri ?? null);
+  const watermarkText = scriptJson(watermark?.identity ?? '');
 
   return `<!doctype html>
 <html>
@@ -72,6 +100,7 @@ export function buildPdfHtml(
 <div id="status">${loading.slice(1, -1)}</div>
 <script src="${PDFJS_BASE}/pdf.min.js" integrity="${PDFJS_SRI}" crossorigin="anonymous"></script>
 <script>
+${PDF_WATERMARK_SCRIPT}
 (function () {
   var pages  = document.getElementById('pages');
   var status = document.getElementById('status');
@@ -101,9 +130,20 @@ export function buildPdfHtml(
       .catch(function () { /* main-thread fallback is still correct */ });
   }
 
+  // Requested alongside the document and awaited before page 1, so every page
+  // carries the same marks. It never rejects: a missing image draws the
+  // identity text only.
+  var watermarkText = ${watermarkText};
+  var watermarkImage = __swWatermark.loadImage(${watermarkImage}, ${PDF_WATERMARK_LOAD_TIMEOUT_MS});
+
   workerReady().then(function () {
-    return pdfjsLib.getDocument({ url: ${url}, httpHeaders: ${httpHeaders} }).promise;
-  }).then(function (doc) {
+    return Promise.all([
+      pdfjsLib.getDocument({ url: ${url}, httpHeaders: ${httpHeaders} }).promise,
+      watermarkImage,
+    ]);
+  }).then(function (loaded) {
+    var doc = loaded[0];
+    var image = loaded[1];
     status.textContent = '';
 
     // Draw above CSS resolution so text stays sharp when the reader zooms in,
@@ -123,10 +163,15 @@ export function buildPdfHtml(
             canvas.width = Math.floor(viewport.width);
             canvas.height = Math.floor(viewport.height);
             pages.appendChild(canvas);
+            var ctx = canvas.getContext('2d');
             return page.render({
-              canvasContext: canvas.getContext('2d'),
+              canvasContext: ctx,
               viewport: viewport,
-            }).promise;
+            }).promise.then(function () {
+              // Into the page's own pixels: the marks scroll and zoom with it.
+              __swWatermark.burnImage(ctx, canvas.width, canvas.height, image);
+              __swWatermark.burnText(ctx, canvas.width, canvas.height, watermarkText, dpr);
+            });
           });
         });
       })(i);

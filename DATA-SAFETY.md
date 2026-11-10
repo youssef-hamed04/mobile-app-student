@@ -6,8 +6,13 @@ entry says why, so the form can be filled in without re-deriving it.
 **Is data encrypted in transit?** Yes. The app refuses cleartext HTTP entirely
 (`usesCleartextTraffic=false` plus a network security config).
 
-**Can users request deletion?** Yes — by writing to the support address in the
-privacy policy.
+**Can users request deletion?** Yes — in the app (Settings → Delete account),
+with the current password. Deletion is carried out 30 days later unless the
+user cancels it by signing in; personal data is then erased, and payment,
+wallet and enrolment records are kept without it. The web URL Play asks for is
+`EXPO_PUBLIC_ACCOUNT_DELETION_URL` (it must point at a real page that explains
+these steps before the listing is submitted). Writing to the support address in
+the privacy policy also still works.
 
 ## Collected and linked to the user
 

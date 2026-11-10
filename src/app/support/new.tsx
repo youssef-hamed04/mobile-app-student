@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/Input';
 import { Screen } from '@/components/ui/Screen';
 import { Select } from '@/components/ui/Select';
 import { Text } from '@/components/ui/Text';
+import { releaseFeatures } from '@/config/release-features';
 import { useCreateTicket } from '@/features/support/hooks';
 import { useTranslation } from '@/hooks/use-translation';
 import type { SupportTicketCategory } from '@/types/domain';
@@ -83,7 +84,9 @@ export default function NewTicketScreen() {
           label={t('support.category')}
           value={category}
           onChange={setCategory}
-          options={CATEGORIES.map((value) => ({
+          options={CATEGORIES.filter(
+            (value) => value !== 'PAYMENT' || releaseFeatures.digitalPurchases
+          ).map((value) => ({
             value,
             label: t(`support.categories.${value}`),
           }))}

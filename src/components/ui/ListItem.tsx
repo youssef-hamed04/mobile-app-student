@@ -17,6 +17,12 @@ export interface ListItemProps {
   iconTone?: 'default' | 'primary' | 'danger';
   /** Right-hand value text (e.g. the current setting). */
   value?: string;
+  /**
+   * Lines the value may take. One for a setting's short value; two (with a
+   * wider column) for a review row whose value is a university or faculty
+   * name, which in Arabic is routinely longer than 40% of the row.
+   */
+  valueLines?: 1 | 2;
   onPress?: () => void;
   showChevron?: boolean;
   /** Renders a Switch instead of a chevron. */
@@ -25,6 +31,8 @@ export interface ListItemProps {
   disabled?: boolean;
   destructive?: boolean;
   className?: string;
+  /** Flip a directional icon (an arrow, a "log out" door) in RTL. */
+  mirrorIcon?: boolean;
 }
 
 export function ListItem({
@@ -33,6 +41,7 @@ export function ListItem({
   icon,
   iconTone = 'default',
   value,
+  valueLines = 1,
   onPress,
   showChevron,
   toggle,
@@ -40,6 +49,7 @@ export function ListItem({
   disabled,
   destructive,
   className,
+  mirrorIcon = false,
 }: ListItemProps) {
   const { colors } = useTheme();
   const isRTL = useLanguageStore((s) => s.isRTL);
@@ -51,10 +61,14 @@ export function ListItem({
         ? colors.primary
         : colors.muted;
 
+  // The surface colour lives on the OUTER element (the Pressable when there is
+  // one) so the pressed state can show through; an opaque inner background
+  // used to cover `active:bg-surface-alt` entirely.
   const content = (
     <View
       className={cn(
-        'flex-row items-center gap-3 bg-surface px-4 py-3',
+        'flex-row items-center gap-3 px-4 py-3',
+        !onPress || toggle ? 'bg-surface' : undefined,
         disabled && 'opacity-50',
         className
       )}
@@ -62,7 +76,7 @@ export function ListItem({
     >
       {icon ? (
         <View className="h-9 w-9 items-center justify-center rounded-md bg-surface-alt">
-          <Icon name={icon} size={18} color={iconColor} />
+          <Icon name={icon} size={18} color={iconColor} mirror={mirrorIcon} />
         </View>
       ) : null}
 
@@ -78,7 +92,12 @@ export function ListItem({
       </View>
 
       {value ? (
-        <Text variant="caption" tone="muted" numberOfLines={1} className="max-w-[40%]">
+        <Text
+          variant="caption"
+          tone="muted"
+          numberOfLines={valueLines}
+          className={cn(valueLines === 2 ? 'max-w-[55%] text-end' : 'max-w-[40%]')}
+        >
           {value}
         </Text>
       ) : null}
@@ -112,7 +131,7 @@ export function ListItem({
       accessibilityValue={value ? { text: value } : undefined}
       disabled={disabled}
       onPress={onPress}
-      className="active:bg-surface-alt"
+      className="bg-surface active:bg-surface-alt"
     >
       {content}
     </Pressable>

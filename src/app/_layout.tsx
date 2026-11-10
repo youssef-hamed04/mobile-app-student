@@ -14,6 +14,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { bootstrapQueryManagers, persistOptions, queryClient } from '@/api/query-client';
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary';
 import { PrivacyShield } from '@/components/feedback/PrivacyShield';
+import { StagingBanner } from '@/components/feedback/StagingBanner';
 import { ToastHost } from '@/components/feedback/ToastHost';
 import { env } from '@/config/env';
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
@@ -86,6 +87,8 @@ export default function RootLayout() {
                 <NotificationRouter />
                 <RootNavigator />
                 <ToastHost />
+                {/* D7: staging builds use the production API; always say so. */}
+                <StagingBanner />
                 {/* Rendered last so it paints above every navigator layer. */}
                 <PrivacyShield />
               </AuthProvider>

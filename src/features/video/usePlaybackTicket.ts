@@ -6,11 +6,23 @@ import { TICKET_REFRESH_LEAD_SECONDS } from '@/constants';
 import { useOnForeground } from '@/hooks/use-app-state';
 import { contentProtection } from '@/services/content-protection';
 import { createLogger } from '@/services/logger';
+import type { ApiErrorCode } from '@/types/api';
 import type { PlaybackTicket } from '@/types/domain';
 
 import { videoApi } from './api';
 
 const log = createLogger('playback-ticket');
+
+/**
+ * Heartbeat termination reasons that mean "this grant is over, ask for a new
+ * one" rather than "you may not watch this". They land in the `expired` phase,
+ * whose screen re-issues the ticket and shows the specific reason.
+ */
+const REISSUABLE_TERMINATIONS = new Set<string>([
+  'PLAYBACK_TICKET_EXPIRED',
+  'DEVICE_NOT_AUTHORIZED',
+  'CONCURRENT_STREAM_LIMIT',
+]);
 
 export type TicketPhase =
   | 'idle'
@@ -164,12 +176,24 @@ export function usePlaybackTicket(
 
         if (res.terminate) {
           log.warn('playback terminated by server', res.terminate);
+          const reason = res.terminate.reason;
+          // The server sends a machine code for the reasons the student can
+          // act on. Those keep their meaning (an expired grant is re-issued by
+          // "reload"; a device problem says so) instead of collapsing into a
+          // generic "not allowed".
+          if (REISSUABLE_TERMINATIONS.has(reason)) {
+            setError(
+              new ApiError({ code: reason as ApiErrorCode, status: 403, message: reason })
+            );
+            setPhase('expired');
+            return;
+          }
           setPhase('terminated');
           setError(
             new ApiError({
-              code: 'PLAYBACK_DENIED',
+              code: reason === 'NOT_ENROLLED' ? 'NOT_ENROLLED' : 'PLAYBACK_DENIED',
               status: 403,
-              message: res.terminate.reason,
+              message: reason,
             })
           );
           return;
@@ -213,7 +237,12 @@ export function usePlaybackTicket(
     );
     const rotateId = setTimeout(() => {
       setPhase('refreshing');
-      void beat().finally(() => setPhase('ready'));
+      // Back to `ready` only if the beat did not end playback. Setting it
+      // unconditionally overwrote a server termination (or an expiry) that the
+      // beat had just recorded, and the player carried on as if authorised.
+      void beat().finally(() =>
+        setPhase((current) => (current === 'refreshing' ? 'ready' : current))
+      );
     }, msUntilRefresh);
 
     return () => {

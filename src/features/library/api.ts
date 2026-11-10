@@ -1,5 +1,7 @@
 import { api } from '@/api/client';
 import { Endpoints } from '@/api/endpoints';
+import { assertFeatureEnabled } from '@/api/feature-guard';
+import { releaseFeatures } from '@/config/release-features';
 import type { Paginated } from '@/types/api';
 import type {
   LibraryDocumentTicket,
@@ -75,8 +77,10 @@ export const libraryApi = {
    * confirm sheet is the figure that will be charged — not a client-side
    * reconstruction that could drift from it.
    */
-  quote: (kind: LibraryPurchaseKind, targetId: string, signal?: AbortSignal) =>
-    api.post<LibraryQuote>(Endpoints.library.quote, { kind, targetId }, { signal }),
+  quote: async (kind: LibraryPurchaseKind, targetId: string, signal?: AbortSignal) => {
+    assertFeatureEnabled(releaseFeatures.library && releaseFeatures.digitalPurchases, 'library purchases');
+    return api.post<LibraryQuote>(Endpoints.library.quote, { kind, targetId }, { signal });
+  },
 
   /**
    * Buys a part or a package.
@@ -86,12 +90,14 @@ export const libraryApi = {
    * its own initiative is one bug away from being wrong about that, and the
    * failure mode is somebody's money.
    */
-  purchase: (kind: LibraryPurchaseKind, targetId: string) =>
-    api.post<LibraryPurchaseResult>(
+  purchase: async (kind: LibraryPurchaseKind, targetId: string) => {
+    assertFeatureEnabled(releaseFeatures.library && releaseFeatures.digitalPurchases, 'library purchases');
+    return api.post<LibraryPurchaseResult>(
       Endpoints.library.purchase,
       { kind, targetId },
       { retries: 0, timeoutMs: 20_000 }
-    ),
+    );
+  },
 
   /**
    * Opens a document the student owns.
@@ -99,10 +105,12 @@ export const libraryApi = {
    * Never cached and never retried: the URL expires, it is bound to this device
    * and session, and a refusal is a decision rather than a transient fault.
    */
-  open: (partId: string, signal?: AbortSignal) =>
-    api.post<LibraryDocumentTicket>(Endpoints.library.open(partId), {}, {
+  open: async (partId: string, signal?: AbortSignal) => {
+    assertFeatureEnabled(releaseFeatures.library, 'library');
+    return api.post<LibraryDocumentTicket>(Endpoints.library.open(partId), {}, {
       retries: 0,
       signal,
       timeoutMs: 15_000,
-    }),
+    });
+  },
 };

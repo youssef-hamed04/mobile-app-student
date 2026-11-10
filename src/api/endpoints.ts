@@ -12,12 +12,14 @@ export const Endpoints = {
     logout: '/auth/logout',
     me: '/auth/me',
     session: '/auth/session',
-    /**
-     * Password change lives under /auth, not /profile: the backend groups
-     * every credential operation behind one rate limit and one audit
-     * category. /profile is profile data only.
-     */
-    changePassword: '/auth/password',
+    // Deliberately no password route. Students cannot change or recover their
+    // own password (product decision); the administration resets it, and
+    // `POST /auth/password` answers a student 403. Password help is a support
+    // link — see app/(auth)/password-help.tsx.
+    /** In-app account deletion (30-day cancellation period). */
+    accountDeletion: '/auth/account-deletion',
+    /** Public: the sessions are revoked once deletion is requested. */
+    cancelAccountDeletion: '/auth/account-deletion/cancel',
   },
 
   catalog: {
@@ -26,7 +28,17 @@ export const Endpoints = {
       `/catalog/universities/${universityId}/faculties`,
     departments: (facultyId: string) =>
       `/catalog/faculties/${facultyId}/departments`,
+    /**
+     * The unscoped platform ladder.
+     *
+     * Kept for catalogue filters, which legitimately want every rung that
+     * exists. It is NOT what registration should use: a filter wants the union,
+     * whereas a student picking their own rung must be offered their college's
+     * list, which is `academicSelection`.
+     */
     academicYears: '/catalog/academic-years',
+    /** The resolved system plus its matching list, for one unit. */
+    academicSelection: '/catalog/academic-selection',
   },
 
   home: {

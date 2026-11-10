@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-query';
 
 import { qk } from '@/api/query-keys';
+import { releaseFeatures } from '@/config/release-features';
 import { PAGE_SIZE } from '@/constants';
 import { useTranslation } from '@/hooks/use-translation';
 import { toast } from '@/store/ui-store';
@@ -92,7 +93,15 @@ export function useEnroll(courseId: string) {
 
       if (result.state === 'ACTIVE') toast.success(t('access.joinedBody'));
       if (result.state === 'PENDING_APPROVAL') toast.info(t('access.pendingBody'));
-      if (result.state === 'PENDING_PAYMENT') toast.info(t('access.paymentPendingBody'));
+      if (result.state === 'PENDING_PAYMENT') {
+        toast.info(
+          t(
+            releaseFeatures.digitalPurchases
+              ? 'access.paymentPendingBody'
+              : 'release.accessPendingBody'
+          )
+        );
+      }
     },
   });
 }

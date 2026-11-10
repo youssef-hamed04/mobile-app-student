@@ -68,23 +68,23 @@ export function Select<T extends string>({
   return (
     <View className={cn('gap-1.5', containerClassName)}>
       {label ? (
-        <View className="flex-row items-center gap-1">
-          <Text
-            variant="label"
-            tone={error ? 'accent' : onPlate ? 'onHighlight' : 'default'}
-          >
-            {label}
-          </Text>
+        // One text at the full row width. Sized to its content, an Arabic label
+        // could measure a hair too narrow on Android, and its last word then
+        // wrapped onto a second line that was never shown.
+        <Text
+          variant="label"
+          // The accent red is too faint on the orange plate in either theme.
+          tone={error ? (onPlate ? 'none' : 'accent') : onPlate ? 'onHighlight' : 'default'}
+          className={error && onPlate ? 'text-danger-800' : undefined}
+          accessibilityLabel={label}
+        >
+          {label}
           {required ? (
-            <Text
-              variant="label"
-              tone={onPlate ? 'onHighlight' : 'accent'}
-              accessibilityElementsHidden
-            >
-              *
+            <Text variant="label" tone={onPlate ? 'onHighlight' : 'accent'}>
+              {' *'}
             </Text>
           ) : null}
-        </View>
+        </Text>
       ) : null}
 
       <Pressable
@@ -119,11 +119,15 @@ export function Select<T extends string>({
       </Pressable>
 
       {error ? (
-        <Text variant="caption" tone="accent">
+        <Text
+          variant="caption"
+          tone={onPlate ? 'none' : 'accent'}
+          className={onPlate ? 'text-danger-800' : undefined}
+        >
           {error}
         </Text>
       ) : hint ? (
-        <Text variant="caption" tone="subtle">
+        <Text variant="caption" tone={onPlate ? 'onHighlight' : 'subtle'}>
           {hint}
         </Text>
       ) : null}

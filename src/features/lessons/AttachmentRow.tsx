@@ -5,6 +5,7 @@ import { Pressable, View } from 'react-native';
 import { Badge } from '@/components/ui/Badge';
 import { Icon, type IconName } from '@/components/ui/Icon';
 import { Text } from '@/components/ui/Text';
+import { releaseFeatures } from '@/config/release-features';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/hooks/use-translation';
 import { toast } from '@/store/ui-store';
@@ -41,7 +42,7 @@ export function AttachmentRow({ attachment, locked }: AttachmentRowProps) {
 
   const open = () => {
     if (locked || attachment.locked) {
-      toast.info(t('access.lockedBody'));
+      toast.info(t(releaseFeatures.courseActivation ? 'access.lockedBody' : 'release.lockedBody'));
       return;
     }
     router.push(`/viewer/${attachment.id}`);
@@ -69,9 +70,9 @@ export function AttachmentRow({ attachment, locked }: AttachmentRowProps) {
           {attachment.title}
         </Text>
 
-        <View className="mt-0.5 flex-row items-center gap-2">
-          <Text variant="caption" tone="subtle" forceLatin>
-            {attachment.kind}
+        <View className="mt-0.5 flex-row flex-wrap items-center gap-x-2">
+          <Text variant="caption" tone="subtle">
+            {t(`lesson.attachmentKind.${attachment.kind}`)}
           </Text>
           {attachment.sizeBytes ? (
             <Text variant="caption" tone="subtle" forceLatin>
@@ -79,8 +80,8 @@ export function AttachmentRow({ attachment, locked }: AttachmentRowProps) {
             </Text>
           ) : null}
           {attachment.pageCount ? (
-            <Text variant="caption" tone="subtle" forceLatin>
-              · {attachment.pageCount}p
+            <Text variant="caption" tone="subtle">
+              · {t('library.pageCount', { count: attachment.pageCount })}
             </Text>
           ) : null}
         </View>

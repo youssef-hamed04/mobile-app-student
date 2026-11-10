@@ -7,6 +7,7 @@ import { Text } from '@/components/ui/Text';
 import { backChevron } from '@/i18n/direction';
 import { useTranslation } from '@/hooks/use-translation';
 import { useLanguageStore } from '@/store/language-store';
+import { palettes } from '@/theme/palette';
 import { cn } from '@/utils/cn';
 
 export interface AppBarProps {
@@ -70,6 +71,8 @@ export function AppBar({
           accessibilityLabel={t('common.back')}
           onPress={handleBack}
           variant={transparent ? 'glass' : 'plain'}
+          // The plate is orange in both themes, so its chevron stays dark in both.
+          color={onPlate ? palettes.light.highlightFg : undefined}
         />
       ) : (
         <View className="w-3" />
@@ -90,7 +93,7 @@ export function AppBar({
           <Text
             variant="caption"
             numberOfLines={1}
-            tone={onPlate ? undefined : 'muted'}
+            tone={onPlate ? 'none' : 'muted'}
             className={onPlate ? 'text-brand-900' : undefined}
           >
             {subtitle}

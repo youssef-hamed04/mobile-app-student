@@ -27,7 +27,9 @@ const COURSE_SIDE = [
   'features/course-parts/api.ts',
   'features/course-parts/hooks.ts',
   'features/course-parts/PartsPanel.tsx',
-  'features/enrollment/EnrollSheet.tsx',
+  // EnrollSheet.tsx (external checkout, never imported) was removed under
+  // owner decision D4; JoinSheet is the course-joining surface.
+  'features/enrollment/JoinSheet.tsx',
 ];
 
 const read = (rel: string) => readFileSync(join(SRC, rel), 'utf8');

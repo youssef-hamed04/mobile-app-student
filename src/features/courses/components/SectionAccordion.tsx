@@ -126,7 +126,7 @@ export function SectionAccordion({
                     })}
                     tone="warning"
                     icon="clock"
-                    className="mt-1.5"
+                    className="mt-1.5 self-start"
                   />
                 ) : null}
 

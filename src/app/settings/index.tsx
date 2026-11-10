@@ -10,6 +10,7 @@ import { Screen } from '@/components/ui/Screen';
 import { Select } from '@/components/ui/Select';
 import { Sheet } from '@/components/ui/Sheet';
 import { env } from '@/config/env';
+import { releaseFeatures } from '@/config/release-features';
 import { useTranslation } from '@/hooks/use-translation';
 import { support } from '@/services/support';
 import { useLanguageStore } from '@/store/language-store';
@@ -50,7 +51,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <Screen padded={false} edges={['top']}>
+    <Screen scroll={false} padded={false} edges={['top']}>
       <AppBar title={t('settings.title')} />
 
       <Screen hideNetworkBanner edges={[]} contentClassName="pt-4">
@@ -95,22 +96,24 @@ export default function SettingsScreen() {
           pay for the library. Separating them would invite the reading that
           credit is a general-purpose balance, which it is not.
         */}
-        <ListSection title={t('library.title')} footer={t('wallet.scopeBody')}>
-          <ListItem
-            icon="document"
-            title={t('library.browseTitle')}
-            subtitle={t('library.browseSubtitle')}
-            showChevron
-            onPress={() => router.push('/library')}
-          />
-          <ListItem
-            icon="price"
-            title={t('wallet.title')}
-            subtitle={t('wallet.settingsSubtitle')}
-            showChevron
-            onPress={() => router.push('/wallet')}
-          />
-        </ListSection>
+        {releaseFeatures.library && releaseFeatures.wallet ? (
+          <ListSection title={t('library.title')} footer={t('wallet.scopeBody')}>
+            <ListItem
+              icon="document"
+              title={t('library.browseTitle')}
+              subtitle={t('library.browseSubtitle')}
+              showChevron
+              onPress={() => router.push('/library')}
+            />
+            <ListItem
+              icon="price"
+              title={t('wallet.title')}
+              subtitle={t('wallet.settingsSubtitle')}
+              showChevron
+              onPress={() => router.push('/wallet')}
+            />
+          </ListSection>
+        ) : null}
 
         <ListSection title={t('settings.account')}>
           <ListItem

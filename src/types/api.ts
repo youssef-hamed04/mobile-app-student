@@ -47,6 +47,7 @@ export type ApiErrorCode =
   | 'SESSION_EXPIRED'
   | 'ACCOUNT_DISABLED'
   | 'ACCOUNT_PENDING'
+  | 'ACCOUNT_DELETION_PENDING'
   | 'PHONE_ALREADY_REGISTERED'
   // device binding
   | 'DEVICE_NOT_AUTHORIZED'
@@ -61,6 +62,8 @@ export type ApiErrorCode =
   | 'COURSE_NOT_TARGETED'
   | 'ACCESS_EXPIRED'
   | 'NOT_ENROLLED'
+  /** The course is not offered to the student's department/year. */
+  | 'COURSE_NOT_TARGETED'
   | 'ENROLLMENT_PENDING'
   | 'PAYMENT_REQUIRED'
   | 'PAYMENT_FAILED'

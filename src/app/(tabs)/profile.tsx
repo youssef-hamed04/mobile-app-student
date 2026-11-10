@@ -9,6 +9,7 @@ import { Screen } from '@/components/ui/Screen';
 import { Text } from '@/components/ui/Text';
 import { env } from '@/config/env';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { departmentLabelKey, progressionLabelKey, studyTypeLabelKey } from '@/features/auth/study-type';
 import { useTranslation } from '@/hooks/use-translation';
 import { support } from '@/services/support';
 import { formatDate, localizedName, maskPhone } from '@/utils/format';
@@ -31,6 +32,13 @@ export default function ProfileScreen() {
 
   if (!user) return null;
 
+  const askForPasswordHelp = async () => {
+    const context = { reason: 'password' as const, fullName: user.fullName, phone: user.phone };
+    if (await support.whatsapp(context)) return;
+    if (await support.email(context)) return;
+    Alert.alert(t('profile.passwordHelp'), t('auth.supportOpenFailed'));
+  };
+
   const statusTone =
     user.status === 'ACTIVE'
       ? 'success'
@@ -51,12 +59,11 @@ export default function ProfileScreen() {
         <Badge
           label={t(`profile.status.${user.status}`)}
           tone={statusTone}
-          className="mt-2"
+          className="mt-2 self-start"
         />
       </View>
 
       <ListSection title={t('profile.academicInfo')}>
-        <ListItem title={t('auth.studyType')} value={user.department?.studyType === 'PROGRAMS' ? t('auth.programs') : user.department ? t('auth.general') : '—'} />
         <ListItem
           icon="school"
           title={t('auth.university')}
@@ -67,14 +74,21 @@ export default function ProfileScreen() {
           title={t('auth.faculty')}
           value={localizedName(user.faculty, language)}
         />
+        {studyTypeLabelKey(user.department) ? (
+          <ListItem
+            icon="courses"
+            title={t('auth.studyType')}
+            value={t(studyTypeLabelKey(user.department)!)}
+          />
+        ) : null}
         <ListItem
           icon="document"
-          title={user.department?.studyType === 'PROGRAMS' ? t('auth.program') : t('auth.department')}
+          title={t(departmentLabelKey(user.department))}
           value={localizedName(user.department, language)}
         />
         <ListItem
           icon="calendar"
-          title={user.department?.studyType === 'PROGRAMS' ? t('auth.level') : t('auth.academicYear')}
+          title={t(progressionLabelKey(user.academicYear, user.department))}
           value={localizedName(user.academicYear, language)}
         />
       </ListSection>
@@ -89,17 +103,17 @@ export default function ProfileScreen() {
           showChevron
           onPress={() => router.push('/profile/edit')}
         />
+        {/*
+          Students cannot change their own password (product decision): the
+          administration resets it. So this is a support link, not a form —
+          WhatsApp with the name and phone filled in, falling back to e-mail.
+        */}
         <ListItem
           icon="lock"
-          title={t('profile.changePassword')}
+          title={t('profile.passwordHelp')}
+          subtitle={t('profile.passwordHelpSubtitle')}
           showChevron
-          onPress={() =>
-            void support.whatsapp({
-              reason: 'password',
-              fullName: user.fullName,
-              phone: user.phone,
-            })
-          }
+          onPress={() => void askForPasswordHelp()}
         />
         <ListItem
           icon="device"
@@ -140,6 +154,7 @@ export default function ProfileScreen() {
       <ListSection footer={t('settings.version', { version: env.appVersion })}>
         <ListItem
           icon="logout"
+          mirrorIcon
           title={t('auth.logout')}
           destructive
           onPress={confirmLogout}

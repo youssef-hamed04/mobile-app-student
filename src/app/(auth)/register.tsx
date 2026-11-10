@@ -21,7 +21,7 @@ import { Text } from '@/components/ui/Text';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { PasswordStrengthMeter } from '@/features/auth/components/PasswordStrengthMeter';
 import {
-  useAcademicYears,
+  useAcademicSelectionOptions,
   useDepartments,
   useFaculties,
   useUniversities,
@@ -30,6 +30,7 @@ import {
   registerAcademicSchema,
   registerAccountSchema,
 } from '@/features/auth/schemas';
+import { departmentLabelKey, studyTypeLabelKey } from '@/features/auth/study-type';
 import { messageParams, useFormErrors } from '@/hooks/use-form-errors';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/hooks/use-translation';
@@ -47,7 +48,6 @@ interface AccountForm {
 interface AcademicForm {
   universityId: string;
   facultyId: string;
-  studyType: 'GENERAL' | 'PROGRAMS';
   departmentId: string;
   academicYearId: string;
   gender: 'MALE' | 'FEMALE' | '';
@@ -86,7 +86,6 @@ export default function RegisterScreen() {
     defaultValues: {
       universityId: '',
       facultyId: '',
-      studyType: undefined as unknown as 'GENERAL',
       departmentId: '',
       academicYearId: '',
       gender: '',
@@ -96,37 +95,77 @@ export default function RegisterScreen() {
 
   const universityId = academicForm.watch('universityId');
   const facultyId = academicForm.watch('facultyId');
-  const studyType = academicForm.watch('studyType');
   const departmentId = academicForm.watch('departmentId');
-  React.useEffect(() => {
-    academicForm.setValue('departmentId', '');
-    academicForm.setValue('academicYearId', '');
-  }, [studyType, academicForm]);
-  React.useEffect(() => {
-    academicForm.setValue('academicYearId', '');
-  }, [departmentId, academicForm]);
   const password = accountForm.watch('password');
 
   const universities = useUniversities();
   const faculties = useFaculties(universityId || null);
-  const departments = useDepartments(
-    studyType ? facultyId || null : null,
-    studyType || undefined
-  );
-  const years = useAcademicYears(departmentId || undefined);
+  const departments = useDepartments(facultyId || null);
 
-  // Clear dependent selections when a parent changes, so the student can
-  // never submit a department that doesn't belong to the chosen faculty.
+  /*
+   * The college's resolved system and its entries.
+   *
+   * Scoped to the department once one is chosen, otherwise the college. This is
+   * what makes the override visible: a computer-science college inside a
+   * year-based university resolves to LEVEL here, and the field below becomes
+   * "المستوى" populated with levels — with the student choosing nothing.
+   *
+   * Previously this screen fetched the platform-wide year list unscoped, so it
+   * offered "First year … Fifth year" to a student registering at a level-based
+   * college.
+   */
+  const selection = useAcademicSelectionOptions(
+    departmentId ? { departmentId } : facultyId ? { facultyId } : null
+  );
+
+  /*
+   * The label follows the vocabulary the entries are actually written in, so it
+   * can never contradict them. Normally that equals the resolved system; the two
+   * diverge only when an administrator has changed a university default without
+   * renaming its ladder, which is deliberate and never automatic. Exactly one of
+   * these two labels is ever shown.
+   */
+  const progressLabel =
+    selection.labelKind === 'LEVEL' ? t('auth.level') : t('auth.academicYear');
+
+  /*
+   * The chosen department DESCRIBES the student's track (General / Programs):
+   * it is shown back to them on the review step, never asked as a question.
+   * Mansoura Engineering keeps its two tracks as two colleges, so the college
+   * name already says it; the row below makes it explicit for every college.
+   */
+  const chosenDepartment = departments.data?.find((d) => d.value === departmentId) ?? null;
+  const studyTypeKey = studyTypeLabelKey(chosenDepartment);
+
+  // Clear dependent selections when a parent changes, so the student can never
+  // submit a department that doesn't belong to the chosen faculty, or a rung
+  // that belongs to a college they have already navigated away from.
   React.useEffect(() => {
     academicForm.setValue('facultyId', '');
     academicForm.setValue('departmentId', '');
+    academicForm.setValue('academicYearId', '');
   }, [universityId, academicForm]);
 
   React.useEffect(() => {
     academicForm.setValue('departmentId', '');
-    academicForm.setValue('studyType', undefined as unknown as 'GENERAL' | 'PROGRAMS');
     academicForm.setValue('academicYearId', '');
   }, [facultyId, academicForm]);
+
+  React.useEffect(() => {
+    academicForm.setValue('academicYearId', '');
+  }, [departmentId, academicForm]);
+
+  /*
+   * The system is configuration and can change while the student is on this
+   * screen. A chosen rung that is no longer offered is cleared rather than left
+   * to fail server-side with a message about a college they never touched.
+   */
+  React.useEffect(() => {
+    const selected = academicForm.getValues('academicYearId');
+    if (!selected || selection.options.length === 0) return;
+    if (selection.options.some((option) => option.value === selected)) return;
+    academicForm.setValue('academicYearId', '');
+  }, [selection.options, academicForm]);
 
   const goNext = async () => {
     setFormError(null);
@@ -377,34 +416,17 @@ export default function RegisterScreen() {
               )}
             />
 
-            <Select
-              label={t('auth.studyType')}
-              error={academicErrors.translate(academicForm.formState.errors.studyType?.message)}
-              value={studyType || null}
-              onChange={(value) => academicForm.setValue('studyType', value as 'GENERAL' | 'PROGRAMS', { shouldValidate: true })}
-              disabled={!facultyId}
-              options={[
-                { value: 'GENERAL', label: t('auth.general') },
-                { value: 'PROGRAMS', label: t('auth.programs') },
-              ]}
-              required
-              onPlate
-            />
             <Controller
               control={academicForm.control}
               name="departmentId"
               render={({ field }) => (
                 <Select
-                  label={
-                    studyType === 'PROGRAMS'
-                      ? t('auth.program')
-                      : t('auth.department')
-                  }
+                  label={t('auth.department')}
                   value={field.value || null}
                   options={departments.data ?? []}
                   onChange={field.onChange}
                   loading={departments.isFetching}
-                  disabled={!facultyId || !studyType}
+                  disabled={!facultyId}
                   emptyMessage={t('courses.empty.listBody')}
                   error={academicErrors.translate(
                     academicForm.formState.errors.departmentId?.message
@@ -415,29 +437,44 @@ export default function RegisterScreen() {
               )}
             />
 
-            <Controller
-              control={academicForm.control}
-              name="academicYearId"
-              render={({ field }) => (
-                <Select
-                  label={
-                    studyType === 'PROGRAMS'
-                      ? t('auth.level')
-                      : t('auth.academicYear')
-                  }
-                  value={field.value || null}
-                  options={departmentId ? (years.data ?? []) : []}
-                  disabled={!departmentId}
-                  onChange={field.onChange}
-                  loading={years.isLoading}
-                  error={academicErrors.translate(
-                    academicForm.formState.errors.academicYearId?.message
-                  )}
-                  required
-                  onPlate
-                />
-              )}
-            />
+            {/*
+              The one system-dependent control on this screen.
+
+              Both the label and the options come from the server's resolution of
+              the selected college, so a levels college gets "المستوى" with
+              levels and a years college gets "الفرقة الدراسية" with years. The
+              student sees exactly one and chooses nothing about which.
+
+              A college with no configured system renders as a caption rather than
+              an empty dropdown: an empty picker with no explanation reads as a
+              bug and gives the student nothing to act on.
+            */}
+            {facultyId && !selection.isLoading && !selection.configured ? (
+              <Text variant="caption" tone="none" className="text-brand-900">
+                {t('auth.academicSystemNotConfigured')}
+              </Text>
+            ) : (
+              <Controller
+                control={academicForm.control}
+                name="academicYearId"
+                render={({ field }) => (
+                  <Select
+                    label={progressLabel}
+                    value={field.value || null}
+                    options={selection.options}
+                    onChange={field.onChange}
+                    loading={selection.isLoading}
+                    disabled={!facultyId || !selection.configured}
+                    emptyMessage={t('courses.empty.listBody')}
+                    error={academicErrors.translate(
+                      academicForm.formState.errors.academicYearId?.message
+                    )}
+                    required
+                    onPlate
+                  />
+                )}
+              />
+            )}
 
             <Controller
               control={academicForm.control}
@@ -462,7 +499,7 @@ export default function RegisterScreen() {
                     />
                   </View>
                   {academicForm.formState.errors.gender ? (
-                    <Text variant="caption" className="text-danger-800">
+                    <Text variant="caption" tone="none" className="text-danger-800">
                       {academicErrors.translate(
                         academicForm.formState.errors.gender.message
                       )}
@@ -479,34 +516,39 @@ export default function RegisterScreen() {
             <Text variant="h3" tone="onHighlight">
               {t('auth.reviewInfo')}
             </Text>
-            <Text variant="caption" className="text-brand-900">
+            <Text variant="caption" tone="none" className="text-brand-900">
               {t('auth.reviewNote')}
             </Text>
 
             <View className="overflow-hidden rounded-lg border-2 border-outline">
-              <ListItem title={t('auth.fullName')} value={values.fullName} />
+              <ListItem title={t('auth.fullName')} value={values.fullName} valueLines={2} />
               <ListItem title={t('auth.phone')} value={values.phone} />
               <ListItem
                 title={t('auth.university')}
                 value={labelFor(universities.data, values.universityId)}
+              valueLines={2}
               />
               <ListItem
                 title={t('auth.faculty')}
                 value={labelFor(faculties.data, values.facultyId)}
+              valueLines={2}
               />
+              {studyTypeKey ? (
+                <ListItem title={t('auth.studyType')} value={t(studyTypeKey)} />
+              ) : null}
               <ListItem
-                title={t('auth.studyType')}
-                value={
-                  studyType === 'PROGRAMS' ? t('auth.programs') : t('auth.general')
-                }
-              />
-              <ListItem
-                title={t('auth.department')}
+                title={t(departmentLabelKey(chosenDepartment))}
                 value={labelFor(departments.data, values.departmentId)}
+              valueLines={2}
               />
+              {/* Labelled with the same resolved noun the dropdown used, so the
+                  review cannot disagree with the form the student just filled
+                  in — and so a levels college is never summarised as an
+                  "Academic year". */}
               <ListItem
-                title={t('auth.academicYear')}
-                value={labelFor(years.data, values.academicYearId)}
+                title={progressLabel}
+                value={labelFor(selection.options, values.academicYearId)}
+              valueLines={2}
               />
               <ListItem
                 title={t('auth.gender')}
@@ -530,7 +572,7 @@ export default function RegisterScreen() {
               </CardBody>
             </Card>
 
-            <Text variant="caption" className="text-brand-900">
+            <Text variant="caption" tone="none" className="text-brand-900">
               {t('auth.termsNotice')}
             </Text>
           </View>
@@ -562,11 +604,11 @@ export default function RegisterScreen() {
 
         {step === 0 ? (
           <View className="flex-row items-center justify-center gap-1">
-            <Text variant="caption" className="text-brand-900">
+            <Text variant="caption" tone="none" className="text-brand-900">
               {t('auth.haveAccount')}
             </Text>
             <Link href="/(auth)/login" asChild>
-              <Text variant="label" className="text-danger-800 underline">
+              <Text variant="label" tone="none" className="text-danger-800 underline">
                 {t('auth.login')}
               </Text>
             </Link>

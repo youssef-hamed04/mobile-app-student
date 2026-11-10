@@ -12,6 +12,14 @@ import { brand } from '@/theme/palette';
 import { formatTimecode } from '@/utils/format';
 
 export interface PlayerControlsProps {
+  /**
+   * `overlay`: the full chrome floating over the picture (fullscreen and
+   * landscape). `transport`: only the centre back / play / forward cluster,
+   * for portrait where everything else lives in the dock below the picture.
+   */
+  mode: 'overlay' | 'transport';
+  /** Safe-area insets, applied to the overlay bars so they clear notches. */
+  insets?: { top: number; bottom: number; left: number; right: number };
   playing: boolean;
   buffering: boolean;
   position: number;
@@ -31,8 +39,10 @@ export interface PlayerControlsProps {
   subtitle?: string;
 }
 
+const NO_INSETS = { top: 0, bottom: 0, left: 0, right: 0 };
+
 /**
- * Player chrome.
+ * Player chrome drawn over the picture.
  *
  * Two RTL decisions worth stating, because they are the usual source of bugs:
  *
@@ -48,6 +58,8 @@ export interface PlayerControlsProps {
  * watermark is rendered after this component with zIndex.watermark.
  */
 export function PlayerControls({
+  mode,
+  insets = NO_INSETS,
   playing,
   buffering,
   position,
@@ -78,6 +90,58 @@ export function PlayerControls({
 
   if (!visible) return null;
 
+  const transport = (
+    // Physical order is fixed (back / play / forward) regardless of layout
+    // direction — see the note in the component doc.
+    <View
+      className="absolute inset-0 items-center justify-center"
+      pointerEvents="box-none"
+      style={{ flexDirection: 'row' }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 28 }}>
+        <IconButton
+          icon="back10"
+          size={30}
+          accessibilityLabel={t('player.seekBackward')}
+          onPress={() => onSeekBy(-SEEK_STEP_SECONDS)}
+          variant="glass"
+          color="#FFFFFF"
+        />
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={playing ? t('player.pause') : t('player.play')}
+          accessibilityState={{ busy: buffering }}
+          onPress={onPlayPause}
+          className="h-[72px] w-[72px] items-center justify-center rounded-full bg-black/55 active:opacity-80"
+        >
+          <Icon
+            name={buffering ? 'refresh' : playing ? 'pause' : 'play'}
+            size={34}
+            color="#FFFFFF"
+          />
+        </Pressable>
+
+        <IconButton
+          icon="forward10"
+          size={30}
+          accessibilityLabel={t('player.seekForward')}
+          onPress={() => onSeekBy(SEEK_STEP_SECONDS)}
+          variant="glass"
+          color="#FFFFFF"
+        />
+      </View>
+    </View>
+  );
+
+  if (mode === 'transport') {
+    return (
+      <View className="absolute inset-0" pointerEvents="box-none">
+        {transport}
+      </View>
+    );
+  }
+
   return (
     <View
       className="absolute inset-0"
@@ -86,8 +150,13 @@ export function PlayerControls({
     >
       {/* ---- top bar --------------------------------------------------- */}
       <View
-        className="absolute inset-x-0 top-0 flex-row items-start gap-2 bg-black/55 px-2 pb-6 pt-2"
+        className="absolute inset-x-0 top-0 flex-row items-start gap-2 bg-black/55 pb-6"
         pointerEvents="auto"
+        style={{
+          paddingTop: 8 + insets.top,
+          paddingLeft: 8 + insets.left,
+          paddingRight: 8 + insets.right,
+        }}
       >
         <IconButton
           icon="close"
@@ -119,55 +188,20 @@ export function PlayerControls({
       </View>
 
       {/* ---- centre transport ------------------------------------------ */}
-      {/* Physical order is fixed (back / play / forward) regardless of
-          layout direction — see the note in the component doc. */}
-      <View
-        className="absolute inset-0 items-center justify-center"
-        pointerEvents="box-none"
-        style={{ flexDirection: 'row' }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 28 }}>
-          <IconButton
-            icon="back10"
-            size={30}
-            accessibilityLabel={t('player.seekBackward')}
-            onPress={() => onSeekBy(-SEEK_STEP_SECONDS)}
-            variant="glass"
-            color="#FFFFFF"
-          />
-
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={playing ? t('player.pause') : t('player.play')}
-            accessibilityState={{ busy: buffering }}
-            onPress={onPlayPause}
-            className="h-[72px] w-[72px] items-center justify-center rounded-full bg-black/55 active:opacity-80"
-          >
-            <Icon
-              name={buffering ? 'refresh' : playing ? 'pause' : 'play'}
-              size={34}
-              color="#FFFFFF"
-            />
-          </Pressable>
-
-          <IconButton
-            icon="forward10"
-            size={30}
-            accessibilityLabel={t('player.seekForward')}
-            onPress={() => onSeekBy(SEEK_STEP_SECONDS)}
-            variant="glass"
-            color="#FFFFFF"
-          />
-        </View>
-      </View>
+      {transport}
 
       {/* ---- bottom bar ------------------------------------------------ */}
       <View
-        className="absolute inset-x-0 bottom-0 gap-1 bg-black/55 px-3 pb-3 pt-8"
+        className="absolute inset-x-0 bottom-0 gap-1 bg-black/55 pt-8"
         pointerEvents="auto"
         // The timeline block is explicitly LTR so the scrubber and its labels
         // keep media-time orientation in Arabic.
-        style={{ direction: 'ltr' }}
+        style={{
+          direction: 'ltr',
+          paddingBottom: 12 + insets.bottom,
+          paddingLeft: 12 + insets.left,
+          paddingRight: 12 + insets.right,
+        }}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Text variant="caption" className="text-white" forceLatin style={{ minWidth: 44 }}>

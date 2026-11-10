@@ -109,7 +109,7 @@ export default function LibraryMaterialScreen() {
               transition={150}
             />
           ) : (
-            <View className="h-[126px] w-[92px] items-center justify-center rounded-[10px] bg-surface-alt">
+            <View className="h-[126px] w-[92px] items-center justify-center rounded-md bg-surface-alt">
               <Icon name="document" size={26} />
             </View>
           )}

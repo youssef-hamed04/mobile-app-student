@@ -122,16 +122,79 @@ function assertProductionEnv() {
 
 assertProductionEnv();
 
+/**
+ * Owner decision D7: no staging backend exists, so the staging profile uses
+ * the production API. A staging build is refused unless that is acknowledged
+ * in its profile, and is refused outright against a local or placeholder host.
+ * Same scope as the production check: only on the EAS build worker, so local
+ * tooling that merely reads the config is never blocked.
+ */
+function assertStagingEnv() {
+  if (process.env.EXPO_PUBLIC_ENV !== 'staging') return;
+  if (process.env.EAS_BUILD !== 'true') return;
+  const problems = stagingBuildProblems(process.env);
+  if (problems.length > 0) {
+    throw new Error(
+      'Staging build refused:\n' + problems.map((p) => `  • ${p}`).join('\n')
+    );
+  }
+}
+
+/**
+ * Kept in this file on purpose: Expo evaluates app.config.ts on its own, and a
+ * TypeScript import from here is not guaranteed to load on every build worker.
+ * `src/config/staging-guard.ts` holds the same rule for the running app, and
+ * __tests__/staging-guard.test.ts checks that the two agree.
+ */
+const PRODUCTION_API_HOSTS = ['student-backend-814y.onrender.com'];
+
+function stagingBuildProblems(env: NodeJS.ProcessEnv): string[] {
+  const problems: string[] = [];
+  const apiUrl = env.EXPO_PUBLIC_API_URL ?? '';
+  let host = '';
+  try {
+    host = new URL(apiUrl).hostname.toLowerCase();
+  } catch {
+    return ['EXPO_PUBLIC_API_URL is missing or not a valid URL'];
+  }
+  if (!/^https:/i.test(apiUrl)) problems.push('EXPO_PUBLIC_API_URL must use https://');
+  if (
+    /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|0\.0\.0\.0)/.test(host) ||
+    /(^|\.)example\.(com|org|net)$/.test(host)
+  ) {
+    problems.push(`EXPO_PUBLIC_API_URL points at a local or placeholder host (${host})`);
+  }
+  if (env.EXPO_PUBLIC_USE_MOCKS === 'true') {
+    problems.push('EXPO_PUBLIC_USE_MOCKS must not be true in a staging build');
+  }
+  if (PRODUCTION_API_HOSTS.includes(host) && env.STAGING_USES_PRODUCTION_API !== 'acknowledged') {
+    problems.push(
+      `this staging build would use the PRODUCTION API (${host}) and real student data. ` +
+        'Set STAGING_USES_PRODUCTION_API=acknowledged in the staging profile to accept that ' +
+        '(no staging backend exists yet - see OWNER_DECISIONS D7).'
+    );
+  }
+  return problems;
+}
+
+assertStagingEnv();
+
 const NAME: Record<Variant, string> = {
   development: 'EduPlatform (Dev)',
   staging: 'EduPlatform (Stg)',
   production: 'Student Center',
 };
 
+/**
+ * Android application id and iOS bundle id. Renamed from `com.eduplatform.app`
+ * on 2026-11-05: that name is registered to the personal Play Console account
+ * (draft app, version code 7) and Play refuses it in the Organization account.
+ * The Firebase Android app and `google-services.json` must match this value.
+ */
 const BUNDLE_ID: Record<Variant, string> = {
-  development: 'com.eduplatform.app.dev',
-  staging: 'com.eduplatform.app.stg',
-  production: 'com.eduplatform.app',
+  development: 'com.studentcenter.app.dev',
+  staging: 'com.studentcenter.app.stg',
+  production: 'com.studentcenter.app',
 };
 
 const SCHEME: Record<Variant, string> = {
@@ -198,6 +261,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
 
   android: {
+    // Google Play release only. With the Android channel in eas.json, this keeps
+    // updates built for the shared `1.0.0` runtime from loading in this build.
+    // iOS keeps the top-level policy below. An update published deliberately with
+    // this channel AND this runtime can still reach the build.
+    runtimeVersion: '1.0.0-play',
     package: BUNDLE_ID[VARIANT],
     googleServicesFile:
       process.env.GOOGLE_SERVICES_JSON ?? './google-services.json',

@@ -60,7 +60,7 @@ export function SectionHeader({
           <Text variant="label" tone="primary">
             {actionLabel}
           </Text>
-          <Icon name={forwardChevron(isRTL)} size={14} color={colors.primary} mirror />
+          <Icon name={forwardChevron(isRTL)} size={14} color={colors.primary} />
         </Pressable>
       ) : null}
     </View>

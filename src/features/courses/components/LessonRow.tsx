@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Icon } from '@/components/ui/Icon';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Text } from '@/components/ui/Text';
+import { releaseFeatures } from '@/config/release-features';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/hooks/use-translation';
 import { MIN_TOUCH_TARGET } from '@/theme/tokens';
@@ -129,7 +130,11 @@ export function LessonRow({ lesson, index, locked, active, onPress }: LessonRowP
           which is the one thing a student needs to see to know they can watch
           it without joining. */}
       {lesson.isPreview ? (
-        <Badge label={t('courses.freeLesson')} tone="success" icon="checkCircle" />
+        <Badge
+          label={releaseFeatures.coursePrices ? t('courses.freeLesson') : t('release.preview')}
+          tone="success"
+          icon="checkCircle"
+        />
       ) : null}
     </Pressable>
   );

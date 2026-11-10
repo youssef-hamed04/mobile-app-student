@@ -89,6 +89,7 @@ module.exports = {
         sans: ['Inter', 'System'],
         heading: ['Inter-SemiBold', 'System'],
         arabic: ['Cairo', 'System'],
+        'arabic-heading': ['Cairo-SemiBold', 'System'],
       },
       borderRadius: {
         xs: '4px',

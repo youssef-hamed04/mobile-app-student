@@ -247,8 +247,8 @@ route('GET', '/catalog/universities', () => universities);
 route('GET', '/catalog/universities/:id/faculties', ({ params }) =>
   faculties.filter((f) => f.universityId === params.id)
 );
-route('GET', '/catalog/faculties/:id/departments', ({ params, query }) =>
-  departments.filter((d) => d.facultyId === params.id && (!query.studyType || (d.studyType ?? 'GENERAL') === query.studyType))
+route('GET', '/catalog/faculties/:id/departments', ({ params }) =>
+  departments.filter((d) => d.facultyId === params.id)
 );
 route('GET', '/catalog/academic-years', () => academicYears);
 
@@ -735,12 +735,6 @@ route('PATCH', '/profile', ({ body }) => {
   requireAuth();
   mockUser = { ...mockUser, ...(body as Partial<User>) };
   return mockUser;
-});
-
-route('PUT', '/profile/password', ({ body }) => {
-  const current = String(body.currentPassword ?? '');
-  if (current.length < 8) fail('INVALID_CREDENTIALS', 401, 'Wrong password');
-  return { ok: true };
 });
 
 route('PUT', '/profile/avatar', ({ body }) => {

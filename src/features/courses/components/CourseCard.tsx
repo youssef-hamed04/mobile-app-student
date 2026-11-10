@@ -8,10 +8,11 @@ import { Card } from '@/components/ui/Card';
 import { Icon } from '@/components/ui/Icon';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { Text } from '@/components/ui/Text';
+import { releaseFeatures } from '@/config/release-features';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/hooks/use-translation';
 import type { AccessState, CourseSummary } from '@/types/domain';
-import { formatCompact, formatDuration, formatMoney } from '@/utils/format';
+import { formatDuration, formatMoney } from '@/utils/format';
 
 const ACCESS_BADGE: Record<AccessState, { key: string; tone: BadgeTone } | null> = {
   NOT_ENROLLED: null,
@@ -40,8 +41,11 @@ export function CourseCard({ course, layout = 'full', onPress }: CourseCardProps
   const { colors } = useTheme();
   const router = useRouter();
 
-  const badge = ACCESS_BADGE[course.access.state];
-  const price = formatMoney(course.price, language);
+  const badge =
+    course.access.state === 'PENDING_PAYMENT' && !releaseFeatures.digitalPurchases
+      ? ({ key: 'release.accessPending', tone: 'warning' } as const)
+      : ACCESS_BADGE[course.access.state];
+  const price = releaseFeatures.coursePrices ? formatMoney(course.price, language) : null;
   const compact = layout === 'compact';
 
   const go = onPress ?? (() => router.push(`/course/${course.id}`));
@@ -79,7 +83,7 @@ export function CourseCard({ course, layout = 'full', onPress }: CourseCardProps
           </View>
         ) : null}
 
-        {course.isFree ? (
+        {releaseFeatures.coursePrices && course.isFree ? (
           <View className="absolute start-2 top-2">
             <Badge label={t('common.free')} tone="primary" />
           </View>
@@ -111,9 +115,6 @@ export function CourseCard({ course, layout = 'full', onPress }: CourseCardProps
             icon="clock"
             label={formatDuration(course.totalDurationSeconds, language)}
           />
-          {course.studentCount ? (
-            <Meta icon="people" label={formatCompact(course.studentCount, language)} />
-          ) : null}
         </View>
 
         {course.progress && course.progress.percent > 0 ? (
@@ -138,7 +139,7 @@ export function CourseCard({ course, layout = 'full', onPress }: CourseCardProps
   );
 }
 
-function Meta({ icon, label }: { icon: 'document' | 'clock' | 'people'; label: string }) {
+function Meta({ icon, label }: { icon: 'document' | 'clock'; label: string }) {
   const { colors } = useTheme();
   return (
     <View className="flex-row items-center gap-1">

@@ -11,6 +11,8 @@ import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
 import { useOpenDocument } from '@/features/library/hooks';
 import { buildPdfHtml } from '@/features/library/pdf-html';
+import { identityFromPayload } from '@/features/library/pdf-watermark';
+import { usePdfWatermarkImage } from '@/features/library/use-pdf-watermark-image';
 import { Watermark } from '@/features/video/components/Watermark';
 import { useProtectedScreen } from '@/hooks/use-content-protection';
 import { useTranslation } from '@/hooks/use-translation';
@@ -44,6 +46,21 @@ export default function LibraryReaderScreen() {
 
   const { blockReason } = useProtectedScreen({});
   const open = useOpenDocument();
+
+  // The Student Web watermark, burned into every rendered page. Built once per
+  // grant: the page is large (it carries the artwork) and a new string on
+  // every render would hand the WebView the whole document again.
+  const watermarkImage = usePdfWatermarkImage();
+  const ticketData = open.data;
+  const pdfHtml = React.useMemo(() => {
+    if (!ticketData || watermarkImage === undefined) return null;
+    return buildPdfHtml(
+      ticketData.url,
+      { loading: t('library.opening'), failed: t('library.readerFailed') },
+      {},
+      { imageDataUri: watermarkImage, identity: identityFromPayload(ticketData.watermark) }
+    );
+  }, [ticketData, watermarkImage, t]);
 
   const close = () =>
     router.canGoBack() ? router.back() : router.replace('/library');
@@ -81,7 +98,9 @@ export default function LibraryReaderScreen() {
     );
   }
 
-  if (open.isPending || (!open.data && !open.isError)) {
+  // The second clause waits for the watermark artwork; bounded by its load
+  // timeout.
+  if (open.isPending || (!open.data && !open.isError) || (open.data && !pdfHtml)) {
     return (
       <SafeAreaView className="flex-1 bg-background">
         <AppBar onBack={close} />
@@ -115,13 +134,7 @@ export default function LibraryReaderScreen() {
       <SecureContentView enabled style={{ flex: 1 }}>
         <View className="flex-1">
           <WebView
-            source={{
-              html: buildPdfHtml(ticket.url, {
-                loading: t('library.opening'),
-                failed: t('library.readerFailed'),
-              }),
-              baseUrl: origin,
-            }}
+            source={{ html: pdfHtml ?? '', baseUrl: origin }}
             style={{ flex: 1, backgroundColor: 'transparent' }}
             originWhitelist={[origin]}
             allowFileAccess={false}

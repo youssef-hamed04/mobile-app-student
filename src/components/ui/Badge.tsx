@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { View } from 'react-native';
 
+import { useTheme } from '@/hooks/use-theme';
 import { cn } from '@/utils/cn';
 
 import { Icon, type IconName } from './Icon';
@@ -26,10 +27,12 @@ const TONES: Record<BadgeTone, { bg: string; fg: string }> = {
   // stays legible even though the plate underneath never changes.
   onPlate: { bg: 'bg-surface border-2 border-outline', fg: 'text-foreground' },
   primary: { bg: 'bg-primary-soft border border-primary/30', fg: 'text-primary' },
-  success: { bg: 'bg-success/12 border border-success/30', fg: 'text-success' },
-  warning: { bg: 'bg-warning/12 border border-warning/30', fg: 'text-warning' },
+  // `/10` rather than `/12`: 12 is not on the opacity scale, so the class was
+  // never generated and these badges had no fill at all.
+  success: { bg: 'bg-success/10 border border-success/30', fg: 'text-success' },
+  warning: { bg: 'bg-warning/10 border border-warning/30', fg: 'text-warning' },
   danger: { bg: 'bg-accent-soft border border-accent/30', fg: 'text-accent' },
-  info: { bg: 'bg-info/12 border border-info/30', fg: 'text-info' },
+  info: { bg: 'bg-info/10 border border-info/30', fg: 'text-info' },
 };
 
 export interface BadgeProps {
@@ -39,17 +42,32 @@ export interface BadgeProps {
   className?: string;
 }
 
+/**
+ * A small status stamp.
+ *
+ * It no longer sets `self-start` on itself: inside a `flex-row items-center`
+ * row that pinned the badge to the top edge of the row. A badge placed in a
+ * column passes `className="self-start"` so it does not stretch.
+ */
 export function Badge({ label, tone = 'neutral', icon, className }: BadgeProps) {
+  const { colors } = useTheme();
   const t = TONES[tone];
+  // `Icon` takes a colour, not a class, so the badge's ink is resolved here.
+  const iconColor: Record<BadgeTone, string> = {
+    neutral: colors.muted,
+    highlight: colors.highlightFg,
+    onPlate: colors.foreground,
+    primary: colors.primary,
+    success: colors.success,
+    warning: colors.warning,
+    danger: colors.accent,
+    info: colors.info,
+  };
   return (
     <View
-      className={cn(
-        'flex-row items-center gap-1 self-start rounded-full px-2.5 py-1',
-        t.bg,
-        className
-      )}
+      className={cn('flex-row items-center gap-1 rounded-full px-2.5 py-1', t.bg, className)}
     >
-      {icon ? <Icon name={icon} size={12} className={t.fg} /> : null}
+      {icon ? <Icon name={icon} size={12} color={iconColor[tone]} /> : null}
       <Text variant="overline" className={t.fg} numberOfLines={1}>
         {label}
       </Text>
@@ -64,9 +82,9 @@ export function CountBadge({ count, label }: { count: number; label?: string }) 
     <View
       accessibilityLabel={label}
       className="min-w-[18px] items-center justify-center rounded-full bg-accent px-1"
-      style={{ height: 18 }}
+      style={{ minHeight: 18 }}
     >
-      <Text variant="overline" className="text-accent-fg" forceLatin>
+      <Text variant="overline" className="text-accent-fg" forceLatin maxFontSizeMultiplier={1.2}>
         {count > 99 ? '99+' : String(count)}
       </Text>
     </View>

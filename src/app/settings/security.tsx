@@ -47,7 +47,7 @@ export default function SecurityScreen() {
   const statusTone = state.available ? 'success' : 'danger';
 
   return (
-    <Screen padded={false} edges={['top']}>
+    <Screen scroll={false} padded={false} edges={['top']}>
       <AppBar title={t('security.title')} />
 
       <Screen hideNetworkBanner edges={[]} contentClassName="pt-4">
@@ -63,7 +63,9 @@ export default function SecurityScreen() {
                 <Text variant="label">{t('security.protectedContentTitle')}</Text>
                 <Text variant="caption" tone="muted" className="mt-0.5">
                   {capabilities.platform} ·{' '}
-                  {capabilities.supportsSecureSurface ? 'secure surface' : 'unavailable'}
+                  {capabilities.supportsSecureSurface
+                    ? t('security.signals.surfaceOn')
+                    : t('security.signals.surfaceOff')}
                 </Text>
               </View>
               <Badge
@@ -74,16 +76,19 @@ export default function SecurityScreen() {
 
             <View className="gap-1.5">
               <Signal
-                label="Screenshot protection"
+                label={t('security.signals.screenshot')}
                 on={capabilities.supportsSecureFlag || capabilities.supportsSecureSurface}
               />
-              <Signal label="Capture detection" on={capabilities.supportsCaptureDetection} />
               <Signal
-                label="Recording detection"
+                label={t('security.signals.capture')}
+                on={capabilities.supportsCaptureDetection}
+              />
+              <Signal
+                label={t('security.signals.recording')}
                 on={capabilities.supportsRecordingDetection}
               />
-              <Signal label="External display clear" on={!state.externalDisplay} />
-              <Signal label="Device integrity" on={!state.integrityFailed} />
+              <Signal label={t('security.signals.externalDisplay')} on={!state.externalDisplay} />
+              <Signal label={t('security.signals.integrity')} on={!state.integrityFailed} />
             </View>
           </CardBody>
         </Card>
@@ -128,7 +133,7 @@ function Signal({ label, on }: { label: string; on: boolean }) {
         size={14}
         color={on ? colors.success : colors.warning}
       />
-      <Text variant="caption" tone="muted" forceLatin>
+      <Text variant="caption" tone="muted">
         {label}
       </Text>
     </View>

@@ -25,7 +25,7 @@ export default function AboutScreen() {
   const { t } = useTranslation();
 
   return (
-    <Screen padded={false} edges={['top']}>
+    <Screen scroll={false} padded={false} edges={['top']}>
       <AppBar title={t('settings.about')} />
 
       <Screen hideNetworkBanner edges={[]} contentClassName="pt-8">

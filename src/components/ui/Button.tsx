@@ -55,10 +55,18 @@ const LABEL: Record<ButtonVariant, string> = {
   link: 'text-primary underline',
 };
 
+// Minimum heights, not fixed ones: a label at a large OS font size, or in the
+// taller Arabic face, grows the button instead of being clipped inside it.
 const SIZE: Record<ButtonSize, string> = {
-  sm: 'h-10 px-3.5 rounded-md gap-1.5',
-  md: 'h-12 px-5 rounded-md gap-2',
-  lg: 'h-14 px-6 rounded-lg gap-2',
+  sm: 'min-h-10 px-3.5 py-1.5 rounded-md',
+  md: 'min-h-12 px-5 py-2 rounded-md',
+  lg: 'min-h-14 px-6 py-2.5 rounded-lg',
+};
+
+const INNER_GAP: Record<ButtonSize, string> = {
+  sm: 'gap-1.5',
+  md: 'gap-2',
+  lg: 'gap-2',
 };
 
 const TEXT_SIZE: Record<ButtonSize, 'caption' | 'label' | 'bodyStrong'> = {
@@ -159,10 +167,16 @@ export const Button = React.forwardRef<View, ButtonProps>(function Button(
       ) : null}
 
       <View
-        className={cn('flex-row items-center justify-center gap-2', loading && 'opacity-0')}
+        className={cn('flex-row items-center justify-center', INNER_GAP[size], loading && 'opacity-0')}
       >
         {iconStart ? <Icon name={iconStart} size={18} color={iconColor} mirror /> : null}
-        <Text variant={TEXT_SIZE[size]} className={LABEL[variant]} numberOfLines={1}>
+        <Text
+          variant={TEXT_SIZE[size]}
+          // The variant's ink must win over the default tone in both themes.
+          tone="none"
+          className={cn('text-center', LABEL[variant])}
+          numberOfLines={1}
+        >
           {label}
         </Text>
         {iconEnd ? <Icon name={iconEnd} size={18} color={iconColor} mirror /> : null}

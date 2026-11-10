@@ -45,7 +45,9 @@ export function Chip({
       onPress={onPress}
       hitSlop={6}
       className={cn(
-        'h-9 flex-row items-center gap-1.5 rounded-full border px-3',
+        // A minimum, not a fixed height: a large OS font size or the taller
+        // Arabic face grows the chip instead of clipping its label.
+        'min-h-9 flex-row items-center gap-1.5 rounded-full border px-3 py-1.5',
         onPlate
           ? selected
             ? 'border-2 border-outline bg-danger-500'
@@ -72,7 +74,7 @@ export function Chip({
 
       <Text
         variant="caption"
-        tone={onPlate && selected ? undefined : selected ? 'primary' : 'default'}
+        tone={onPlate && selected ? 'none' : selected ? 'primary' : 'default'}
         className={onPlate && selected ? 'text-ink-0' : undefined}
         numberOfLines={1}
       >
@@ -82,9 +84,11 @@ export function Chip({
       {onRemove ? (
         <Pressable
           onPress={onRemove}
-          hitSlop={10}
+          hitSlop={14}
           accessibilityRole="button"
           accessibilityLabel={removeAccessibilityLabel ?? label}
+          className="-me-1 items-center justify-center"
+          style={{ minWidth: 24, minHeight: 24 }}
         >
           <Icon name="close" size={14} color={selected ? colors.primary : colors.muted} />
         </Pressable>

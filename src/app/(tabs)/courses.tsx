@@ -1,20 +1,26 @@
 import { FlashList } from '@shopify/flash-list';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
 import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { NetworkBanner } from '@/components/feedback/NetworkBanner';
+import { IconButton } from '@/components/ui/Button';
 import { Chip, ChipRow } from '@/components/ui/Chip';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ErrorState } from '@/components/ui/ErrorState';
+import { Select } from '@/components/ui/Select';
 import { Sheet } from '@/components/ui/Sheet';
 import { CardSkeleton } from '@/components/ui/Skeleton';
 import { Spinner } from '@/components/ui/Spinner';
 import { Text } from '@/components/ui/Text';
-import { IconButton } from '@/components/ui/Button';
-import { Select } from '@/components/ui/Select';
-import { useAcademicYears, useUniversities } from '@/features/auth/hooks';
+import { releaseFeatures } from '@/config/release-features';
 import { useAuth } from '@/features/auth/AuthProvider';
+import {
+  useAcademicYears,
+  useUniversities,
+} from '@/features/auth/hooks';
+import { progressionLabelKey } from '@/features/auth/study-type';
 import type { CourseFilters } from '@/features/courses/api';
 import { CourseCard } from '@/features/courses/components/CourseCard';
 import { useCourseList } from '@/features/courses/hooks';
@@ -40,29 +46,41 @@ export default function CoursesScreen() {
   const [academicYearId, setAcademicYearId] = React.useState<string | null>(null);
   const [filtersOpen, setFiltersOpen] = React.useState(false);
 
+  // A teacher search result opens this tab as /courses?teacherId=…
+  const router = useRouter();
+  const { teacherId: teacherParam } = useLocalSearchParams<{ teacherId?: string }>();
+  const teacherId = typeof teacherParam === 'string' && teacherParam ? teacherParam : null;
+
   const filters = React.useMemo<CourseFilters>(
     () => ({
       sort,
       free: freeOnly || undefined,
       universityId: universityId ?? undefined,
       academicYearId: academicYearId ?? undefined,
+      teacherId: teacherId ?? undefined,
     }),
-    [sort, freeOnly, universityId, academicYearId]
+    [sort, freeOnly, universityId, academicYearId, teacherId]
   );
 
   const query = useCourseList(filters);
   const universities = useUniversities();
+  // The year filter lists the signed-in student's own ladder (their
+  // department's years or levels), not the platform-wide list.
   const { user } = useAuth();
   const years = useAcademicYears(user?.department?.id);
+  const yearFilterLabel = years.data?.[0]?.kind
+    ? t(progressionLabelKey(years.data[0], user?.department))
+    : t('courses.filterYear');
 
   const items = query.data?.items ?? [];
   const activeFilterCount =
-    (freeOnly ? 1 : 0) + (universityId ? 1 : 0) + (academicYearId ? 1 : 0);
+    (freeOnly ? 1 : 0) + (universityId ? 1 : 0) + (academicYearId ? 1 : 0) + (teacherId ? 1 : 0);
 
   const clearFilters = () => {
     setFreeOnly(false);
     setUniversityId(null);
     setAcademicYearId(null);
+    if (teacherId) router.setParams({ teacherId: undefined });
   };
 
   const renderItem = React.useCallback(
@@ -99,18 +117,16 @@ export default function CoursesScreen() {
             selected={sort === 'popular'}
             onPress={() => setSort('popular')}
           />
-          <Chip
-            label={t('courses.filterFree')}
-            selected={freeOnly}
-            icon="price"
-            onPress={() => setFreeOnly((v) => !v)}
-          />
-          {activeFilterCount > 0 ? (
+          {releaseFeatures.coursePrices ? (
             <Chip
-              label={t('courses.clearFilters')}
-              icon="close"
-              onPress={clearFilters}
+              label={t('courses.filterFree')}
+              selected={freeOnly}
+              icon="price"
+              onPress={() => setFreeOnly((v) => !v)}
             />
+          ) : null}
+          {activeFilterCount > 0 ? (
+            <Chip label={t('courses.clearFilters')} icon="close" onPress={clearFilters} />
           ) : null}
         </ChipRow>
       </View>
@@ -141,9 +157,7 @@ export default function CoursesScreen() {
           ListHeaderComponent={
             items.length > 0 ? (
               <Text variant="caption" tone="muted" className="pb-3">
-                {t('courses.resultsCount', {
-                  count: query.data?.total ?? items.length,
-                })}
+                {t('courses.resultsCount', { count: query.data?.total ?? items.length })}
               </Text>
             ) : null
           }
@@ -152,9 +166,7 @@ export default function CoursesScreen() {
               icon="search"
               title={t('courses.empty.listTitle')}
               body={t('courses.empty.listBody')}
-              actionLabel={
-                activeFilterCount > 0 ? t('courses.clearFilters') : undefined
-              }
+              actionLabel={activeFilterCount > 0 ? t('courses.clearFilters') : undefined}
               onAction={activeFilterCount > 0 ? clearFilters : undefined}
             />
           }
@@ -182,7 +194,7 @@ export default function CoursesScreen() {
             loading={universities.isLoading}
           />
           <Select
-            label={user?.department?.studyType === 'PROGRAMS' ? t('auth.level') : t('courses.filterYear')}
+            label={yearFilterLabel}
             value={academicYearId}
             options={years.data ?? []}
             onChange={setAcademicYearId}
@@ -194,8 +206,12 @@ export default function CoursesScreen() {
             options={[
               { value: 'newest', label: t('courses.sortNewest') },
               { value: 'popular', label: t('courses.sortPopular') },
-              { value: 'priceLow', label: t('courses.sortPriceLow') },
-              { value: 'priceHigh', label: t('courses.sortPriceHigh') },
+              ...(releaseFeatures.coursePrices
+                ? [
+                    { value: 'priceLow', label: t('courses.sortPriceLow') },
+                    { value: 'priceHigh', label: t('courses.sortPriceHigh') },
+                  ]
+                : []),
             ]}
             onChange={(v) => setSort(v as Sort)}
           />

@@ -10,6 +10,7 @@ import { Icon, type IconName } from '@/components/ui/Icon';
 import { Screen } from '@/components/ui/Screen';
 import { CardSkeleton, Skeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
+import { isAnnouncementVisible, releaseFeatures } from '@/config/release-features';
 import { AdBanner } from '@/features/ads';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { CourseCard } from '@/features/courses/components/CourseCard';
@@ -91,20 +92,22 @@ export default function HomeScreen() {
         destinations, and this is somewhere students go deliberately rather
         than switch to mid-task.
       */}
-      <View className="mb-6 px-4">
-        <Card onPress={() => router.push('/library')}>
-          <CardBody className="flex-row items-center gap-3">
-            <Icon name="document" size={22} />
-            <View className="flex-1 gap-0.5">
-              <Text variant="label">{t('library.title')}</Text>
-              <Text variant="caption" tone="muted">
-                {t('library.browseSubtitle')}
-              </Text>
-            </View>
-            <Icon name="chevron-right" size={18} />
-          </CardBody>
-        </Card>
-      </View>
+      {releaseFeatures.library ? (
+        <View className="mb-6 px-4">
+          <Card onPress={() => router.push('/library')}>
+            <CardBody className="flex-row items-center gap-3">
+              <Icon name="document" size={22} />
+              <View className="flex-1 gap-0.5">
+                <Text variant="label">{t('library.title')}</Text>
+                <Text variant="caption" tone="muted">
+                  {t('library.browseSubtitle')}
+                </Text>
+              </View>
+              <Icon name="chevron-right" size={18} mirror />
+            </CardBody>
+          </Card>
+        </View>
+      ) : null}
 
       {data ? (
         <View className="mb-6 mt-3 flex-row gap-2 px-4">
@@ -179,14 +182,14 @@ export default function HomeScreen() {
         </View>
       ) : null}
 
-      {data && data.announcements.length > 0 ? (
+      {data && data.announcements.some((n) => isAnnouncementVisible(n)) ? (
         <View className="mb-7 px-4">
           <SectionHeader
             title={t('home.announcements')}
             actionLabel={t('common.seeAll')}
             onAction={() => router.push('/(tabs)/notifications')}
           />
-          {data.announcements.slice(0, 2).map((n) => (
+          {data.announcements.filter((n) => isAnnouncementVisible(n)).slice(0, 2).map((n) => (
             <Card key={n.id} className="mb-2">
               <CardBody className="flex-row gap-3">
                 <View className="h-9 w-9 items-center justify-center rounded-md bg-primary-soft">
@@ -260,7 +263,9 @@ function Stat({
       <Text variant="label" className="mt-1.5" numberOfLines={1}>
         {value}
       </Text>
-      <Text variant="caption" tone="subtle" numberOfLines={1} className="text-center">
+      {/* Two lines: the Arabic labels do not fit one line in a quarter-width
+          tile and were being cut off with an ellipsis. */}
+      <Text variant="caption" tone="subtle" numberOfLines={2} className="text-center">
         {label}
       </Text>
     </View>

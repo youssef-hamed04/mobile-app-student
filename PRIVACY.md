@@ -75,10 +75,22 @@ for a limited period and then deleted.
 ## Your choices
 
 You can edit your profile and change your password in the app. Notifications can
-be turned off in the app or in your phone's settings. To request a copy of your
-data or ask us to delete your account, write to the address at the top of this
-policy; we will confirm your identity first, since a deletion request from the
-wrong person would cost you access you paid for.
+be turned off in the app or in your phone's settings.
+
+You can delete your account in the app under Settings → Delete account. You
+confirm with your password, you are signed out on every device straight away,
+and the deletion is carried out 30 days later. Until then you can cancel it by
+signing in with your phone number and password and choosing "Cancel deletion".
+When the deletion is carried out we erase your name, phone number, email,
+photo, devices, notifications and the messages you wrote to support. We keep
+payment, wallet and enrolment records without those details, because the law
+and our accounting require them. Your wallet balance is shown before you
+confirm. It stays on record but cannot be used while the deletion is pending or
+afterwards; contact us before deleting if you want to ask about it.
+
+To request a copy of your data, or if you cannot use the app, write to the
+address at the top of this policy; we will confirm your identity first, since a
+deletion request from the wrong person would cost you access you paid for.
 
 ## Children
 

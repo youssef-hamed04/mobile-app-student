@@ -215,6 +215,10 @@ export default function NotificationsScreen() {
               icon="bellOutline"
               title={t('notifications.empty.title')}
               body={t('notifications.empty.body')}
+              // With the Unread filter on, "nothing here" has an obvious next
+              // step: show everything.
+              actionLabel={unreadOnly ? t('notifications.all') : undefined}
+              onAction={unreadOnly ? () => setUnreadOnly(false) : undefined}
             />
           }
           ListFooterComponent={

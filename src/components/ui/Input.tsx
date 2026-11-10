@@ -66,6 +66,7 @@ export const Input = React.forwardRef<TextInput, InputProps>(function Input(
     editable = true,
     onFocus,
     onBlur,
+    style,
     ...rest
   },
   ref
@@ -80,23 +81,23 @@ export const Input = React.forwardRef<TextInput, InputProps>(function Input(
   return (
     <View className={cn('gap-1.5', containerClassName)}>
       {label ? (
-        <View className="flex-row items-center gap-1">
-          <Text
-            variant="label"
-            tone={error ? 'accent' : onPlate ? 'onHighlight' : 'default'}
-          >
-            {label}
-          </Text>
+        // One text at the full row width. Sized to its content, an Arabic label
+        // could measure a hair too narrow on Android, and its last word then
+        // wrapped onto a second line that was never shown.
+        <Text
+          variant="label"
+          // The accent red is too faint on the orange plate in either theme.
+          tone={error ? (onPlate ? 'none' : 'accent') : onPlate ? 'onHighlight' : 'default'}
+          className={error && onPlate ? 'text-danger-800' : undefined}
+          accessibilityLabel={label}
+        >
+          {label}
           {required ? (
-            <Text
-              variant="label"
-              tone={onPlate ? 'onHighlight' : 'accent'}
-              accessibilityElementsHidden
-            >
-              *
+            <Text variant="label" tone={onPlate ? 'onHighlight' : 'accent'}>
+              {' *'}
             </Text>
           ) : null}
-        </View>
+        </Text>
       ) : null}
 
       <View
@@ -125,7 +126,12 @@ export const Input = React.forwardRef<TextInput, InputProps>(function Input(
         <TextInput
           ref={ref}
           editable={editable}
-          className="flex-1 py-3 text-base text-foreground"
+          // The app's own faces, so typed text and placeholders match the
+          // labels around them instead of falling back to Roboto / SF.
+          className={cn(
+            'flex-1 py-3 text-base text-foreground',
+            isRTL && !forceLTR ? 'font-arabic' : 'font-sans'
+          )}
           placeholderTextColor={colors.subtle}
           selectionColor={colors.primary}
           cursorColor={colors.primary}
@@ -137,11 +143,15 @@ export const Input = React.forwardRef<TextInput, InputProps>(function Input(
           accessibilityLabel={label}
           accessibilityHint={describedBy}
           accessibilityState={{ disabled: !editable }}
-          style={
+          // The caller's style (a multiline minHeight, say) is merged after
+          // the direction, not instead of it: a `style` prop used to replace
+          // the writing direction and Arabic multiline fields went LTR.
+          style={[
             forceLTR
               ? { writingDirection: 'ltr', textAlign: isRTL ? 'right' : 'left' }
-              : { writingDirection: isRTL ? 'rtl' : 'ltr' }
-          }
+              : { writingDirection: isRTL ? 'rtl' : 'ltr' },
+            style,
+          ]}
           onFocus={(e) => {
             setFocused(true);
             onFocus?.(e);
@@ -156,10 +166,13 @@ export const Input = React.forwardRef<TextInput, InputProps>(function Input(
         {iconEnd ? (
           <Pressable
             onPress={onPressIconEnd}
-            hitSlop={12}
+            hitSlop={8}
             accessibilityRole="button"
             accessibilityLabel={iconEndAccessibilityLabel ?? t('common.select')}
             disabled={!onPressIconEnd}
+            // A full 48dp target on its own, inside the 52dp field.
+            className="-me-2 items-center justify-center"
+            style={{ minWidth: 44, minHeight: 44 }}
           >
             <Icon name={iconEnd} size={20} color={colors.muted} />
           </Pressable>
@@ -177,6 +190,7 @@ export const Input = React.forwardRef<TextInput, InputProps>(function Input(
           />
           <Text
             variant="caption"
+            tone={onPlate ? 'none' : 'default'}
             className={cn('flex-1', onPlate ? 'text-danger-800' : 'text-accent')}
           >
             {error}

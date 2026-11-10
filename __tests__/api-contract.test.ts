@@ -1,6 +1,8 @@
 import { Endpoints } from '@/api/endpoints';
 import { toApiError } from '@/api/errors';
 
+import type { AcademicSelectionScope } from '@/features/auth/api';
+
 /**
  * The wire contract, pinned where it is cheapest to get wrong.
  *
@@ -9,10 +11,65 @@ import { toApiError } from '@/api/errors';
  * but wrong screen instead of an obvious failure.
  */
 
+/**
+ * Mirrors `catalogApi.academicSelection`'s query construction.
+ *
+ * Duplicated here on purpose: the test is asserting the shape that goes on the
+ * wire, so calling the function under test would make it tautological.
+ */
+function buildSelectionUrl(scope: AcademicSelectionScope): string {
+  const search = new URLSearchParams(
+    Object.entries(scope).filter(([, value]) => Boolean(value)) as [
+      string,
+      string,
+    ][]
+  ).toString();
+  return search
+    ? `${Endpoints.catalog.academicSelection}?${search}`
+    : Endpoints.catalog.academicSelection;
+}
+
+describe('academic structure contract', () => {
+  /**
+   * The registration picker.
+   *
+   * Pinned because getting it wrong is silent rather than loud: the unscoped
+   * `/catalog/academic-years` call returns a valid, correctly-shaped answer —
+   * the platform-wide ladder — so a student registering at a level-based college
+   * was offered years without any error anywhere.
+   */
+  it('asks for the resolved system, not just a list', () => {
+    expect(Endpoints.catalog.academicSelection).toBe('/catalog/academic-selection');
+    // The unscoped route stays for catalogue filters, which legitimately want
+    // the union of every rung. Only registration must be scoped.
+    expect(Endpoints.catalog.academicYears).toBe('/catalog/academic-years');
+  });
+
+  it('scopes the picker to the most specific unit chosen', () => {
+    // The backend resolves a single owner and refuses two, so the three ids are
+    // never sent together.
+    const department = buildSelectionUrl({ departmentId: 'd1' });
+    expect(department).toBe('/catalog/academic-selection?departmentId=d1');
+
+    const college = buildSelectionUrl({ facultyId: 'f1' });
+    expect(college).toBe('/catalog/academic-selection?facultyId=f1');
+  });
+
+  it('omits the scope rather than sending empty parameters', () => {
+    // `?departmentId=` would be a real scope the backend cannot resolve, and the
+    // resulting error is far less obvious than an empty list.
+    expect(buildSelectionUrl({})).toBe('/catalog/academic-selection');
+  });
+});
+
 describe('endpoint paths', () => {
   it.each([
     ['courses.parts', Endpoints.courses.parts('c1'), '/courses/c1/parts'],
-    ['courseParts.myPurchases', Endpoints.courseParts.myPurchases, '/me/part-purchases'],
+    [
+      'courseParts.myPurchases',
+      Endpoints.courseParts.myPurchases,
+      '/me/part-purchases',
+    ],
     ['codes.validate', Endpoints.codes.validate, '/codes/validate'],
     ['wallet.summary', Endpoints.wallet.summary, '/wallet'],
     ['wallet.transactions', Endpoints.wallet.transactions, '/wallet/transactions'],
@@ -26,8 +83,16 @@ describe('endpoint paths', () => {
     ['library.open', Endpoints.library.open('p1'), '/library/parts/p1/open'],
     ['support.tickets', Endpoints.support.tickets, '/support/tickets'],
     ['support.ticket', Endpoints.support.ticket('t1'), '/support/tickets/t1'],
-    ['support.reply', Endpoints.support.reply('t1'), '/support/tickets/t1/messages'],
-    ['storage.avatarUpload', Endpoints.storage.avatarUpload, '/storage/uploads/avatar'],
+    [
+      'support.reply',
+      Endpoints.support.reply('t1'),
+      '/support/tickets/t1/messages',
+    ],
+    [
+      'storage.avatarUpload',
+      Endpoints.storage.avatarUpload,
+      '/storage/uploads/avatar',
+    ],
     ['profile.avatar', Endpoints.profile.avatar, '/profile/avatar'],
   ])('%s resolves to %s', (_name, actual, expected) => {
     expect(actual).toBe(expected);

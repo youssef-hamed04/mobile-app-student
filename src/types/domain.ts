@@ -22,11 +22,16 @@ export interface Faculty {
 }
 
 export interface Department {
-  studyType?: 'GENERAL' | 'PROGRAMS';
   id: string;
   facultyId: string;
   name: string;
   nameAr: string;
+  /**
+   * Which track the department belongs to. Descriptive metadata from the
+   * server; it is shown (review step, profile, course filter label) and never
+   * chosen by the student - the department choice implies it.
+   */
+  studyType?: 'GENERAL' | 'PROGRAMS';
 }
 
 export interface AcademicYear {
@@ -35,6 +40,8 @@ export interface AcademicYear {
   order: number;
   name: string;
   nameAr: string;
+  /** The ladder's vocabulary, supplied for scoped lists so the control can be labelled. */
+  kind?: 'YEAR' | 'LEVEL';
 }
 
 export interface User {
@@ -433,7 +440,12 @@ export interface HomeFeed {
  * should be inert rather than pretending to be tappable.
  */
 export type AdTargetType =
-  'NONE' | 'COURSE' | 'SECTION' | 'LESSON' | 'EXTERNAL_URL' | 'APP_SCREEN';
+  | 'NONE'
+  | 'COURSE'
+  | 'SECTION'
+  | 'LESSON'
+  | 'EXTERNAL_URL'
+  | 'APP_SCREEN';
 
 export interface AdTarget {
   type: AdTargetType;
@@ -821,7 +833,12 @@ export interface LibraryDocumentTicket {
 export type SupportTicketStatus = 'OPEN' | 'PENDING' | 'RESOLVED' | 'CLOSED';
 export type SupportTicketPriority = 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
 export type SupportTicketCategory =
-  'GENERAL' | 'TECHNICAL' | 'PAYMENT' | 'ACCESS' | 'CONTENT' | 'OTHER';
+  | 'GENERAL'
+  | 'TECHNICAL'
+  | 'PAYMENT'
+  | 'ACCESS'
+  | 'CONTENT'
+  | 'OTHER';
 
 export interface SupportTicketSummary {
   id: string;

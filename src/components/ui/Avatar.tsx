@@ -40,8 +40,12 @@ export function Avatar({ name, uri, size = 44, className }: AvatarProps) {
         <Text
           variant="label"
           className="text-primary"
-          forceLatin
-          style={{ fontSize: Math.max(11, size * 0.36) }}
+          // The size scales with the avatar, so the line height must follow
+          // it; the variant's fixed leading clipped large initials.
+          style={{
+            fontSize: Math.max(11, size * 0.36),
+            lineHeight: Math.round(Math.max(11, size * 0.36) * 1.25),
+          }}
         >
           {initials(name)}
         </Text>

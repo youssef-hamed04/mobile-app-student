@@ -29,7 +29,7 @@ export default function PlaybackSettingsScreen() {
   const setDataSaver = usePlayerStore((s) => s.setDataSaver);
 
   return (
-    <Screen padded={false} edges={['top']}>
+    <Screen scroll={false} padded={false} edges={['top']}>
       <AppBar title={t('settings.playback')} />
 
       <Screen hideNetworkBanner edges={[]} contentClassName="pt-4">
