@@ -250,6 +250,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       UIBackgroundModes: ['remote-notification'],
       // Protected content must never continue in PiP / background.
       UIRequiresFullScreen: false,
+      // The app ships Arabic and English (src/i18n). Declaring both here makes
+      // iOS show system-provided strings (permission prompts, share sheets,
+      // the App Store "Languages" row) in the student's language instead of
+      // treating the app as English-only.
+      CFBundleDevelopmentRegion: 'en',
+      CFBundleLocalizations: ['en', 'ar'],
       // The avatar flow only picks from the library (no camera), and uses the
       // system photo picker. The camera, microphone and Face ID strings that
       // the image-picker / secure-store plugins add by default are removed
