@@ -145,15 +145,10 @@ public final class SecureContentView: ExpoView {
     childComponentView.removeFromSuperview()
   }
 
-  // Legacy renderer / interop layer.
-  public override func insertReactSubview(_ subview: UIView!, at index: Int) {
-    guard let subview else { return }
-    contentHost.insertSubview(subview, at: index)
-  }
-
-  public override func removeReactSubview(_ subview: UIView!) {
-    subview?.removeFromSuperview()
-  }
+  // There is deliberately no insertReactSubview / removeReactSubview override:
+  // those legacy-renderer methods are not visible to an Expo module's Swift
+  // under React Native 0.86, and overriding them failed the iOS compile
+  // ("method does not override any method from its superclass").
 
   // MARK: - Touches
 
