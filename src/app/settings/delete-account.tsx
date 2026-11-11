@@ -32,12 +32,17 @@ import { formatDate, formatMoney } from '@/utils/format';
  * After 30 days the server erases the personal data and keeps the payment,
  * wallet and enrolment records without it - the "What we keep" card says so.
  *
- * The current wallet balance is shown, and repeated in the confirmation,
- * before anything is sent. What happens to a remaining balance is an owner
- * policy that has not been decided, so the text states only facts: the
- * balance stays on record and cannot be used while deletion is pending or
- * afterwards, and the student is pointed to support. The button stays
- * disabled until the balance has loaded.
+ * A remaining wallet balance is disclosed, and repeated in the confirmation,
+ * before anything is sent. What happens to it is an owner policy that has not
+ * been decided, so the text states only facts: the balance stays on record and
+ * cannot be used while deletion is pending or afterwards, and the student is
+ * pointed to support.
+ *
+ * Deletion never depends on the wallet: the button waits only while the
+ * balance is still loading, and a failed or absent wallet answer does not
+ * block it (App Store 5.1.1(v) - deletion must be possible in the app). In the
+ * consumption-only release the wallet card appears only for a student who
+ * actually holds a balance; a zero balance or a failed lookup shows nothing.
  */
 export default function DeleteAccountScreen() {
   const { t, language } = useTranslation();
@@ -85,7 +90,7 @@ export default function DeleteAccountScreen() {
       setFieldError(t('deleteAccount.passwordRequired'));
       return;
     }
-    if (!wallet.data) return;
+    if (wallet.isPending) return;
     const confirmBody = hasBalance
       ? `${t('deleteAccount.confirmBody')}\n\n${t('deleteAccount.confirmBalance', { amount: balance ?? '' })}`
       : t('deleteAccount.confirmBody');
@@ -119,9 +124,8 @@ export default function DeleteAccountScreen() {
         </Card>
 
         {/* With the wallet off, this appears only for a student who actually holds
-            a balance (they must be told what they lose) or when it can't be loaded
-            (the delete button waits for it, so a retry has to be reachable). */}
-        {releaseFeatures.wallet || hasBalance || wallet.isError ? (
+            a balance: they must be told what they lose. */}
+        {releaseFeatures.wallet || hasBalance ? (
         <Card>
           <CardBody className="gap-2">
             <Text variant="label">{t('deleteAccount.walletTitle')}</Text>
@@ -172,7 +176,7 @@ export default function DeleteAccountScreen() {
           variant="danger"
           iconStart="trash"
           loading={busy}
-          disabled={busy || !wallet.data}
+          disabled={busy || wallet.isPending}
           onPress={submit}
           fullWidth
         />

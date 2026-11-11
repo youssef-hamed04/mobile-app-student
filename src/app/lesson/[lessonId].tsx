@@ -14,6 +14,7 @@ import { Icon } from '@/components/ui/Icon';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { ListSkeleton, Skeleton } from '@/components/ui/Skeleton';
 import { Text } from '@/components/ui/Text';
+import { releaseFeatures } from '@/config/release-features';
 import { AttachmentRow } from '@/features/lessons/AttachmentRow';
 import { useLesson, useMarkLessonComplete } from '@/features/lessons/hooks';
 import { useTheme } from '@/hooks/use-theme';
@@ -157,7 +158,10 @@ export default function LessonScreen() {
                 <Badge label={t('lesson.completed')} tone="success" icon="checkCircle" />
               ) : null}
               {lesson.isPreview ? (
-                <Badge label={t('courses.preview')} tone="primary" />
+                <Badge
+                  label={t(releaseFeatures.coursePrices ? 'courses.preview' : 'release.preview')}
+                  tone="primary"
+                />
               ) : null}
             </View>
           </View>

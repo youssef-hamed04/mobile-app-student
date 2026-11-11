@@ -30,6 +30,7 @@ export const startDetection = async () => undefined;
 export const stopDetection = async () => undefined;
 export const isBeingRecorded = () => false;
 export const hasExternalDisplay = () => false;
+export const setPrivacyOverlayText = (_text: string) => undefined;
 export const getIntegritySignals = (): IntegritySignals => ({
   rooted: false,
   debuggerAttached: false,

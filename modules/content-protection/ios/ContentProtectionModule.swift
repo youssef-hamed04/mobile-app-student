@@ -41,6 +41,8 @@ public class ContentProtectionModule: Module {
 
   private var privacyOverlay: UIView?
   private var secureFlagEnabled = false
+  /// Set from JS in the app's language (Arabic or English); English until then.
+  private var privacyOverlayText = "Protected content"
 
   public func definition() -> ModuleDefinition {
     Name("ContentProtection")
@@ -79,6 +81,14 @@ public class ContentProtectionModule: Module {
     }
 
     Function("isSecureFlagEnabled") { self.secureFlagEnabled }
+
+    // The overlay is drawn natively (it must appear before JS can run when the
+    // app is backgrounded), so its one line of text is handed over from JS.
+    Function("setPrivacyOverlayText") { (text: String) in
+      DispatchQueue.main.async {
+        self.privacyOverlayText = text
+      }
+    }
 
     // -----------------------------------------------------------------
     // Detection
@@ -230,7 +240,7 @@ public class ContentProtectionModule: Module {
     overlay.tag = 0x5EC0
 
     let label = UILabel()
-    label.text = "Protected content"
+    label.text = privacyOverlayText
     label.textColor = UIColor(red: 0.949, green: 0.416, blue: 0.106, alpha: 1)
     label.font = .systemFont(ofSize: 16, weight: .semibold)
     label.translatesAutoresizingMaskIntoConstraints = false

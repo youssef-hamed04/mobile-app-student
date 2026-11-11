@@ -78,6 +78,14 @@
       "android": {
         "buildType": "apk"
       }
+    },
+    "production:ios-simulator": {
+      "extends": "production",
+      "distribution": "internal",
+      "autoIncrement": false,
+      "ios": {
+        "simulator": true
+      }
     }
   },
   "submit": {

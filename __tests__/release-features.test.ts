@@ -159,6 +159,10 @@ describe('announcements on Android', () => {
     expect(visible({ kind: 'ANNOUNCEMENT', title: 'Mid-term timetable', body: 'Published.' })).toBe(true);
     expect(visible({ kind: 'NEW_LESSON', title: 'درس جديد', body: 'تم نشر محاضرة جديدة', route: '/lesson/l1' })).toBe(true);
     expect(visible({ kind: 'ANNOUNCEMENT', title: 'A course of 3 credit hours', body: null })).toBe(true);
+    // Account news about access is not a sale.
+    expect(visible({ kind: 'ANNOUNCEMENT', title: 'تم تفعيل الكورس على حسابك', body: null })).toBe(true);
+    expect(visible({ kind: 'ANNOUNCEMENT', title: 'Your course was activated', body: 'Enjoy.' })).toBe(true);
+    expect(visible({ kind: 'ANNOUNCEMENT', title: 'Lecture 4 is on the site now', body: null })).toBe(true);
   });
 
   it('hides anything that opens a disabled screen', () => {
@@ -177,6 +181,13 @@ describe('announcements on Android', () => {
       'اشترك الآن',
       'اطلب كود التفعيل',
       'كارت الشحن متاح',
+      // Pointing elsewhere to get access is the same message.
+      'Subscribe to the new term',
+      'Get it on our website',
+      'Contact us to activate the course',
+      'متاح الآن على موقعنا',
+      'فعّل الكورس من خلال الموقع',
+      'تواصل معنا للاشتراك',
     ]) {
       expect(isSalesMessaging(text)).toBe(true);
       expect(visible({ kind: 'ANNOUNCEMENT', title: text, body: '' })).toBe(false);

@@ -31,9 +31,11 @@ const schema = z.object({
     rootDetection: boolish,
     queryPersistence: boolish,
     /**
-     * Google Play first-release scope. Applied on Android only, by
-     * `release-features.ts`. They default to off so a missing variable fails
-     * toward the restricted release, never toward selling.
+     * Store-release scope. `release-features.ts` applies them on every
+     * platform: only `library` is read from here; wallet, activation, prices
+     * and purchases are forced off (consumption-only, iOS and Android). They
+     * default to off so a missing variable fails toward the restricted
+     * release, never toward selling.
      */
     library: boolish,
     wallet: boolish,
