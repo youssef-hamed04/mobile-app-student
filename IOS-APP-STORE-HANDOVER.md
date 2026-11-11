@@ -15,13 +15,30 @@ https://github.com/youssef-hamed04/mobile-app-student
 
 ## 2. Release commit
 
-Build from the tag **`ios-handover-1.0.0`** on `main`. The exact commit SHA
-behind the tag is recorded in the owner's readiness report
-(`STUDENT-CENTER-IOS-GITHUB-RELEASE-READINESS.md`). Check it after cloning:
+Build from the tag **`ios-handover-1.0.0`** on `main` — commit
+`b109bd052a4f68fcfbbf0f24b2af728f931d169f`. Check it after cloning:
 
 ```bash
 git rev-parse ios-handover-1.0.0^{commit}
 ```
+
+`main` may carry later **documentation-only** commits (this guide,
+`APP-REVIEW-ACCOUNT.md`, the listing draft). They change no app code, so the tag
+remains the source to build; read the documents from `main`.
+
+## Public URLs (verified live, no sign-in)
+
+| Use in App Store Connect | URL |
+|---|---|
+| Privacy Policy URL | https://student-dashoard.vercel.app/privacy (Arabic: `?lang=ar`) |
+| Support URL | https://student-dashoard.vercel.app/contact (Arabic: `?lang=ar`) |
+| Account deletion (reference) | https://student-dashoard.vercel.app/account-deletion |
+| Terms | https://student-dashoard.vercel.app/terms |
+
+The domain is spelled `dashoard` — copy it exactly. Since 11 November 2026 these
+pages describe the iOS app as it is: no prices, purchases, codes or wallet in the
+app; codes and wallet exist on the student website only. The privacy URL is also
+the value of `EXPO_PUBLIC_PRIVACY_POLICY_URL` built into the app.
 
 ## 3. Clone
 
@@ -245,26 +262,20 @@ wants (the service targets Egypt).
 - **App Privacy** (nutrition labels): a draft mapping from the app's real data
   collection is in `APP-STORE-LISTING-DRAFT.md`. The owner must confirm it.
   Nothing is used for tracking; there is no advertising identifier.
-- **Privacy policy URL:** the app's production value of
-  `EXPO_PUBLIC_PRIVACY_POLICY_URL`. Its wording must match the iOS app — see
-  the owner's readiness report.
+- **Privacy policy URL:** https://student-dashoard.vercel.app/privacy (verified
+  live; it matches the iOS app since 11 November 2026). **Support URL:**
+  https://student-dashoard.vercel.app/contact.
 
 ## 19. Review account
 
-App Review needs a working sign-in (guideline 2.1). Prepare, with the owner:
-
-- A dedicated student account (phone number + password) with **at least one
-  course active** that contains a playable video, and library access with a
-  readable document.
-- **Device binding:** every account is bound to one device. The first device
-  of an account with no active device is bound automatically. So **do not sign
-  in to the review account on your own phone before submitting** — or ask the
-  administration to remove its devices first. If Apple tests on a second
-  device (for example an iPad), it will wait for approval: tell the
-  administration the review window so they can approve it promptly.
-- The backend (production API) must be up during review.
-- Put the credentials only in App Store Connect → App Review Information,
-  never in the repository. Use the review notes in `APP-STORE-LISTING-DRAFT.md`.
+App Review needs a working sign-in (guideline 2.1). The administration prepares
+it following **[APP-REVIEW-ACCOUNT.md](APP-REVIEW-ACCOUNT.md)**: a dedicated
+student account with representative content granted without any payment step,
+**no bound device at submission time** (the reviewer's first device is bound
+automatically; a second one waits for approval), and someone ready to approve a
+second device during the review. Do not sign in to the review account on your
+own phone. The production API must be up during review. Credentials go only
+into App Store Connect → App Review Information.
 
 ## 20. Submission
 
@@ -309,9 +320,9 @@ Not verifiable without hardware; do them on a TestFlight build:
 | Bundle id not available | section 10 |
 | Push token request fails / no pushes | APNs key not added to the Expo project, or building under another project (sections 7, 12) |
 | `aps-environment` is `development` in the IPA | built with a development/ad-hoc profile — use the App Store profile |
-| Rejected under 3.1.1 / 3.1.3 (purchases outside the app) | see the owner's readiness report: the app sells nothing and links to no purchase; reply with the review notes, do not add links |
+| Rejected under 3.1.1 / 3.1.3 (purchases outside the app) | section 24 — do not add links or purchase wording; the response is an owner decision |
 | Rejected under 4.2 (minimum functionality) | point to native protected playback, watch progress and "continue watching", push notifications, the protected PDF reader, Arabic/English with RTL |
-| iPad layout rejected | owner decision: keep iPad and fix, or set `ios.supportsTablet: false` for this version (removes iPad from sale; needs a new build) |
+| iPad layout rejected | section 23 |
 
 - **Versioning:** keep `version` in `app.config.ts` as the marketing version
   (1.0.0 now). Build numbers come from EAS. A new store version for a native
@@ -324,6 +335,68 @@ Not verifiable without hardware; do them on a TestFlight build:
   Use phased release, keep the previous build in TestFlight, fix forward with a
   new build, or (JS-only problems) publish a corrective OTA update to the
   `production` channel for the same runtime.
+
+## 23. Owner decision before the first build: iPad
+
+Today `ios.supportsTablet` is **`true`**: the app is built for iPhone **and**
+iPad. Nobody has run it on an iPad. **It has not been changed** — this is the
+owner's call, to make before the first store build.
+
+**Recommendation: ship 1.0 as iPhone-only** (`ios.supportsTablet: false` in
+`app.config.ts`, a one-line change plus a new build), and add iPad in a later
+version once it has been tested. Reasons:
+
+- With iPad declared, App Review tests the iPad layout and multitasking (Split
+  View, Slide Over, every orientation — `UIRequiresFullScreen` is false), and
+  App Store Connect requires iPad screenshots. None of that has been checked.
+- The direction matters: a later version can **add** iPad support, but once a
+  version supports iPad, later versions are expected to keep it (App Store
+  Connect validates that a new build still supports the device families of the
+  previous version). Starting iPhone-only keeps the choice open; starting with
+  iPad does not.
+- iPhone-only apps still install on iPads in iPhone compatibility mode, so iPad
+  students are not locked out; they get the phone layout.
+
+If the owner keeps iPad, run checklist items 4–6 of section 21 on a real iPad
+before submitting, and prepare iPad screenshots.
+
+## 24. Unresolved App Store policy risk — purchases made outside the app (3.1.1 / 3.1.3)
+
+**Approval is not guaranteed.** The app unlocks nothing itself: it shows
+courses and documents that the account received from the administration or
+bought on the website. Apple's rules, as published (re-read them before
+replying to App Review — <https://developer.apple.com/app-store/review/guidelines/>):
+
+- **3.1.1** — unlocking features or content *within* the app (premium content
+  included) must use in-app purchase, and apps may not use their own unlock
+  mechanisms such as license keys or codes. The iOS app has no code entry and
+  no unlock flow; whether App Review treats showing website-bought access as
+  "unlocking" is the open question.
+- **3.1.3** — the categories allowed to rely on purchases made elsewhere:
+  - **(a) Reader apps** cover previously purchased magazines, newspapers, books,
+    audio, music and video. Recorded lectures are video, but Apple's list does
+    not name courses or education, so eligibility is a judgement App Review
+    makes.
+  - **(b) Multiplatform services** may give access to content bought on the
+    website **only if the same items are also offered as in-app purchases**.
+    They are not today.
+  - **(c) Enterprise services** cover apps sold only to organizations for their
+    employees or students; single-user consumer sales must use IAP. Student
+    Center sells to individual students, so this does not apply as things stand.
+  - All of 3.1.3 forbids encouraging, inside the app, purchase methods other than
+    IAP (except on the US storefront). The app complies: no prices, no buy
+    buttons, no codes, no links or wording pointing to the website for purchase,
+    and the public pages linked from the app describe codes and wallet as website
+    features without calls to action.
+
+**What has been done:** consumption-only app; review notes that state the model
+plainly (`APP-STORE-LISTING-DRAFT.md`); privacy, terms and support pages aligned.
+
+**If App Review rejects under 3.1.1 / 3.1.3**, do not add links, prices or
+purchase wording to get through. The options are owner decisions: argue the
+reader-app case (recorded video, no purchase in the app) in Resolution Center;
+offer course access as in-app purchases as well (3.1.3(b)); or sell through
+institutions (3.1.3(c)).
 
 ## What cannot happen until your Apple account is connected
 

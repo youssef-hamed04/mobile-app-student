@@ -116,7 +116,7 @@ analytics or ad SDK.
 |---|---|---|---|---|
 | Contact Info → Name | Yes | Yes | App Functionality | account |
 | Contact Info → Phone Number | Yes | Yes | App Functionality | sign-in |
-| Contact Info → Email Address | Optional | Yes | App Functionality | only if added |
+| Contact Info → Email Address | No | — | — | the app never asks for an email (registration and profile have no email field; the privacy policy says so) |
 | User Content → Photos | Optional | Yes | App Functionality | profile photo picked by the student |
 | User Content → Customer Support | Yes | Yes | App Functionality | support tickets |
 | Identifiers → Device ID | Yes | Yes | App Functionality | app-generated id; one account per device |
@@ -136,10 +136,10 @@ info, audio, other photos/videos, advertising data.
 | Item | Status |
 |---|---|
 | iPhone screenshots (and iPad while iPad is supported) | **missing** — take them from a TestFlight build signed in to the demo account, in English and Arabic |
-| Privacy policy URL | exists (the app's `EXPO_PUBLIC_PRIVACY_POLICY_URL`, reachable) — **its text must be updated first**, see the readiness report |
-| Support URL | **missing** — the site's `/support` page requires sign-in; Apple needs a public page with contact details |
+| Privacy policy URL | **ready** — https://student-dashoard.vercel.app/privacy (public, English/Arabic, matches the consumption-only app since 11 November 2026) |
+| Support URL | **ready** — https://student-dashoard.vercel.app/contact (public, English/Arabic: contacts, sign-in, devices, playback, deletion) |
 | Marketing URL | optional |
-| App Review demo account | **to be created** by the administration (section 19 of `IOS-APP-STORE-HANDOVER.md`) |
+| App Review demo account | **to be created** by the administration following `APP-REVIEW-ACCOUNT.md` |
 | Age rating questionnaire | to answer in App Store Connect (education content; no user-generated content shared with other users; no web browsing) — owner confirms |
 | App Privacy | confirm the table above |
 | Copyright line | owner's legal entity name |
