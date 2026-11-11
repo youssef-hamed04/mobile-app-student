@@ -135,7 +135,7 @@ info, audio, other photos/videos, advertising data.
 
 | Item | Status |
 |---|---|
-| iPhone screenshots (and iPad while iPad is supported) | **missing** — take them from a TestFlight build signed in to the demo account, in English and Arabic |
+| iPhone screenshots | **missing** — take them from a TestFlight build signed in to the demo account, in English and Arabic. No iPad screenshots: 1.0.0 is iPhone-only |
 | Privacy policy URL | **ready** — https://student-dashoard.vercel.app/privacy (public, English/Arabic, matches the consumption-only app since 11 November 2026) |
 | Support URL | **ready** — https://student-dashoard.vercel.app/contact (public, English/Arabic: contacts, sign-in, devices, playback, deletion) |
 | Marketing URL | optional |

@@ -61,7 +61,8 @@ So when you submit:
    phone, open **Students → open the account → Device tab → Clear device binding**
    (`POST /admin/devices/users/:userId/reset-binding`) or revoke that device.
 2. Apple's reviewer signs in on their device, which becomes the active device.
-3. Apple sometimes tests on a **second device** (often an iPad). That device
+3. Apple sometimes tests on a **second device** (another iPhone, or an iPad
+   running the app in iPhone compatibility mode — 1.0.0 is iPhone-only). That device
    appears under **Students → Device requests** (also counted on the dashboard home); approve it there
    (`POST /admin/devices/change-requests/:id/approve`). Keep someone watching
    the requests during the review window (Apple does not announce when it starts).
