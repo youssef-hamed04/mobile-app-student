@@ -222,7 +222,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
 
   ios: {
-    supportsTablet: true,
+    // Owner decision (2026-11-11): version 1.0.0 is iPhone-only; iPad support
+    // is deferred to a later release once it has been tested on iPad. This
+    // makes the build TARGETED_DEVICE_FAMILY = 1 (iPhone). iPads can still
+    // install it in iPhone compatibility mode. Adding iPad later is allowed;
+    // removing it after a release that supported it is not, which is why it
+    // starts off.
+    supportsTablet: false,
     bundleIdentifier: BUNDLE_ID[VARIANT],
     buildNumber: '1',
     config: {
