@@ -15,16 +15,22 @@ https://github.com/youssef-hamed04/mobile-app-student
 
 ## 2. Release commit
 
-Build from the tag **`ios-handover-1.0.0`** on `main` — commit
-`b109bd052a4f68fcfbbf0f24b2af728f931d169f`. Check it after cloning:
+Build from the tag **`ios-handover-1.0.0-iphone`** on `main` (version 1.0.0,
+**iPhone only**). The exact commit is recorded in the owner's readiness report
+and in the tag message; check it after cloning:
 
 ```bash
-git rev-parse ios-handover-1.0.0^{commit}
+git rev-parse ios-handover-1.0.0-iphone^{commit}
+git show --no-patch ios-handover-1.0.0-iphone
 ```
 
-`main` may carry later **documentation-only** commits (this guide,
-`APP-REVIEW-ACCOUNT.md`, the listing draft). They change no app code, so the tag
-remains the source to build; read the documents from `main`.
+**Do not build the older tag `ios-handover-1.0.0`** (`b109bd0`). It was the first
+handover and still declares iPad support. It is kept unchanged, because
+published tags are never moved; `ios-handover-1.0.0-iphone` supersedes it, and
+the only app change between them is `ios.supportsTablet: false`.
+
+`main` may later carry **documentation-only** commits. They change no app code,
+so the tag remains the source to build; read the documents from `main`.
 
 ## Public URLs (verified live, no sign-in)
 
@@ -45,7 +51,7 @@ the value of `EXPO_PUBLIC_PRIVACY_POLICY_URL` built into the app.
 ```bash
 git clone https://github.com/youssef-hamed04/mobile-app-student.git
 cd mobile-app-student
-git checkout ios-handover-1.0.0
+git checkout ios-handover-1.0.0-iphone
 ```
 
 There are no submodules and no files outside the repository are needed to
@@ -214,8 +220,8 @@ npx eas-cli@latest build -p ios --profile production
   auto-incremented by EAS: the iOS counter was initialized at 1 on
   11 November 2026, so the first store build will be **2**. Ignore the
   `ios.buildNumber: '1'` in `app.config.ts` (EAS warns about it).
-- Minimum iOS **16.4**. Devices: iPhone **and iPad** (`supportsTablet: true`) —
-  see section 22 for the iPad decision.
+- Minimum iOS **16.4**. Devices: **iPhone only** (`supportsTablet: false`,
+  generated `TARGETED_DEVICE_FAMILY = 1`) — see section 23.
 - Do not run `expo prebuild` and commit an `ios/` folder: the project is
   managed, and `/ios` is ignored on purpose.
 
@@ -281,13 +287,13 @@ into App Store Connect → App Review Information.
 
 1. TestFlight build passes the section 21 checks.
 2. Fill the version page: screenshots in the iPhone size App Store Connect
-   requires (and the iPad size too while iPad is supported), description,
+   requires (no iPad screenshots — the app is iPhone-only), description,
    keywords, support URL, privacy URL, age rating, App Privacy, review
    information.
 3. Select the build and submit for review. Release manually unless the owner
    asks otherwise.
 
-## 21. Checks that need a real iPhone (and iPad)
+## 21. Checks that need a real iPhone
 
 Not verifiable without hardware; do them on a TestFlight build:
 
@@ -305,7 +311,9 @@ Not verifiable without hardware; do them on a TestFlight build:
    and PDF scrolling/zoom all respond.
 5. Course attachment PDFs open (this viewer was blank on iOS before this
    release) and library documents open; a 100+ page PDF on an older iPhone.
-6. Fullscreen and rotation on iPhone; on iPad, Split View / Slide Over.
+6. Fullscreen and rotation on iPhone. If an iPad is at hand, a quick sanity
+   check that the app opens and plays in iPhone compatibility mode (App Review
+   may launch it there); no iPad layout work is expected for 1.0.
 7. Push notification received and tapping it opens the right screen.
 8. Arabic: right-to-left layout after the language switch, the Arabic photo
    permission prompt, and the "Protected content" app-switcher overlay text.
@@ -322,7 +330,7 @@ Not verifiable without hardware; do them on a TestFlight build:
 | `aps-environment` is `development` in the IPA | built with a development/ad-hoc profile — use the App Store profile |
 | Rejected under 3.1.1 / 3.1.3 (purchases outside the app) | section 24 — do not add links or purchase wording; the response is an owner decision |
 | Rejected under 4.2 (minimum functionality) | point to native protected playback, watch progress and "continue watching", push notifications, the protected PDF reader, Arabic/English with RTL |
-| iPad layout rejected | section 23 |
+| Build declares iPad (device family 1,2) | built from the old tag `ios-handover-1.0.0` — use `ios-handover-1.0.0-iphone` (section 2) |
 
 - **Versioning:** keep `version` in `app.config.ts` as the marketing version
   (1.0.0 now). Build numbers come from EAS. A new store version for a native
@@ -336,29 +344,21 @@ Not verifiable without hardware; do them on a TestFlight build:
   new build, or (JS-only problems) publish a corrective OTA update to the
   `production` channel for the same runtime.
 
-## 23. Owner decision before the first build: iPad
+## 23. Devices: iPhone only for 1.0.0 (owner decision, 11 November 2026)
 
-Today `ios.supportsTablet` is **`true`**: the app is built for iPhone **and**
-iPad. Nobody has run it on an iPad. **It has not been changed** — this is the
-owner's call, to make before the first store build.
+Version 1.0.0 targets **iPhone only**: `ios.supportsTablet: false`, so the
+generated Xcode project has `TARGETED_DEVICE_FAMILY = 1` and no iPad orientation
+key (verified by generating the project and by an EAS iOS Simulator build of
+this configuration). iPad support is deferred to a later release.
 
-**Recommendation: ship 1.0 as iPhone-only** (`ios.supportsTablet: false` in
-`app.config.ts`, a one-line change plus a new build), and add iPad in a later
-version once it has been tested. Reasons:
-
-- With iPad declared, App Review tests the iPad layout and multitasking (Split
-  View, Slide Over, every orientation — `UIRequiresFullScreen` is false), and
-  App Store Connect requires iPad screenshots. None of that has been checked.
-- The direction matters: a later version can **add** iPad support, but once a
-  version supports iPad, later versions are expected to keep it (App Store
-  Connect validates that a new build still supports the device families of the
-  previous version). Starting iPhone-only keeps the choice open; starting with
-  iPad does not.
-- iPhone-only apps still install on iPads in iPhone compatibility mode, so iPad
-  students are not locked out; they get the phone layout.
-
-If the owner keeps iPad, run checklist items 4–6 of section 21 on a real iPad
-before submitting, and prepare iPad screenshots.
+- No iPad screenshots and no iPad layout or multitasking review for 1.0.0.
+- iPads can still install the app in iPhone compatibility mode, so iPad students
+  are not locked out; they get the phone layout.
+- To add iPad later: set `supportsTablet: true`, test layout, rotation and
+  multitasking on a real iPad (`UIRequiresFullScreen` is false, so Split View and
+  Slide Over apply), add iPad screenshots, and ship it as a new version. Adding a
+  device family later is fine; removing one after a release that had it is not.
+- Android is unaffected: `supportsTablet` is an iOS-only setting.
 
 ## 24. Unresolved App Store policy risk — purchases made outside the app (3.1.1 / 3.1.3)
 

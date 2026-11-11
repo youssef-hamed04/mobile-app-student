@@ -225,6 +225,16 @@ describe('identity and build configuration', () => {
     expect(source).toMatch(/package: BUNDLE_ID\[VARIANT\]/);
   });
 
+  it('ships iOS 1.0.0 as iPhone-only and leaves Android untouched (owner decision 2026-11-11)', () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- evaluates the real config
+    const config = require('../app.config').default({ config: {} });
+    expect(config.version).toBe('1.0.0');
+    expect(config.ios.supportsTablet).toBe(false);
+    expect(config.ios.bundleIdentifier).toMatch(/^com\.studentcenter\.app/);
+    expect(config.android.package).toBe(config.ios.bundleIdentifier);
+    expect(config.android.permissions).toContain('android.permission.DETECT_SCREEN_CAPTURE');
+  });
+
   it('keeps the EAS project and the production API', () => {
     expect(source).toContain('f5f88e33-01f3-4049-ae16-6c3cd5221f57');
     const eas = JSON.parse(readFileSync(join(root, 'eas.json'), 'utf8'));
