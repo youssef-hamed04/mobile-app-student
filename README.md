@@ -116,6 +116,10 @@ docs/                         ARCHITECTURE · SECURITY · API_CONTRACT · MANUAL
 
 ## Read next
 
+- **[IOS-APP-STORE-HANDOVER.md](IOS-APP-STORE-HANDOVER.md)** — building,
+  signing and submitting the iOS app with your own Apple account, and
+  **[APP-STORE-LISTING-DRAFT.md](APP-STORE-LISTING-DRAFT.md)** for the listing.
+  **[RELEASE-ANDROID.md](RELEASE-ANDROID.md)** is the Android counterpart.
 - **[docs/MANUAL_STEPS.md](docs/MANUAL_STEPS.md)** — everything you must do by
   hand before this can build and ship. Start here.
 - **[docs/SECURITY.md](docs/SECURITY.md)** — the content-protection design,
