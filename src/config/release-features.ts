@@ -90,14 +90,21 @@ export function isRouteEnabled(
  * Sales wording in admin-written announcements, in English and Arabic.
  *
  * Deliberately specific. Bare "credit" is left out because of credit hours, and
- * bare "code" and "كود" because of programming courses.
+ * bare "code" and "كود" because of programming courses. Bare "activate" and
+ * "تفعيل" are left out too: "your course was activated" is account news, not a
+ * sale. What is caught is a call to subscribe, or a pointer to the website or
+ * to a contact for getting access - both direct the student to buy elsewhere.
  */
 const SALES_WORDING = new RegExp(
   [
     '\\b(prices?|egp|buy|buying|purchases?|discounts?|checkout|payments?|pay|recharge|top[ -]?up|wallet)\\b',
+    '\\b(subscribe|subscribes|subscribing|subscriptions?)\\b',
     '\\b(access|activation|course) (code|card)s?\\b',
+    '\\b(visit|on|from|via|through|at) our (website|web site|site)\\b',
+    '\\bcontact us to (join|enrol|enroll|activate|subscribe|get access)\\b',
     'سعر|أسعار|جنيه|ج\\.م|اشتر|شراء|خصم|محفظ|رصيد|شحن|ادفع|دفع|كارت|كروت',
     'كود (التفعيل|تفعيل|الوصول|وصول|الكورس|الاشتراك)',
+    'موقعنا|فعّل|(عبر|من خلال) الموقع|تواصل معنا (لل|ل)(تفعيل|اشتراك|شراء)',
   ].join('|'),
   'i'
 );

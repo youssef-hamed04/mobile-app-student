@@ -130,6 +130,22 @@ public final class SecureContentView: ExpoView {
 
   // MARK: - React child management
 
+  // New Architecture (Fabric) - the only renderer in React Native 0.86. Fabric
+  // mounts children through these two calls and never calls
+  // `insertReactSubview`. Without them the children were mounted as plain
+  // subviews of `self`, next to the text field instead of inside its secure
+  // canvas, so nothing was actually excluded from screenshots or recordings.
+  public override func mountChildComponentView(_ childComponentView: UIView, index: Int) {
+    contentHost.insertSubview(childComponentView, at: index)
+    setNeedsLayout()
+  }
+
+  public override func unmountChildComponentView(_ childComponentView: UIView, index: Int) {
+    // React Native asserts that an unmounted child has no superview.
+    childComponentView.removeFromSuperview()
+  }
+
+  // Legacy renderer / interop layer.
   public override func insertReactSubview(_ subview: UIView!, at index: Int) {
     guard let subview else { return }
     contentHost.insertSubview(subview, at: index)
@@ -137,6 +153,25 @@ public final class SecureContentView: ExpoView {
 
   public override func removeReactSubview(_ subview: UIView!) {
     subview?.removeFromSuperview()
+  }
+
+  // MARK: - Touches
+
+  /// The content lives inside a `UITextField` whose own interaction is off (it
+  /// must never take focus or raise the keyboard), and UIKit's hit-testing
+  /// stops at a view with interaction disabled. Route touches straight into the
+  /// hosted content so the player controls and PDF scrolling keep working.
+  public override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
+    guard isUserInteractionEnabled, !isHidden, alpha > 0.01, self.point(inside: point, with: event) else {
+      return nil
+    }
+    if contentHost.superview != nil {
+      let local = convert(point, to: contentHost)
+      if let hit = contentHost.hitTest(local, with: event) {
+        return hit
+      }
+    }
+    return super.hitTest(point, with: event)
   }
 
   public override func layoutSubviews() {

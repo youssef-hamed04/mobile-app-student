@@ -10,7 +10,11 @@
     "notifyEnrollment": "Course access and account",
     "libraryLocked": "Not on your account yet",
     "deleteWhatHappensBody": "When your account is deleted you lose access to your courses and progress, and this cannot be undone.",
-    "deleteKeptBody": "Your name, phone number, email, photo, devices, notifications and support messages are erased. Account and enrolment records are kept without your personal details, because the law and our accounting require them."
+    "deleteKeptBody": "Your name, phone number, email, photo, devices, notifications and support messages are erased. Account and enrolment records are kept without your personal details, because the law and our accounting require them.",
+    "libraryBrowseSubtitle": "Books and revision papers for your courses",
+    "libraryMineEmptyTitle": "No documents on your account yet",
+    "libraryMineEmptyBody": "Documents added to your account appear here, ready to read.",
+    "protectedContent": "Protected content"
   },
   "ads": {
     "label": "Featured",

@@ -457,7 +457,8 @@ describe('strings', () => {
     const source = readFileSync(join(__dirname, '..', 'src/app/settings/delete-account.tsx'), 'utf8');
     expect(source).toMatch(/useWallet\(\)/);
     expect(source).toMatch(/deleteAccount\.confirmBalance/);
-    expect(source).toMatch(/disabled=\{busy \|\| !wallet\.data\}/);
-    expect(source).toMatch(/releaseFeatures\.wallet \|\| hasBalance \|\| wallet\.isError/);
+    // Deletion never waits on a failed wallet lookup (App Store 5.1.1(v)).
+    expect(source).toMatch(/disabled=\{busy \|\| wallet\.isPending\}/);
+    expect(source).toMatch(/releaseFeatures\.wallet \|\| hasBalance \? \(/);
   });
 });

@@ -100,7 +100,11 @@ export default function HomeScreen() {
               <View className="flex-1 gap-0.5">
                 <Text variant="label">{t('library.title')}</Text>
                 <Text variant="caption" tone="muted">
-                  {t('library.browseSubtitle')}
+                  {t(
+                    releaseFeatures.digitalPurchases
+                      ? 'library.browseSubtitle'
+                      : 'release.libraryBrowseSubtitle'
+                  )}
                 </Text>
               </View>
               <Icon name="chevron-right" size={18} mirror />

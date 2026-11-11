@@ -113,3 +113,43 @@ describe('playback speed keeps the voice pitch', () => {
     );
   });
 });
+
+describe('iOS protection wiring', () => {
+  const secureView = read('modules/content-protection/ios/SecureContentView.swift');
+
+  it('mounts New Architecture children inside the secure canvas, not beside it', () => {
+    // React Native 0.86 renders only with Fabric, which mounts children through
+    // mountChildComponentView and never calls insertReactSubview.
+    expect(secureView).toMatch(
+      /override func mountChildComponentView\(_ childComponentView: UIView, index: Int\) \{\s*contentHost\.insertSubview\(childComponentView, at: index\)/
+    );
+    expect(secureView).toMatch(/override func unmountChildComponentView\(_ childComponentView: UIView, index: Int\)/);
+  });
+
+  it('routes touches into the hosted content past the non-interactive text field', () => {
+    expect(secureView).toMatch(/field\.isUserInteractionEnabled = false/);
+    expect(secureView).toMatch(/override func hitTest\(_ point: CGPoint, with event: UIEvent\?\) -> UIView\?/);
+    expect(secureView).toMatch(/contentHost\.hitTest\(local, with: event\)/);
+  });
+
+  it('keeps protected video off AirPlay routing', () => {
+    expect(read('src/features/video/ProtectedVideoPlayer.tsx')).toMatch(/p\.allowsExternalPlayback = false;/);
+  });
+
+  it('the attachment PDF page may load on iOS (base-URL navigation is allowed)', () => {
+    const viewer = read('src/app/viewer/[attachmentId].tsx');
+    expect(viewer).toMatch(/req\.url === origin \|\| req\.url === `\$\{origin\}\/`/);
+  });
+
+  it('localizes the native privacy overlay and the photo permission prompt', () => {
+    expect(read('modules/content-protection/ios/ContentProtectionModule.swift')).toMatch(
+      /label\.text = privacyOverlayText/
+    );
+    expect(read('src/components/feedback/PrivacyShield.tsx')).toMatch(
+      /setPrivacyOverlayText\(overlayText\)/
+    );
+    const ar = JSON.parse(read('assets/locales/ios/ar.json'));
+    expect(ar.NSPhotoLibraryUsageDescription).toMatch(/[؀-ۿ]/);
+    expect(read('app.config.ts')).toMatch(/ar: '\.\/assets\/locales\/ios\/ar\.json'/);
+  });
+});

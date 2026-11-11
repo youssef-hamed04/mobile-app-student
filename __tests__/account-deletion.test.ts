@@ -49,11 +49,16 @@ describe('account deletion contract', () => {
     expect(JSON.stringify(ar.deleteAccount)).not.toMatch(/يُسترد|استرداد/);
   });
 
-  it('the screen waits for the balance before the delete button works', () => {
+  it('discloses a balance but never makes deletion depend on the wallet (App Store 5.1.1(v))', () => {
     const source = readFileSync(join(__dirname, '..', 'src', 'app', 'settings', 'delete-account.tsx'), 'utf8');
     expect(source).toMatch(/useWallet\(\)/);
-    expect(source).toMatch(/disabled=\{busy \|\| !wallet\.data\}/);
     expect(source).toMatch(/deleteAccount\.confirmBalance/);
+    // The button waits only while the balance is loading; a failed lookup does not block it.
+    expect(source).toMatch(/disabled=\{busy \|\| wallet\.isPending\}/);
+    expect(source).not.toMatch(/!wallet\.data/);
+    // Consumption-only: the wallet card appears only for a student who holds a balance.
+    expect(source).toMatch(/\{releaseFeatures\.wallet \|\| hasBalance \? \(/);
+    expect(source).not.toMatch(/hasBalance \|\| wallet\.isError/);
   });
 
   it('no longer describes deletion as a support ticket', () => {

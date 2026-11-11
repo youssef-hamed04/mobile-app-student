@@ -242,7 +242,11 @@ function PartCard({
           </View>
 
           {part.isPreview && !part.owned ? (
-            <Badge tone="info" icon="eye" label={t('library.preview')} />
+            <Badge
+              tone="info"
+              icon="eye"
+              label={t(releaseFeatures.coursePrices ? 'library.preview' : 'release.preview')}
+            />
           ) : part.owned ? (
             <Badge tone="success" icon="check" label={t('library.owned')} />
           ) : releaseFeatures.coursePrices ? (

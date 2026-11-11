@@ -143,8 +143,15 @@ export default function AttachmentViewer() {
             cacheEnabled={false}
             sharedCookiesEnabled={false}
             thirdPartyCookiesEnabled={false}
+            // PDFs are drawn by a page loaded from HTML with `origin` as its
+            // base URL; iOS asks this callback about that load (with the
+            // base URL itself), Android does not. Refusing it left the viewer
+            // blank on iOS. The page fetches the document; it never navigates.
+            // Any other attachment is opened directly and may only load itself.
             onShouldStartLoadWithRequest={(req) =>
-              req.url.startsWith(ticket.url.split('?')[0] ?? ticket.url)
+              isPdf && pdfHtml
+                ? req.url === 'about:blank' || req.url === origin || req.url === `${origin}/`
+                : req.url.startsWith(ticket.url.split('?')[0] ?? ticket.url)
             }
             injectedJavaScript={`
               document.addEventListener('contextmenu', e => e.preventDefault());

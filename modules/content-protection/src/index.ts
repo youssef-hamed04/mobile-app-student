@@ -31,6 +31,8 @@ interface NativeContentProtection {
   isBeingRecorded(): boolean;
   hasExternalDisplay(): boolean;
   getIntegritySignals(): IntegritySignals;
+  /** iOS only: the text on the native app-switcher privacy overlay. */
+  setPrivacyOverlayText?(text: string): void;
 
   addListener(
     event: 'onScreenCaptured',
@@ -121,6 +123,20 @@ export function isBeingRecorded(): boolean {
 
 export function hasExternalDisplay(): boolean {
   return resolveNative()?.hasExternalDisplay() ?? false;
+}
+
+/**
+ * Text for the native privacy overlay iOS shows in the app switcher. A no-op
+ * where the native side has no overlay (Android, Expo Go, web).
+ */
+export function setPrivacyOverlayText(text: string): void {
+  const m = resolveNative();
+  if (typeof m?.setPrivacyOverlayText !== 'function') return;
+  try {
+    m.setPrivacyOverlayText(text);
+  } catch {
+    // Cosmetic only; the overlay keeps its English default.
+  }
 }
 
 export function getIntegritySignals(): IntegritySignals {

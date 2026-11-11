@@ -215,6 +215,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
 
   assetBundlePatterns: ['**/*'],
 
+  // iOS: Arabic text for the system permission prompt (written to
+  // ar.lproj/InfoPlist.strings). English comes from ios.infoPlist below.
+  locales: {
+    ar: './assets/locales/ios/ar.json',
+  },
+
   ios: {
     supportsTablet: true,
     bundleIdentifier: BUNDLE_ID[VARIANT],

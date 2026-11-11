@@ -8,6 +8,7 @@ import { useTranslation } from '@/hooks/use-translation';
 import type { ProtectionState } from '@/services/content-protection';
 import { useUIStore } from '@/store/ui-store';
 import { zIndex } from '@/theme/tokens';
+import { setPrivacyOverlayText } from '@modules/content-protection';
 
 import { Icon } from '../ui/Icon';
 import { Text } from '../ui/Text';
@@ -42,6 +43,12 @@ export function PrivacyShield() {
   const protection = useProtectionState();
   const { t } = useTranslation();
   const { colors } = useTheme();
+
+  // The app-switcher overlay is native (iOS); keep its text in the app's language.
+  const overlayText = t('release.protectedContent');
+  React.useEffect(() => {
+    setPrivacyOverlayText(overlayText);
+  }, [overlayText]);
 
   const capturing = coversForCapture(Platform.OS, protection);
 

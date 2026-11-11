@@ -167,6 +167,12 @@ describe('screens derive access from the account and never sell', () => {
     // Reading stays: owned and preview parts keep their Read button and route.
     expect(material).toMatch(/part\.owned \|\| part\.isPreview \? \(/);
     expect(material).toMatch(/router\.push\(`\/library\/reader\/\$\{part\.id\}`\)/);
+    // No "bought"/"buy" wording on reachable library surfaces, and no bundle badge.
+    expect(index).toMatch(/releaseFeatures\.digitalPurchases && material\.packageCount > 0/);
+    expect(index).toMatch(/'release\.libraryMineEmptyTitle'/);
+    expect(index).toMatch(/'release\.libraryMineEmptyBody'/);
+    expect(src('app/(tabs)/index.tsx')).toMatch(/'release\.libraryBrowseSubtitle'/);
+    expect(material).toMatch(/releaseFeatures\.coursePrices \? 'library\.preview' : 'release\.preview'/);
     // The library layout redirects only when the library switch is off.
     expect(src('app/library/_layout.tsx')).toMatch(/if \(!releaseFeatures\.library\) return <Redirect/);
     expect(src('app/wallet/_layout.tsx')).toMatch(/if \(!releaseFeatures\.wallet\) return <Redirect/);
@@ -210,6 +216,10 @@ describe('free previews and library reading remain', () => {
     const row = src('features/courses/components/LessonRow.tsx');
     expect(row).toMatch(/lesson\.isPreview \? \(/);
     expect(row).toMatch(/t\('release\.preview'\)/);
+    // The lesson screen's own badge says "Preview", not "Free preview".
+    expect(src('app/lesson/[lessonId].tsx')).toMatch(
+      /releaseFeatures\.coursePrices \? 'courses\.preview' : 'release\.preview'/
+    );
   });
 
   it('the library reader is reachable for owned and preview parts', () => {
@@ -221,7 +231,17 @@ describe('Arabic and English follow the same rules', () => {
   it('the neutral strings exist in both languages and carry no sales wording', () => {
     for (const dict of [en, ar]) {
       const release = (dict as { release: Record<string, string> }).release;
-      for (const key of ['notActiveTitle', 'notActiveBody', 'lockedBody', 'accessPending', 'preview', 'libraryLocked']) {
+      for (const key of [
+        'notActiveTitle',
+        'notActiveBody',
+        'lockedBody',
+        'accessPending',
+        'preview',
+        'libraryLocked',
+        'libraryBrowseSubtitle',
+        'libraryMineEmptyTitle',
+        'libraryMineEmptyBody',
+      ]) {
         expect(typeof release[key]).toBe('string');
         expect(release[key]).not.toMatch(SALES_TEXT);
       }

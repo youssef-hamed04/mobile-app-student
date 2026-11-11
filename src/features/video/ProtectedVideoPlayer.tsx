@@ -233,6 +233,10 @@ export function ProtectedVideoPlayer({
     p.playbackRate = usePlayerStore.getState().rate;
     p.staysActiveInBackground = false;
     p.showNowPlayingNotification = false;
+    // iOS: no AirPlay video routing. AVPlayer allows it by default, and a
+    // routed (not mirrored) stream leaves the device without tripping the
+    // capture detection - and without the watermark, which is an overlay.
+    p.allowsExternalPlayback = false;
     p.audioMixingMode = 'doNotMix';
     p.loop = false;
   }, []);

@@ -190,8 +190,16 @@ export default function LibraryScreen() {
           ListEmptyComponent={
             <EmptyState
               icon="document"
-              title={t('library.empty.mineTitle')}
-              body={t('library.empty.mineBody')}
+              title={t(
+                releaseFeatures.digitalPurchases
+                  ? 'library.empty.mineTitle'
+                  : 'release.libraryMineEmptyTitle'
+              )}
+              body={t(
+                releaseFeatures.digitalPurchases
+                  ? 'library.empty.mineBody'
+                  : 'release.libraryMineEmptyBody'
+              )}
               actionLabel={t('library.tabBrowse')}
               onAction={() => setTab('browse')}
             />
@@ -254,7 +262,8 @@ function MaterialCard({
               tone="neutral"
               label={t('library.partCount', { count: material.partCount })}
             />
-            {material.packageCount > 0 ? (
+            {/* Bundles exist only to be bought: hidden in the consumption-only release. */}
+            {releaseFeatures.digitalPurchases && material.packageCount > 0 ? (
               <Badge
                 tone="info"
                 label={t('library.packageCount', { count: material.packageCount })}
