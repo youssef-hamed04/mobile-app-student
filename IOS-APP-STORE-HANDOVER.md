@@ -15,19 +15,25 @@ https://github.com/youssef-hamed04/mobile-app-student
 
 ## 2. Release commit
 
-Build from the tag **`ios-handover-1.0.0-iphone`** on `main` (version 1.0.0,
-**iPhone only**). The exact commit is recorded in the owner's readiness report
-and in the tag message; check it after cloning:
+Build from the tag **`ios-handover-1.0.0-iphone-r2`** (commit **`e1219de`** on
+`main`, version 1.0.0, **iPhone only**). Check it after cloning:
 
 ```bash
-git rev-parse ios-handover-1.0.0-iphone^{commit}
-git show --no-patch ios-handover-1.0.0-iphone
+git rev-parse ios-handover-1.0.0-iphone-r2^{commit}   # e1219de5c061607e6c24210143ccc81a747ee26f
+git show --no-patch ios-handover-1.0.0-iphone-r2
 ```
 
-**Do not build the older tag `ios-handover-1.0.0`** (`b109bd0`). It was the first
-handover and still declares iPad support. It is kept unchanged, because
-published tags are never moved; `ios-handover-1.0.0-iphone` supersedes it, and
-the only app change between them is `ios.supportsTablet: false`.
+**Do not build the older tags.** Published tags are never moved, so they stay,
+superseded:
+
+| Tag | Commit | Why not |
+|---|---|---|
+| `ios-handover-1.0.0-iphone` | `53244bc` | lacks the shared video player fix (PR #6: ticket-rotation hot swap, overlapping heartbeats, rebuffer handling) |
+| `ios-handover-1.0.0` | `b109bd0` | also still declares iPad support |
+
+Between `ios-handover-1.0.0-iphone` and `-r2` only `src/features/video/*` and
+its tests changed; the iOS configuration, native code and dependencies are
+identical, and the version stays **1.0.0**.
 
 `main` may later carry **documentation-only** commits. They change no app code,
 so the tag remains the source to build; read the documents from `main`.
@@ -51,7 +57,7 @@ the value of `EXPO_PUBLIC_PRIVACY_POLICY_URL` built into the app.
 ```bash
 git clone https://github.com/youssef-hamed04/mobile-app-student.git
 cd mobile-app-student
-git checkout ios-handover-1.0.0-iphone
+git checkout ios-handover-1.0.0-iphone-r2
 ```
 
 There are no submodules and no files outside the repository are needed to
@@ -75,11 +81,12 @@ npx tsc --noEmit
 npx jest --ci
 ```
 
-Expected: typecheck clean and **575 tests passing** (the same under
-`npx jest --ci -c jest.android.config.js`). `npx eslint .` reports 24
-pre-existing React Compiler advisory errors in the video player and a few
-hooks; the project does not enable the React Compiler and they do not affect
-the build. `npx expo install --check` lists patch-level updates within SDK 57;
+Expected: typecheck clean and **594 tests passing** (the same under
+`npx jest --ci -c jest.android.config.js`). `npx eslint .` reports 18
+pre-existing React Compiler advisory errors (`react-hooks/refs`,
+`set-state-in-effect`, `immutability`) in the video player and a few hooks;
+the project does not enable the React Compiler and they do not affect the
+build. `npx expo install --check` lists patch-level updates within SDK 57;
 they were reviewed and deliberately not applied so iOS ships the same
 dependency set as the tested Android build.
 
@@ -301,7 +308,10 @@ Not verifiable without hardware; do them on a TestFlight build:
    assets carry FairPlay keys and Gumlet's FairPlay certificate is DER, but the
    licence exchange itself has never been exercised on a device.
 2. **Mobile HLS playback** on a video that has a mobile rendition, and
-   seamless continuation past a ticket rotation (about every 5 minutes).
+   seamless continuation past several ticket rotations (about every 4 minutes):
+   no pause, no jump to 0:00, controls responsive, pause held across a
+   rotation. The rotation hand-over was fixed in PR #6 and verified for 45+
+   minutes on an Android emulator; it is shared code but has not run on iOS.
 3. **Screen protection:** take a screenshot and a Control Center recording
    while a video and while a PDF is open — the protected area should come out
    blank (secure-surface hosting was fixed for the New Architecture in this
@@ -330,7 +340,8 @@ Not verifiable without hardware; do them on a TestFlight build:
 | `aps-environment` is `development` in the IPA | built with a development/ad-hoc profile — use the App Store profile |
 | Rejected under 3.1.1 / 3.1.3 (purchases outside the app) | section 24 — do not add links or purchase wording; the response is an owner decision |
 | Rejected under 4.2 (minimum functionality) | point to native protected playback, watch progress and "continue watching", push notifications, the protected PDF reader, Arabic/English with RTL |
-| Build declares iPad (device family 1,2) | built from the old tag `ios-handover-1.0.0` — use `ios-handover-1.0.0-iphone` (section 2) |
+| Build declares iPad (device family 1,2) | built from the old tag `ios-handover-1.0.0` — use `ios-handover-1.0.0-iphone-r2` (section 2) |
+| Video stops or restarts after a few minutes | built from a tag older than `ios-handover-1.0.0-iphone-r2` (section 2) |
 
 - **Versioning:** keep `version` in `app.config.ts` as the marketing version
   (1.0.0 now). Build numbers come from EAS. A new store version for a native
