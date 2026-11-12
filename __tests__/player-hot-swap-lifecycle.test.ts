@@ -71,6 +71,8 @@ class FakePlayer implements LifecyclePlayer {
     return [...this.listeners.values()].reduce((n, s) => n + s.size, 0);
   }
   setStatus(s: string) { this._status = s; this.emit('statusChange', { status: s }); }
+  /** The native state moves on before JS has handled the events already queued. */
+  setStatusSilently(s: string) { this._status = s; }
   advance(seconds: number) { if (this._playing) this._time += seconds; }
 }
 
@@ -106,16 +108,21 @@ function harness() {
   const created: FakePlayer[] = [active];
 
   const attach = (p: FakePlayer) => {
+    // As the component: the status this player's own events reported last.
+    let lastStatus = p.status;
     subs = [
       p.addListener('timeUpdate', (({ currentTime }: { currentTime: number }) => {
         if (p !== current) return; // stale player: ignored
         ui.position = currentTime;
         ui.events.push(`tick ${p.id} ${currentTime}`);
       }) as never),
+      p.addListener('statusChange', (({ status }: { status: string }) => {
+        lastStatus = status;
+      }) as never),
       p.addListener('playingChange', (({ isPlaying }: { isPlaying: boolean }) => {
         if (p !== current) return;
         // ui.playing is the play intent (wasPlayingRef), kept as the component does.
-        ui.playing = nextPlayIntent(ui.playing, isPlaying, p.status);
+        ui.playing = nextPlayIntent(ui.playing, isPlaying, lastStatus);
       }) as never),
     ];
   };
@@ -450,6 +457,30 @@ describe('ticket rotation hot swap: lifecycle-safe player replacement', () => {
     h.rotate();
     primeAndSwitch(h);
     expect(h.current.playing).toBe(false);
+  });
+
+  it('12. a stall whose events are handled after the player recovered is still not a pause', () => {
+    // Emulator, 2026-11-12 (45-min run): the old player flapped between
+    // buffering and playing on a starved decoder, the JS thread handled the
+    // stall's playingChange(false) after the player was ready again, a live
+    // status read called it a pause, and the hand-over paused the lesson.
+    const h = harness();
+    h.current.setStatus('readyToPlay');
+    h.current.play();
+    h.current.emit('playingChange', { isPlaying: true });
+    h.rotate();
+    const old = h.current;
+    // Media3 order: the state change, then isPlaying=false...
+    old.setStatus('loading');
+    old.pause();
+    // ...but by the time JS gets to playingChange the player is ready again.
+    old.setStatusSilently('readyToPlay');
+    old.emit('playingChange', { isPlaying: false });
+    expect(h.ui.playing).toBe(true);
+    // Hand-over while the old player is (again) not playing: the new one plays.
+    primeAndSwitch(h);
+    expect(h.current).not.toBe(old);
+    expect(h.current.playing).toBe(true);
   });
 
   it('nextPlayIntent: only a stall keeps the previous intent', () => {

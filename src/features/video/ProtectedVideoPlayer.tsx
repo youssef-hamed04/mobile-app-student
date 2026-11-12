@@ -394,6 +394,7 @@ export function ProtectedVideoPlayer({
       !pendingRestoreRef.current
     ) {
       let fellBack = false;
+      let fallbackPoll: ReturnType<typeof setInterval> | null = null;
       const cancel = hotSwap(source, () => {
         // Same path as before this existed: load in place and restore.
         fellBack = true;
@@ -402,6 +403,19 @@ export function ProtectedVideoPlayer({
           play: wasPlayingRef.current,
           since: Date.now(),
         };
+        // The same safety net as the in-place path below: a paused player
+        // gets no timeUpdate, and a readyToPlay missed on a busy device left
+        // the lesson at 0:00 (emulator, 2026-11-12). Only a READY player is
+        // restored.
+        let polls = 0;
+        fallbackPoll = setInterval(() => {
+          if (!pendingRestoreRef.current || polls++ > 30) {
+            if (fallbackPoll) clearInterval(fallbackPoll);
+            fallbackPoll = null;
+            return;
+          }
+          if (safely(() => player.status, 'idle') === 'readyToPlay') applyRestore();
+        }, 1_000);
         void player
           .replaceAsync(source)
           .then(() => {
@@ -414,6 +428,7 @@ export function ProtectedVideoPlayer({
           });
       });
       return () => {
+        if (fallbackPoll) clearInterval(fallbackPoll);
         if (!fellBack) cancel();
       };
     }
@@ -469,21 +484,27 @@ export function ProtectedVideoPlayer({
   React.useEffect(() => {
     if (!player) return;
 
+    // This player's status as its own events report it. A rebuffer arrives as
+    // statusChange(loading) and THEN playingChange(false) (Media3 queues the
+    // state change first), so the play intent is judged against this, not
+    // against `player.status` read later: on a busy JS thread the event is
+    // handled after the player has already recovered, and the stall then read
+    // as the student pausing (emulator, 2026-11-12: a hand-over carried that
+    // "pause" to the new player).
+    let lastStatus = safely(() => player.status as string, 'idle');
+
     const subs = [
       player.addListener('playingChange', ({ isPlaying }) => {
         // A late event from a replaced (retired) player must not drive the UI.
         if (playerRef.current !== player) return;
         // A rebuffer also reports isPlaying=false; it is not the student pausing.
-        wasPlayingRef.current = nextPlayIntent(
-          wasPlayingRef.current,
-          isPlaying,
-          safely(() => player.status, 'idle')
-        );
+        wasPlayingRef.current = nextPlayIntent(wasPlayingRef.current, isPlaying, lastStatus);
         playingRef.current = isPlaying;
         setPlaying(isPlaying);
       }),
 
       player.addListener('statusChange', ({ status, error: playerError }) => {
+        lastStatus = status;
         // A late event from a replaced (retired) player must not drive the UI.
         if (playerRef.current !== player) return;
         setBuffering(status === 'loading');
@@ -530,7 +551,9 @@ export function ProtectedVideoPlayer({
         const isPlaying = player.playing;
         if (isPlaying !== playingRef.current) {
           playingRef.current = isPlaying;
-          wasPlayingRef.current = nextPlayIntent(wasPlayingRef.current, isPlaying, player.status);
+          // Playing is unambiguous; "not playing" read here may be a stall the
+          // events have not reported yet, so the intent is never lowered here.
+          if (isPlaying) wasPlayingRef.current = true;
           setPlaying(isPlaying);
         }
         if (isPlaying && player.status === 'readyToPlay') setBuffering(false);

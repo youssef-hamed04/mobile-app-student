@@ -50,6 +50,21 @@ describe('ProtectedVideoPlayer keeps one native player across source swaps', () 
     expect(player).toMatch(/PLAYER_ROTATION_HOT_SWAP &&\s*isRotation/);
     // Every failure path hands the source to the existing in-place loader.
     expect(player).toMatch(/const cancel = hotSwap\(source, \(\) => \{[\s\S]*?\.replaceAsync\(source\)/);
+    // ...and restores the position even if readyToPlay is missed: a paused
+    // player gets no timeUpdate, so the fallback polls like the in-place path.
+    expect(player).toMatch(
+      /const cancel = hotSwap\(source, \(\) => \{[\s\S]*?fallbackPoll = setInterval\(\(\) => \{[\s\S]*?=== 'readyToPlay'\) applyRestore\(\);[\s\S]*?\.replaceAsync\(source\)/
+    );
+    expect(player).toMatch(/if \(fallbackPoll\) clearInterval\(fallbackPoll\);\s*if \(!fellBack\) cancel\(\);/);
+  });
+
+  it('judges a stall by the status the player\'s own events reported, never lowers intent on a tick', () => {
+    const listeners = player.slice(player.indexOf('// ---- player events'));
+    expect(listeners).toMatch(/let lastStatus = safely\(\(\) => player\.status as string, 'idle'\);/);
+    expect(listeners).toMatch(/addListener\('statusChange', \(\{ status, error: playerError \}\) => \{\s*lastStatus = status;/);
+    expect(listeners).toMatch(/nextPlayIntent\(wasPlayingRef\.current, isPlaying, lastStatus\)/);
+    expect(listeners).toMatch(/if \(isPlaying\) wasPlayingRef\.current = true;/);
+    expect(listeners).not.toMatch(/nextPlayIntent\([^)]*player\.status/);
   });
 
   it('loads every source - the first included - with replaceAsync on the same player', () => {
