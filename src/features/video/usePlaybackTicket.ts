@@ -75,6 +75,8 @@ export function usePlaybackTicket(
   const watchedDeltaRef = React.useRef(0);
   const ticketRef = React.useRef<PlaybackTicket | null>(null);
   ticketRef.current = ticket;
+  /** The heartbeat on the wire, if any: beats never overlap (see `beat`). */
+  const beatInFlightRef = React.useRef<Promise<void> | null>(null);
 
   const reportPosition = React.useCallback(
     (positionSeconds: number, watchedDeltaSeconds: number) => {
@@ -157,14 +159,43 @@ export function usePlaybackTicket(
 
     const intervalMs = Math.max(10, ticket.heartbeatIntervalSeconds) * 1000;
 
-    const beat = async () => {
+    // Heartbeats never overlap, and each one is sent for the ticket that is
+    // current when it leaves. The server rotates on whichever beat arrives
+    // near expiry and releases the old ticket at once; a second beat still in
+    // flight on the old id then hit "Playback session already ended" and ended
+    // the student's lesson (Android emulator, 2026-11-12: a periodic beat and
+    // the rotation beat overlapped on a busy JS thread after the app came back
+    // from the background). A periodic beat that finds one on the wire is
+    // skipped - that one carries the position; the rotation beat waits for it
+    // and stands down if it already rotated.
+    const beat = async (kind: 'periodic' | 'rotation') => {
+      const pending = beatInFlightRef.current;
+      if (pending) {
+        if (kind === 'periodic') return;
+        await pending.catch(() => undefined);
+      }
+      const sent = ticketRef.current;
+      if (!sent || sent.ticketId !== ticket.ticketId) return; // rotated meanwhile
+      const run = send(sent);
+      beatInFlightRef.current = run;
+      try {
+        await run;
+      } finally {
+        if (beatInFlightRef.current === run) beatInFlightRef.current = null;
+      }
+    };
+
+    /** A response for a ticket that is no longer the current one is stale. */
+    const isStale = (sent: PlaybackTicket) => ticketRef.current?.ticketId !== sent.ticketId;
+
+    const send = async (sent: PlaybackTicket) => {
       const delta = watchedDeltaRef.current;
       watchedDeltaRef.current = 0;
 
       const protection = contentProtection.getState();
 
       try {
-        const res = await videoApi.heartbeat(ticket.ticketId, {
+        const res = await videoApi.heartbeat(sent.ticketId, {
           positionSeconds: Math.round(positionRef.current),
           watchedDeltaSeconds: Math.round(delta),
           protection: {
@@ -173,6 +204,14 @@ export function usePlaybackTicket(
             externalDisplay: protection.externalDisplay,
           },
         });
+
+        // The ticket was replaced while this beat was on the wire (a reload, or
+        // the lesson closed): its answer describes a grant that is gone. The
+        // current ticket's own beats run every server check again.
+        if (isStale(sent)) {
+          log.info('stale heartbeat response ignored');
+          return;
+        }
 
         if (res.terminate) {
           log.warn('playback terminated by server', res.terminate);
@@ -201,9 +240,12 @@ export function usePlaybackTicket(
 
         if (res.ticket) {
           log.info('ticket rotated');
+          // Visible to the next beat at once, not only after the re-render.
+          ticketRef.current = res.ticket;
           setTicket(res.ticket);
         }
       } catch (e) {
+        if (isStale(sent)) return;
         const apiError = asApiError(e);
         // A failed heartbeat must not kill playback on a flaky connection;
         // only an explicit authorization failure does.
@@ -221,7 +263,7 @@ export function usePlaybackTicket(
       }
     };
 
-    const id = setInterval(() => void beat(), intervalMs);
+    const id = setInterval(() => void beat('periodic'), intervalMs);
 
     // Proactive rotation shortly before the manifest URL stops working, so
     // the student never sees a mid-lesson stall.
@@ -240,7 +282,7 @@ export function usePlaybackTicket(
       // Back to `ready` only if the beat did not end playback. Setting it
       // unconditionally overwrote a server termination (or an expiry) that the
       // beat had just recorded, and the player carried on as if authorised.
-      void beat().finally(() =>
+      void beat('rotation').finally(() =>
         setPhase((current) => (current === 'refreshing' ? 'ready' : current))
       );
     }, msUntilRefresh);

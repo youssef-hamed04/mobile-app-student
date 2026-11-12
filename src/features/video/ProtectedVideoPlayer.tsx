@@ -30,6 +30,14 @@ import { PlayerHeader } from './components/PlayerHeader';
 import { PlayerSettingsSheet, type SettingsPanel } from './components/PlayerSettingsSheet';
 import { Watermark } from './components/Watermark';
 import { aspectFromTrack, isImmersive, surfaceFor } from './layout';
+import {
+  PlayerRetirement,
+  afterNextFrames,
+  nextPlayIntent,
+  safeRemove,
+  safely,
+  startHotSwap,
+} from './playerLifecycle';
 import { buildPlayerSource } from './source';
 import { usePlayAllowance } from './usePlayAllowance';
 import { usePlaybackTicket } from './usePlaybackTicket';
@@ -72,8 +80,10 @@ export interface ProtectedVideoPlayerProps {
  *  5. **No PiP, no background audio, no download.** PiP would move protected
  *     frames into a window outside the secure surface; background audio would
  *     keep the stream alive with no watermark on screen.
- *  6. **Ticket rotation.** Handled by usePlaybackTicket; the source is
- *     swapped in place, preserving position.
+ *  6. **Ticket rotation.** Handled by usePlaybackTicket; absorbed by a
+ *     primed standby player (hot swap) with the in-place swap as fallback,
+ *     preserving position. Replaced players are released only after React
+ *     has committed the switch (playerLifecycle.ts).
  */
 export function ProtectedVideoPlayer({
   videoId,
@@ -251,19 +261,15 @@ export function ProtectedVideoPlayer({
   playerRef.current = player;
   /** A standby being primed for a rotation, so it can be released on unmount or cancel. */
   const standbyRef = React.useRef<VideoPlayer | null>(null);
-
-  React.useEffect(() => {
-    return () => {
-      for (const p of [standbyRef.current, playerRef.current]) {
-        try {
-          p?.release();
-        } catch {
-          // Already released.
-        }
-      }
-      standbyRef.current = null;
-    };
-  }, []);
+  /**
+   * Players replaced by a rotation wait here until React has committed the
+   * render that no longer uses them - never on a timer. See playerLifecycle.ts
+   * for the use-after-release this prevents. The unmount release is declared
+   * after the listener effect below, so subscriptions are removed first.
+   */
+  const [retirement] = React.useState(
+    () => new PlayerRetirement<VideoPlayer>(afterNextFrames, log)
+  );
 
   // A denied, terminated or expired grant replaces the video surface with an
   // error screen, but the native player outlives the surface: without an
@@ -326,108 +332,44 @@ export function ProtectedVideoPlayer({
    * Rotation without a visible stall. The rotated manifest is loaded into a
    * standby player that plays MUTED and off-screen from the current position
    * until it has buffered a little past it; the view then switches to the
-   * standby at the live position and the old player is released. Anything
-   * that goes wrong (load error, nothing buffered within the timeout) falls
-   * back to the in-place replace, which is exactly what happened before.
-   * Returns a cancel function.
+   * standby at the live position. Anything that goes wrong (load error,
+   * nothing buffered within the timeout) falls back to the in-place replace.
+   *
+   * The replaced player is RETIRED, not released: paused and muted at once,
+   * and released by the effect after the listener effect, once React has
+   * committed the switch. A release on a fixed timer raced that commit and
+   * crashed the player (ERR_USING_RELEASED_SHARED_OBJECT; see
+   * playerLifecycle.ts). Returns a cancel function; a cancel never falls back.
    */
   const hotSwap = React.useCallback(
     (next: VideoSource, onFallback: () => void): (() => void) => {
       const old = playerRef.current;
-      let standby: VideoPlayer;
-      try {
-        standby = createVideoPlayer(next);
-      } catch (e) {
-        log.warn('standby player could not be created', { e: String((e as Error)?.message ?? e) });
-        onFallback();
-        return () => undefined;
-      }
-      standbyRef.current = standby;
-      configurePlayer(standby);
-      standby.muted = true;
-      // Priming must not take audio focus from the player the student hears.
-      standby.audioMixingMode = 'mixWithOthers';
-
-      let finished = false;
-      let primeTimer: ReturnType<typeof setInterval> | null = null;
-      const subs: { remove: () => void }[] = [];
-      const cleanup = () => {
-        subs.forEach((s) => s.remove());
-        if (primeTimer) clearInterval(primeTimer);
-        clearTimeout(deadline);
-      };
-      const abandon = (why: string) => {
-        if (finished) return;
-        finished = true;
-        cleanup();
-        standbyRef.current = null;
-        try {
-          standby.release();
-        } catch {
-          // Nothing to release.
-        }
-        log.warn('rotation hot-swap abandoned', { why });
-        onFallback();
-      };
-      const switchNow = () => {
-        if (finished) return;
-        finished = true;
-        cleanup();
-        standbyRef.current = null;
-        try {
-          const position = old.currentTime;
-          const keepPlaying = old.playing || wasPlayingRef.current;
-          standby.currentTime = position;
-          standby.audioMixingMode = 'doNotMix';
-          standby.muted = mutedRef.current;
-          if (keepPlaying) standby.play();
-          else standby.pause();
+      return startHotSwap<VideoPlayer>({
+        old,
+        create: () => {
+          const standby = createVideoPlayer(next);
+          standbyRef.current = standby;
+          return standby;
+        },
+        configure: configurePlayer,
+        wantsPlaying: () => wasPlayingRef.current,
+        muted: () => mutedRef.current,
+        onSwitch: (standby, { position }) => {
+          if (standbyRef.current === standby) standbyRef.current = null;
           settleRef.current = { position, until: Date.now() + 4_000 };
-          old.pause();
-        } catch (e) {
-          log.warn('rotation hot-swap switch failed', { e: String((e as Error)?.message ?? e) });
-        }
-        playerRef.current = standby;
-        setPlayer(standby);
-        // The view re-attaches to the standby on the next render; release the
-        // old decoder once that has happened.
-        setTimeout(() => {
-          try {
-            old.release();
-          } catch {
-            // Already released.
-          }
-        }, 1_000);
-        log.info('ticket rotation absorbed without a stall');
-      };
-      const deadline = setTimeout(() => abandon('timeout'), 12_000);
-
-      subs.push(
-        standby.addListener('statusChange', ({ status, error: standbyError }) => {
-          if (status === 'error') {
-            abandon(`error: ${String(standbyError?.message ?? 'unknown')}`);
-            return;
-          }
-          if (status !== 'readyToPlay' || primeTimer) return;
-          // Ready: start decoding at the live position so the buffer fills
-          // around it, then switch once it holds a couple of seconds ahead.
-          try {
-            standby.currentTime = old.currentTime;
-            standby.play();
-          } catch (e) {
-            abandon(`prime failed: ${String((e as Error)?.message ?? e)}`);
-            return;
-          }
-          const primedAt = Date.now();
-          primeTimer = setInterval(() => {
-            const ahead = standby.bufferedPosition - old.currentTime;
-            if (ahead >= 2 || Date.now() - primedAt > 3_000) switchNow();
-          }, 150);
-        })
-      );
-      return () => abandon('cancelled');
+          retirement.retire(old);
+          playerRef.current = standby;
+          setPlayer(standby);
+        },
+        onFallback: () => onFallback(),
+        discard: (standby) => {
+          if (standbyRef.current === standby) standbyRef.current = null;
+          retirement.releaseOnce(standby);
+        },
+        log,
+      });
     },
-    [configurePlayer]
+    [configurePlayer, retirement]
   );
 
   React.useEffect(() => {
@@ -452,6 +394,7 @@ export function ProtectedVideoPlayer({
       !pendingRestoreRef.current
     ) {
       let fellBack = false;
+      let fallbackPoll: ReturnType<typeof setInterval> | null = null;
       const cancel = hotSwap(source, () => {
         // Same path as before this existed: load in place and restore.
         fellBack = true;
@@ -460,6 +403,19 @@ export function ProtectedVideoPlayer({
           play: wasPlayingRef.current,
           since: Date.now(),
         };
+        // The same safety net as the in-place path below: a paused player
+        // gets no timeUpdate, and a readyToPlay missed on a busy device left
+        // the lesson at 0:00 (emulator, 2026-11-12). Only a READY player is
+        // restored.
+        let polls = 0;
+        fallbackPoll = setInterval(() => {
+          if (!pendingRestoreRef.current || polls++ > 30) {
+            if (fallbackPoll) clearInterval(fallbackPoll);
+            fallbackPoll = null;
+            return;
+          }
+          if (safely(() => player.status, 'idle') === 'readyToPlay') applyRestore();
+        }, 1_000);
         void player
           .replaceAsync(source)
           .then(() => {
@@ -472,6 +428,7 @@ export function ProtectedVideoPlayer({
           });
       });
       return () => {
+        if (fallbackPoll) clearInterval(fallbackPoll);
         if (!fellBack) cancel();
       };
     }
@@ -527,14 +484,29 @@ export function ProtectedVideoPlayer({
   React.useEffect(() => {
     if (!player) return;
 
+    // This player's status as its own events report it. A rebuffer arrives as
+    // statusChange(loading) and THEN playingChange(false) (Media3 queues the
+    // state change first), so the play intent is judged against this, not
+    // against `player.status` read later: on a busy JS thread the event is
+    // handled after the player has already recovered, and the stall then read
+    // as the student pausing (emulator, 2026-11-12: a hand-over carried that
+    // "pause" to the new player).
+    let lastStatus = safely(() => player.status as string, 'idle');
+
     const subs = [
       player.addListener('playingChange', ({ isPlaying }) => {
-        wasPlayingRef.current = isPlaying;
+        // A late event from a replaced (retired) player must not drive the UI.
+        if (playerRef.current !== player) return;
+        // A rebuffer also reports isPlaying=false; it is not the student pausing.
+        wasPlayingRef.current = nextPlayIntent(wasPlayingRef.current, isPlaying, lastStatus);
         playingRef.current = isPlaying;
         setPlaying(isPlaying);
       }),
 
       player.addListener('statusChange', ({ status, error: playerError }) => {
+        lastStatus = status;
+        // A late event from a replaced (retired) player must not drive the UI.
+        if (playerRef.current !== player) return;
         setBuffering(status === 'loading');
         if (status === 'error') {
           // e.g. the CDN refused an expired/revoked manifest, or the stream
@@ -553,6 +525,8 @@ export function ProtectedVideoPlayer({
       }),
 
       player.addListener('timeUpdate', ({ currentTime }) => {
+        // A late event from a replaced (retired) player must not drive the UI.
+        if (playerRef.current !== player) return;
         if (pendingRestoreRef.current) {
           // Ticks from the new source before it is ready are the old 0:00;
           // once it reports ready, put it in place here even if the status
@@ -577,7 +551,9 @@ export function ProtectedVideoPlayer({
         const isPlaying = player.playing;
         if (isPlaying !== playingRef.current) {
           playingRef.current = isPlaying;
-          wasPlayingRef.current = isPlaying;
+          // Playing is unambiguous; "not playing" read here may be a stall the
+          // events have not reported yet, so the intent is never lowered here.
+          if (isPlaying) wasPlayingRef.current = true;
           setPlaying(isPlaying);
         }
         if (isPlaying && player.status === 'readyToPlay') setBuffering(false);
@@ -587,11 +563,15 @@ export function ProtectedVideoPlayer({
       // range of anything a lecture could be (square to ultra-wide); a bogus
       // size from a half-loaded track must not collapse the band.
       player.addListener('videoTrackChange', ({ videoTrack }) => {
+        // A late event from a replaced (retired) player must not drive the UI.
+        if (playerRef.current !== player) return;
         const aspect = aspectFromTrack(videoTrack?.size);
         if (aspect !== null) setVideoAspect(aspect);
       }),
 
       player.addListener('playToEnd', () => {
+        // A late event from a replaced (retired) player must not drive the UI.
+        if (playerRef.current !== player) return;
         // `useVideoPlayer` is called before the ticket exists, so for the first
         // moments of every lesson there is a native player with NO source.
         // expo-video reports that empty timeline as already played to its end,
@@ -605,9 +585,27 @@ export function ProtectedVideoPlayer({
       }),
     ];
 
-    return () => subs.forEach((s) => s.remove());
+    return () => subs.forEach(safeRemove);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [player, preferredQuality]);
+
+  // Release replaced players only now. This effect runs after the listener
+  // effect of the same commit, so the old player's subscriptions are already
+  // gone and the view has been rendered with the new player; the release
+  // itself waits a frame for the native view to re-attach.
+  React.useEffect(() => {
+    retirement.flushRetired(player);
+  }, [player, retirement]);
+
+  // Unmount. Declared after the listener effect so React removes every
+  // subscription first; then each player is released exactly once.
+  React.useEffect(
+    () => () => {
+      retirement.releaseAll(playerRef.current, standbyRef.current);
+      standbyRef.current = null;
+    },
+    [retirement]
+  );
 
   // Keep playback rate in sync with the persisted preference.
   React.useEffect(() => {
@@ -650,22 +648,28 @@ export function ProtectedVideoPlayer({
   }, [ticket, duration, player]);
 
   const acceptResume = () => {
-    if (resumePrompt !== null && player) {
+    const p = playerRef.current;
+    if (resumePrompt !== null && p) {
       // The prompt is decided before the duration is known; by the time it is
       // accepted it may be, and a saved position at the very end means the
       // lesson was finished: "resume" there would end it again at once.
       const atEnd =
         duration > 0 && resumePrompt >= duration - RESUME_IGNORE_TAIL_SECONDS;
-      player.currentTime = atEnd ? 0 : resumePrompt;
+      safely(() => {
+        p.currentTime = atEnd ? 0 : resumePrompt;
+      }, undefined);
     }
     setResumePrompt(null);
-    player?.play();
+    safely(() => p?.play(), undefined);
   };
 
   const declineResume = () => {
     setResumePrompt(null);
-    if (player) player.currentTime = 0;
-    player?.play();
+    const p = playerRef.current;
+    safely(() => {
+      if (p) p.currentTime = 0;
+      p?.play();
+    }, undefined);
   };
 
   // ---- completion --------------------------------------------------------
@@ -883,29 +887,39 @@ export function ProtectedVideoPlayer({
   const toggleControls = () =>
     controlsVisible ? setControlsVisible(false) : bumpControls();
 
+  // Actions go to the player on screen now (playerRef), which during a
+  // rotation hand-over can be newer than the one this render closed over.
   const onPlayPause = () => {
     bumpControls();
+    const p = playerRef.current;
     if (playing) {
-      player.pause();
+      safely(() => p.pause(), undefined);
       void progress.flush(position);
     } else {
-      player.play();
+      safely(() => p.play(), undefined);
     }
   };
   const onSeek = (v: number) => {
     bumpControls();
-    player.currentTime = v;
+    const p = playerRef.current;
+    safely(() => {
+      p.currentTime = v;
+    }, undefined);
   };
   const onSeekBy = (delta: number) => {
     bumpControls();
-    player.seekBy(delta);
+    const p = playerRef.current;
+    safely(() => p.seekBy(delta), undefined);
   };
   const onToggleMute = () => {
     bumpControls();
     const next = !muted;
     setMuted(next);
     mutedRef.current = next;
-    player.muted = next;
+    const p = playerRef.current;
+    safely(() => {
+      p.muted = next;
+    }, undefined);
   };
   const closePlayer = () => {
     void progress.flush(position);
