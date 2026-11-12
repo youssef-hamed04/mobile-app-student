@@ -1,3 +1,5 @@
 {
-  "NSPhotoLibraryUsageDescription": "تُستخدم فقط إذا اخترت صورة للملف الشخصي من مكتبة الصور."
+  "ios": {
+    "NSPhotoLibraryUsageDescription": "تُستخدم فقط إذا اخترت صورة للملف الشخصي من مكتبة الصور."
+  }
 }

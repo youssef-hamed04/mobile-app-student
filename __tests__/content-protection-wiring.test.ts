@@ -149,7 +149,11 @@ describe('iOS protection wiring', () => {
       /setPrivacyOverlayText\(overlayText\)/
     );
     const ar = JSON.parse(read('assets/locales/ios/ar.json'));
-    expect(ar.NSPhotoLibraryUsageDescription).toMatch(/[؀-ۿ]/);
+    expect(ar.ios.NSPhotoLibraryUsageDescription).toMatch(/[؀-ۿ]/);
+    // Only under `ios`: Expo writes top-level locale keys into Android's
+    // values-b+ar/strings.xml too, where an iOS-only key fails the release
+    // lint (ExtraTranslation) and the Android build (EAS af200148, vc 12).
+    expect(Object.keys(ar)).toEqual(['ios']);
     expect(read('app.config.ts')).toMatch(/ar: '\.\/assets\/locales\/ios\/ar\.json'/);
   });
 });
