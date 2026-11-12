@@ -29,17 +29,26 @@ describe('ProtectedVideoPlayer keeps one native player across source swaps', () 
     // DRM context; it must never be confused with a quality change or reload.
     expect(player).toMatch(/previousContext\.quality === swapContext\.quality/);
     expect(player).toMatch(/previousContext\.reloadKey === swapContext\.reloadKey/);
+    // Priming and hand-over live in playerLifecycle.ts and are exercised
+    // behaviourally in player-hot-swap-lifecycle.test.ts.
     const swap = player.slice(player.indexOf('const hotSwap = React.useCallback'));
+    expect(swap).toMatch(/startHotSwap<VideoPlayer>\(\{/);
     expect(swap).toMatch(/createVideoPlayer\(next\)/);
-    expect(swap).toMatch(/standby\.muted = true/);
-    expect(swap).toMatch(/audioMixingMode = 'mixWithOthers'/);
-    expect(swap).toMatch(/standby\.bufferedPosition - old\.currentTime/);
-    expect(swap).toMatch(/setPlayer\(standby\)/);
-    expect(swap).toMatch(/old\.release\(\)/);
+    expect(swap).toMatch(
+      /retirement\.retire\(old\);\s*playerRef\.current = standby;\s*setPlayer\(standby\)/
+    );
+    // The replaced player is never released on a timer (the 1aaa34a crash):
+    // only the retirement effect, declared after the listener effect, does.
+    expect(player).not.toMatch(/old\.release\(\)/);
+    expect(player).toMatch(
+      /subs\.forEach\(safeRemove\)[\s\S]*?retirement\.flushRetired\(player\)[\s\S]*?retirement\.releaseAll\(/
+    );
+    // Every listener ignores events from a player that is no longer active.
+    const listeners = player.slice(player.indexOf('// ---- player events'));
+    expect(listeners.match(/if \(playerRef\.current !== player\) return;/g)).toHaveLength(5);
     // Behind a kill switch, so the in-place reload is one constant away.
     expect(player).toMatch(/PLAYER_ROTATION_HOT_SWAP &&\s*isRotation/);
     // Every failure path hands the source to the existing in-place loader.
-    expect(swap).toMatch(/abandon\('timeout'\)/);
     expect(player).toMatch(/const cancel = hotSwap\(source, \(\) => \{[\s\S]*?\.replaceAsync\(source\)/);
   });
 
